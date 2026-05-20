@@ -292,24 +292,7 @@ export function SpuRuleManagement() {
   }
 
   function saveDraft() {
-    if (isCustomTerm) {
-      const name = customTermInput.trim();
-      if (!name) {
-        setCustomTermError("请输入自定义类型名称");
-        return;
-      }
-      if (allTermTypes.includes(name)) {
-        setCustomTermError("该类型名称已存在");
-        return;
-      }
-      setCustomTermError("");
-      if (!customTermTypes.includes(name)) {
-        setCustomTermTypes((prev) => [...prev, name]);
-      }
-      if (!draft.termType.includes(name)) {
-        draft.termType = [...draft.termType, name];
-      }
-    }
+    if (draft.termType.length === 0) return;
     if (
       (draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") &&
       draft.regions.length === 0
