@@ -830,6 +830,8 @@ export function SpuRuleManagement() {
                     </TableBody>
                   </Table>
                 </div>
+                </>
+                )}
               </div>
             </div>
           </div>
