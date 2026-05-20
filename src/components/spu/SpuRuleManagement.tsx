@@ -241,6 +241,7 @@ export function SpuRuleManagement() {
   const [draft, setDraft] = useState<RuleRow>(blank);
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [scopeError, setScopeError] = useState("");
+  const [duplicateError, setDuplicateError] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
   const [customTermTypes, setCustomTermTypes] = useState<string[]>([]);
   const [customTermInput, setCustomTermInput] = useState("");
@@ -279,6 +280,8 @@ export function SpuRuleManagement() {
     setIsCustomTerm(false);
     setCustomTermInput("");
     setCustomTermError("");
+    setDuplicateError("");
+    setScopeError("");
     setEditOpen(true);
   }
 
@@ -288,11 +291,23 @@ export function SpuRuleManagement() {
     setIsCustomTerm(false);
     setCustomTermInput("");
     setCustomTermError("");
+    setDuplicateError("");
+    setScopeError("");
     setEditOpen(true);
   }
 
   function saveDraft() {
     if (draft.termType.length === 0) return;
+    const dup = rows.find(
+      (r) => r.id !== draft.id && r.standard && r.standard === draft.standard,
+    );
+    if (dup) {
+      setDuplicateError(
+        `当前SPU下已存在相同标准化词的词条「${dup.content}」，请直接编辑该词条`,
+      );
+      return;
+    }
+    setDuplicateError("");
     if (
       (draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") &&
       draft.regions.length === 0
