@@ -841,14 +841,6 @@ export function SpuRuleManagement() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="发布后启用">
-              <div className="flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3">
-                <Switch checked={publishEnabled} onCheckedChange={setPublishEnabled} />
-                <span className="text-xs text-slate-500">
-                  开启后，点击"保存并发布"词条状态为已启用；关闭则为已停用
-                </span>
-              </div>
-            </Field>
             <Field label="生效范围" required>
               <div className="flex items-center gap-2">
                 <Select
