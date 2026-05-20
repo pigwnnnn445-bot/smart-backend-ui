@@ -351,11 +351,9 @@ export function SpuRuleManagement() {
               {/* Right: filters + table */}
               <div className="min-w-0 flex-1 p-4">
                 {/* Filters */}
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   <div className="flex items-center gap-2">
-                    <Label className="w-16 shrink-0 text-right text-slate-600">
-                      词条内容
-                    </Label>
+                    <Label className="w-24 shrink-0 text-right text-slate-600">词条内容</Label>
                     <Input
                       placeholder="请输入词条内容"
                       className="h-8"
@@ -366,9 +364,7 @@ export function SpuRuleManagement() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label className="w-16 shrink-0 text-right text-slate-600">
-                      标准化词
-                    </Label>
+                    <Label className="w-24 shrink-0 text-right text-slate-600">标准化词</Label>
                     <Input
                       placeholder="请输入标准化词"
                       className="h-8"
@@ -379,50 +375,44 @@ export function SpuRuleManagement() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label className="w-16 shrink-0 text-right text-slate-600">
-                      匹配方式
-                    </Label>
-                    <Select
-                      value={filters.matchType}
-                      onValueChange={(v) =>
-                        setFilters((f) => ({ ...f, matchType: v === "all" ? "" : v }))
+                    <Label className="w-24 shrink-0 text-right text-slate-600">词条类型</Label>
+                    <MultiSelect
+                      options={TERM_TYPES}
+                      value={filters.termTypes}
+                      onChange={(v) =>
+                        setFilters((f) => ({ ...f, termTypes: v as TermType[] }))
                       }
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="请选择" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">全部</SelectItem>
-                        {MATCH_TYPES.map((m) => (
-                          <SelectItem key={m} value={m}>
-                            {m}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label className="w-16 shrink-0 text-right text-slate-600">
-                      词条状态
-                    </Label>
-                    <Select
-                      value={filters.status}
-                      onValueChange={(v) =>
-                        setFilters((f) => ({ ...f, status: v === "all" ? "" : v }))
+                    <Label className="w-24 shrink-0 text-right text-slate-600">匹配方式</Label>
+                    <MultiSelect
+                      options={MATCH_TYPES}
+                      value={filters.matchTypes}
+                      onChange={(v) =>
+                        setFilters((f) => ({ ...f, matchTypes: v as MatchType[] }))
                       }
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="请选择" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">全部</SelectItem>
-                        {STATUSES.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label className="w-24 shrink-0 text-right text-slate-600">指向当前SPU</Label>
+                    <MultiSelect
+                      options={DIRECT_FLAGS}
+                      value={filters.directs}
+                      onChange={(v) =>
+                        setFilters((f) => ({ ...f, directs: v as DirectFlag[] }))
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label className="w-24 shrink-0 text-right text-slate-600">词条状态</Label>
+                    <MultiSelect
+                      options={STATUSES}
+                      value={filters.statuses}
+                      onChange={(v) =>
+                        setFilters((f) => ({ ...f, statuses: v as Status[] }))
+                      }
+                    />
                   </div>
                 </div>
 
@@ -435,7 +425,14 @@ export function SpuRuleManagement() {
                     variant="outline"
                     className="h-8"
                     onClick={() =>
-                      setFilters({ content: "", standard: "", matchType: "", status: "" })
+                      setFilters({
+                        content: "",
+                        standard: "",
+                        termTypes: [],
+                        matchTypes: [],
+                        directs: [],
+                        statuses: [],
+                      })
                     }
                   >
                     <RotateCcw className="h-3.5 w-3.5" /> 重置
