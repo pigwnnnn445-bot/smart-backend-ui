@@ -1090,7 +1090,200 @@ export function SpuRuleManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 词库停用/启用 二次确认 */}
+      <Dialog
+        open={!!libConfirm}
+        onOpenChange={(o) => !o && setLibConfirm(null)}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {libConfirm && libStatus[libConfirm.name] === "已启用"
+                ? "确认停用词库"
+                : "确认启用词库"}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-600">
+            {libConfirm && libStatus[libConfirm.name] === "已启用"
+              ? `停用后，SPU「${libConfirm.name}」下的全部词条将不再参与前台搜索召回。是否确认停用？`
+              : `启用后，SPU「${libConfirm?.name}」下已启用的词条将重新参与前台搜索召回。是否确认启用？`}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLibConfirm(null)}>
+              取消
+            </Button>
+            <Button className="bg-blue-500 hover:bg-blue-600" onClick={confirmToggleLib}>
+              确认
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 查看日志 */}
+      <Dialog open={!!logSpu} onOpenChange={(o) => !o && setLogSpu(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>操作日志 - {logSpu}</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-auto rounded border border-slate-200">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50">
+                  <TableHead className="whitespace-nowrap">操作时间</TableHead>
+                  <TableHead>操作类型</TableHead>
+                  <TableHead>对象</TableHead>
+                  <TableHead>操作人</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.filter((l) => l.spu === logSpu).length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-10 text-center text-slate-400">
+                      暂无操作记录
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  logs
+                    .filter((l) => l.spu === logSpu)
+                    .sort((a, b) => (a.at < b.at ? 1 : -1))
+                    .map((l) => (
+                      <TableRow key={l.id}>
+                        <TableCell className="whitespace-nowrap">{l.at}</TableCell>
+                        <TableCell>{l.action}</TableCell>
+                        <TableCell>{l.target}</TableCell>
+                        <TableCell>{l.operator}</TableCell>
+                      </TableRow>
+                    ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLogSpu(null)}>
+              关闭
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+interface OverviewRow extends SpuInfo {
+  termCount: number;
+  enabledCount: number;
+  libStatus: "已启用" | "已停用";
+  updater: string;
+  updatedAt: string;
+}
+
+function OverviewTable({
+  rows,
+  onEdit,
+  onToggleLib,
+  onViewLog,
+}: {
+  rows: OverviewRow[];
+  onEdit: (spu: string) => void;
+  onToggleLib: (s: SpuInfo) => void;
+  onViewLog: (spu: string) => void;
+}) {
+  return (
+    <>
+      <div className="mb-3 text-slate-700">SPU词库总览</div>
+      <div className="overflow-x-auto rounded border border-slate-200">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50">
+              <TableHead>SPU ID</TableHead>
+              <TableHead>SPU名称</TableHead>
+              <TableHead>SPU分类</TableHead>
+              <TableHead>商品状态</TableHead>
+              <TableHead>是否参与搜索</TableHead>
+              <TableHead>词条数量</TableHead>
+              <TableHead>已启用词条数</TableHead>
+              <TableHead>词库状态</TableHead>
+              <TableHead>最近更新人</TableHead>
+              <TableHead className="whitespace-nowrap">最近更新时间</TableHead>
+              <TableHead className="text-right">操作</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell className="whitespace-nowrap">{r.id}</TableCell>
+                <TableCell>{r.name}</TableCell>
+                <TableCell>{r.category}</TableCell>
+                <TableCell>
+                  <Badge
+                    className={cn(
+                      "border-0",
+                      r.productStatus === "在售"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-slate-200 text-slate-600",
+                    )}
+                  >
+                    {r.productStatus}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    className={cn(
+                      "border-0",
+                      r.inSearch
+                        ? "bg-sky-100 text-sky-700"
+                        : "bg-slate-100 text-slate-600",
+                    )}
+                  >
+                    {r.inSearch ? "是" : "否"}
+                  </Badge>
+                </TableCell>
+                <TableCell>{r.termCount}</TableCell>
+                <TableCell>{r.enabledCount}</TableCell>
+                <TableCell>
+                  <Badge
+                    className={cn(
+                      "border-0",
+                      r.libStatus === "已启用"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-slate-200 text-slate-600",
+                    )}
+                  >
+                    {r.libStatus}
+                  </Badge>
+                </TableCell>
+                <TableCell>{r.updater}</TableCell>
+                <TableCell className="whitespace-nowrap">{r.updatedAt}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-3 text-xs">
+                    <button
+                      className="text-blue-600 hover:underline inline-flex items-center gap-1"
+                      onClick={() => onEdit(r.name)}
+                    >
+                      <Pencil className="h-3 w-3" /> 编辑词库
+                    </button>
+                    <button
+                      className="text-rose-500 hover:underline inline-flex items-center gap-1"
+                      onClick={() => onToggleLib(r)}
+                    >
+                      <Power className="h-3 w-3" />
+                      {r.libStatus === "已启用" ? "停用" : "启用"}
+                    </button>
+                    <button
+                      className="text-slate-600 hover:underline inline-flex items-center gap-1"
+                      onClick={() => onViewLog(r.name)}
+                    >
+                      <FileText className="h-3 w-3" /> 查看日志
+                    </button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }
 
