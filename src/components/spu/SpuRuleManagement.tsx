@@ -62,7 +62,7 @@ interface RuleRow {
   id: string;
   content: string;
   standard: string;
-  termType: TermType;
+  termType: TermType[];
   matchType: MatchType;
   direct: DirectFlag;
   status: Status;
@@ -172,7 +172,7 @@ const initialRows: RuleRow[] = [
     id: "1",
     content: "Open AI",
     standard: "openai",
-    termType: "品牌词",
+    termType: ["品牌词"],
     matchType: "精准匹配",
     direct: "是",
     status: "已启用",
@@ -201,7 +201,7 @@ const blank: RuleRow = {
   id: "",
   content: "",
   standard: "",
-  termType: "品牌词",
+  termType: ["品牌词"],
   matchType: "精准匹配",
   direct: "是",
   status: "已启用",
