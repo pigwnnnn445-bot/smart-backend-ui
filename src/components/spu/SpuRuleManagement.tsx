@@ -229,7 +229,6 @@ export function SpuRuleManagement() {
   const [scopeError, setScopeError] = useState("");
   const [duplicateError, setDuplicateError] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
-  const [publishEnabled, setPublishEnabled] = useState(true);
   const [customTermTypes, setCustomTermTypes] = useState<string[]>([]);
   const [customTermInput, setCustomTermInput] = useState("");
   const [isCustomTerm, setIsCustomTerm] = useState(false);
@@ -269,7 +268,6 @@ export function SpuRuleManagement() {
     setCustomTermError("");
     setDuplicateError("");
     setScopeError("");
-    setPublishEnabled(true);
     setEditOpen(true);
   }
 
@@ -281,7 +279,6 @@ export function SpuRuleManagement() {
     setCustomTermError("");
     setDuplicateError("");
     setScopeError("");
-    setPublishEnabled(row.status !== "已停用");
     setEditOpen(true);
   }
 
@@ -318,7 +315,7 @@ export function SpuRuleManagement() {
       // 新增时进入草稿；编辑已发布词条仅存草稿，前台仍用原线上版本，保持原状态展示
       nextStatus = mode === "create" ? "草稿" : draft.status;
     } else {
-      nextStatus = publishEnabled ? "已启用" : "已停用";
+      nextStatus = "已启用";
     }
     const payload = { ...draft, status: nextStatus, updatedAt: now };
     setRows((prev) => {
