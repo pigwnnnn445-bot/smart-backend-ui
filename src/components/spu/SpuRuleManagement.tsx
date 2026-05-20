@@ -740,20 +740,46 @@ export function SpuRuleManagement() {
             </Field>
             <Field label="词条类型" required>
               <Select
-                value={draft.termType}
-                onValueChange={(v) => setDraft({ ...draft, termType: v as TermType })}
+                value={isCustomTerm ? "__custom__" : draft.termType}
+                onValueChange={(v) => {
+                  if (v === "__custom__") {
+                    setIsCustomTerm(true);
+                    setCustomTermInput("");
+                    setCustomTermError("");
+                  } else {
+                    setIsCustomTerm(false);
+                    setCustomTermError("");
+                    setDraft({ ...draft, termType: v as TermType });
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TERM_TYPES.map((t) => (
+                  {allTermTypes.map((t) => (
                     <SelectItem key={t} value={t}>
                       {t}
                     </SelectItem>
                   ))}
+                  <SelectItem value="__custom__">自定义</SelectItem>
                 </SelectContent>
               </Select>
+              {isCustomTerm && (
+                <div className="mt-1.5">
+                  <Input
+                    value={customTermInput}
+                    onChange={(e) => {
+                      setCustomTermInput(e.target.value);
+                      if (customTermError) setCustomTermError("");
+                    }}
+                    placeholder="请输入自定义类型名称"
+                  />
+                  {customTermError && (
+                    <p className="text-xs text-rose-500 mt-1">{customTermError}</p>
+                  )}
+                </div>
+              )}
             </Field>
             <Field label="匹配方式" required>
               <Select
