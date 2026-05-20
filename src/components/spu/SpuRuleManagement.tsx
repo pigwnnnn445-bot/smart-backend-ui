@@ -306,20 +306,6 @@ export function SpuRuleManagement() {
               {/* SPU list */}
               <div className="w-52 shrink-0 border-r border-slate-200 p-4">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-600">隐藏未启用</span>
-                    <Switch
-                      checked={hideDisabled}
-                      onCheckedChange={setHideDisabled}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-600">创建倒序/正序</span>
-                    <Switch
-                      checked={reverseOrder}
-                      onCheckedChange={setReverseOrder}
-                    />
-                  </div>
                   <div className="relative">
                     <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                     <Input placeholder="搜索" className="h-8 pl-7" />
@@ -340,6 +326,14 @@ export function SpuRuleManagement() {
                             setEnabledSpu((p) => ({ ...p, [s]: !!v }))
                           }
                           onClick={(e) => e.stopPropagation()}
+                        />
+                        <span
+                          aria-hidden
+                          className="inline-block h-2.5 w-2.5 rounded-sm"
+                          style={{
+                            backgroundColor: enabledSpu[s] ? "#2FCC25" : "transparent",
+                            border: enabledSpu[s] ? "none" : "1px solid #d1d5db",
+                          }}
                         />
                         <span className="text-slate-700">{s}</span>
                       </div>
