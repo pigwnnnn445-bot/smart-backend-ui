@@ -383,6 +383,18 @@ export function SpuRuleManagement() {
       const exists = prev.some((p) => p.id === payload.id);
       return exists ? prev.map((p) => (p.id === payload.id ? payload : p)) : [payload, ...prev];
     });
+    pushLog({
+      spu: activeSpu,
+      action:
+        mode === "create"
+          ? action === "publish"
+            ? "新增并发布词条"
+            : "新增词条草稿"
+          : action === "publish"
+            ? "编辑并发布词条"
+            : "编辑词条草稿",
+      target: payload.content,
+    });
     setEditOpen(false);
   }
 
