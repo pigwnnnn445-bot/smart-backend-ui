@@ -749,34 +749,31 @@ export function SpuRuleManagement() {
               />
             </Field>
             <Field label="词条类型" required>
-              <Select
-                value={isCustomTerm ? "__custom__" : draft.termType}
-                onValueChange={(v) => {
-                  if (v === "__custom__") {
-                    setIsCustomTerm(true);
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <MultiSelect
+                    options={allTermTypes}
+                    value={draft.termType}
+                    onChange={(v) => setDraft({ ...draft, termType: v as TermType[] })}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={isCustomTerm ? "secondary" : "outline"}
+                  className="h-9 shrink-0"
+                  onClick={() => {
+                    setIsCustomTerm((v) => !v);
                     setCustomTermInput("");
                     setCustomTermError("");
-                  } else {
-                    setIsCustomTerm(false);
-                    setCustomTermError("");
-                    setDraft({ ...draft, termType: v as TermType });
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {allTermTypes.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="__custom__">自定义</SelectItem>
-                </SelectContent>
-              </Select>
+                  }}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  自定义
+                </Button>
+              </div>
               {isCustomTerm && (
-                <div className="mt-1.5">
+                <div className="mt-1.5 flex items-center gap-2">
                   <Input
                     value={customTermInput}
                     onChange={(e) => {
@@ -785,10 +782,33 @@ export function SpuRuleManagement() {
                     }}
                     placeholder="请输入自定义类型名称"
                   />
-                  {customTermError && (
-                    <p className="text-xs text-rose-500 mt-1">{customTermError}</p>
-                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-9 shrink-0 bg-blue-500 hover:bg-blue-600 text-white"
+                    onClick={() => {
+                      const name = customTermInput.trim();
+                      if (!name) {
+                        setCustomTermError("请输入自定义类型名称");
+                        return;
+                      }
+                      if (allTermTypes.includes(name)) {
+                        setCustomTermError("该类型名称已存在");
+                        return;
+                      }
+                      setCustomTermTypes((prev) => [...prev, name]);
+                      setDraft({ ...draft, termType: [...draft.termType, name] });
+                      setIsCustomTerm(false);
+                      setCustomTermInput("");
+                      setCustomTermError("");
+                    }}
+                  >
+                    确定
+                  </Button>
                 </div>
+              )}
+              {isCustomTerm && customTermError && (
+                <p className="text-xs text-rose-500 mt-1">{customTermError}</p>
               )}
             </Field>
             <Field label="匹配方式" required>
