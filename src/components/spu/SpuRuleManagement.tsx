@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   Filter,
@@ -945,7 +945,7 @@ function RegionSheet({
   const [tab, setTab] = useState("select");
 
   // 打开时同步外部值
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) setSelected(value);
   }, [open, value]);
 
