@@ -644,9 +644,15 @@ export function SpuRuleManagement() {
                             <TableCell>{r.content}</TableCell>
                             <TableCell>{r.standard}</TableCell>
                             <TableCell>
-                              <div className="flex flex-wrap gap-1">
+                              <div
+                                className="flex w-[160px] items-center gap-1 overflow-hidden whitespace-nowrap"
+                                title={r.termType.join("、")}
+                              >
                                 {r.termType.map((t) => (
-                                  <Badge key={t} className={cn("border-0", termBadge(t))}>
+                                  <Badge
+                                    key={t}
+                                    className={cn("border-0 shrink-0", termBadge(t))}
+                                  >
                                     {t}
                                   </Badge>
                                 ))}
