@@ -243,6 +243,7 @@ export function SpuRuleManagement() {
   const [scopeError, setScopeError] = useState("");
   const [duplicateError, setDuplicateError] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
+  const [publishEnabled, setPublishEnabled] = useState(true);
   const [customTermTypes, setCustomTermTypes] = useState<string[]>([]);
   const [customTermInput, setCustomTermInput] = useState("");
   const [isCustomTerm, setIsCustomTerm] = useState(false);
@@ -282,6 +283,7 @@ export function SpuRuleManagement() {
     setCustomTermError("");
     setDuplicateError("");
     setScopeError("");
+    setPublishEnabled(true);
     setEditOpen(true);
   }
 
@@ -293,10 +295,11 @@ export function SpuRuleManagement() {
     setCustomTermError("");
     setDuplicateError("");
     setScopeError("");
+    setPublishEnabled(row.status !== "已停用");
     setEditOpen(true);
   }
 
-  function saveDraft() {
+  function saveDraft(action: "draft" | "publish") {
     if (draft.termType.length === 0) return;
     const dup = rows.find(
       (r) => r.id !== draft.id && r.standard && r.standard === draft.standard,
@@ -324,7 +327,14 @@ export function SpuRuleManagement() {
       .toISOString()
       .replace("T", " ")
       .slice(0, 19);
-    const payload = { ...draft, updatedAt: now };
+    let nextStatus: Status;
+    if (action === "draft") {
+      // 新增时进入草稿；编辑已发布词条仅存草稿，前台仍用原线上版本，保持原状态展示
+      nextStatus = mode === "create" ? "草稿" : draft.status;
+    } else {
+      nextStatus = publishEnabled ? "已启用" : "已停用";
+    }
+    const payload = { ...draft, status: nextStatus, updatedAt: now };
     setRows((prev) => {
       const exists = prev.some((p) => p.id === payload.id);
       return exists ? prev.map((p) => (p.id === payload.id ? payload : p)) : [payload, ...prev];
