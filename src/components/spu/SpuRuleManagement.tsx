@@ -988,6 +988,7 @@ function MultiSelect({
       <PopoverTrigger asChild>
         <button
           type="button"
+          title={value.length > 0 ? value.join("、") : undefined}
           className="flex h-8 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm hover:bg-slate-50"
         >
           <span className={cn("truncate", value.length === 0 && "text-slate-400")}>
