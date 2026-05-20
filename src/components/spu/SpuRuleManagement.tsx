@@ -645,16 +645,20 @@ export function SpuRuleManagement() {
                             <TableCell>{r.standard}</TableCell>
                             <TableCell>
                               <div
-                                className="flex w-[160px] items-center gap-1 overflow-hidden whitespace-nowrap"
+                                className="w-[160px] truncate"
                                 title={r.termType.join("、")}
                               >
-                                {r.termType.map((t) => (
-                                  <Badge
+                                {r.termType.map((t, i) => (
+                                  <span
                                     key={t}
-                                    className={cn("border-0 shrink-0", termBadge(t))}
+                                    className={cn(
+                                      "inline-block rounded px-1.5 py-0.5 text-xs",
+                                      i > 0 && "ml-1",
+                                      termBadge(t),
+                                    )}
                                   >
                                     {t}
-                                  </Badge>
+                                  </span>
                                 ))}
                               </div>
                             </TableCell>
