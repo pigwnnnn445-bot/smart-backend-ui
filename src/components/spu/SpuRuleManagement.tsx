@@ -149,21 +149,7 @@ function normalizeTerm(input: string): string {
   return s;
 }
 
-const NAV = [
-  "智能回复",
-  "用户管理",
-  "订单管理",
-  "工单管理",
-  "供应管理",
-  "供应商管理",
-  "车辆管理",
-  "代充值记录管理",
-  "车票管理",
-  "营销管理",
-  "Affiliate管理",
-  "线索管理",
-  "SPU配置",
-];
+const NAV = ["SPU配置"];
 
 const SPU_SUBNAV = ["SPU基础配置", "SPU管理", "SPU搜索配置", "SPU内容配置"];
 
