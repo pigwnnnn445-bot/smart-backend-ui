@@ -678,3 +678,62 @@ function Field({
     </div>
   );
 }
+
+function MultiSelect({
+  options,
+  value,
+  onChange,
+  placeholder = "请选择",
+}: {
+  options: readonly string[];
+  value: string[];
+  onChange: (v: string[]) => void;
+  placeholder?: string;
+}) {
+  const toggle = (opt: string) => {
+    onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt]);
+  };
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-8 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm hover:bg-slate-50"
+        >
+          <span className={cn("truncate", value.length === 0 && "text-slate-400")}>
+            {value.length === 0 ? placeholder : value.join("、")}
+          </span>
+          <ChevronDown className="ml-2 h-3.5 w-3.5 text-slate-400" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-1" align="start">
+        <div className="flex items-center justify-between px-2 py-1.5 text-xs text-slate-500">
+          <span>{value.length > 0 ? `已选 ${value.length}` : "多选"}</span>
+          {value.length > 0 && (
+            <button
+              type="button"
+              className="text-blue-600 hover:underline"
+              onClick={() => onChange([])}
+            >
+              清空
+            </button>
+          )}
+        </div>
+        <div className="max-h-64 overflow-y-auto">
+          {options.map((opt) => {
+            const checked = value.includes(opt);
+            return (
+              <label
+                key={opt}
+                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-slate-50"
+              >
+                <Checkbox checked={checked} onCheckedChange={() => toggle(opt)} />
+                <span>{opt}</span>
+              </label>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
