@@ -927,3 +927,142 @@ function MultiSelect({
     </Popover>
   );
 }
+
+function RegionSheet({
+  open,
+  onOpenChange,
+  title,
+  value,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  title: string;
+  value: string[];
+  onSave: (v: string[]) => void;
+}) {
+  const [selected, setSelected] = useState<string[]>(value);
+  const [tab, setTab] = useState("select");
+
+  // 打开时同步外部值
+  React.useEffect(() => {
+    if (open) setSelected(value);
+  }, [open, value]);
+
+  const toggle = (code: string) => {
+    setSelected((p) => (p.includes(code) ? p.filter((c) => c !== code) : [...p, code]));
+  };
+
+  const allCodes = REGION_GROUPS.flatMap((g) => g.countries.map((c) => c.code));
+  const allSelected = allCodes.every((c) => selected.includes(c));
+
+  const toggleAll = () => {
+    setSelected(allSelected ? [] : allCodes);
+  };
+
+  const toggleContinent = (continent: string) => {
+    const codes = REGION_GROUPS.find((g) => g.continent === continent)!.countries.map(
+      (c) => c.code,
+    );
+    const allIn = codes.every((c) => selected.includes(c));
+    setSelected((p) =>
+      allIn ? p.filter((c) => !codes.includes(c)) : Array.from(new Set([...p, ...codes])),
+    );
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="!w-2/5 !max-w-none p-0 flex flex-col"
+      >
+        <SheetHeader className="px-6 py-4 border-b border-slate-200">
+          <SheetTitle className="text-base">{title}</SheetTitle>
+        </SheetHeader>
+
+        <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col min-h-0">
+          <div className="px-6 pt-3 border-b border-slate-200">
+            <TabsList className="bg-transparent p-0 h-auto gap-6">
+              <TabsTrigger
+                value="add"
+                className="px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 data-[state=active]:shadow-none bg-transparent"
+              >
+                添加国家地区
+              </TabsTrigger>
+              <TabsTrigger
+                value="select"
+                className="px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 data-[state=active]:shadow-none bg-transparent"
+              >
+                选择国家地区
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="add" className="flex-1 overflow-auto px-6 py-4 m-0">
+            <p className="text-sm text-slate-500">在此添加自定义国家/地区。</p>
+          </TabsContent>
+
+          <TabsContent value="select" className="flex-1 overflow-auto px-6 py-4 m-0 space-y-6">
+            {REGION_GROUPS.map((group) => {
+              const codes = group.countries.map((c) => c.code);
+              const allIn = codes.every((c) => selected.includes(c));
+              const someIn = codes.some((c) => selected.includes(c));
+              return (
+                <div key={group.continent}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-base font-semibold text-slate-800">
+                      {group.continent}
+                    </span>
+                    <label className="flex items-center gap-1.5 text-sm text-slate-600 cursor-pointer">
+                      <Checkbox
+                        checked={allIn ? true : someIn ? "indeterminate" : false}
+                        onCheckedChange={() => toggleContinent(group.continent)}
+                      />
+                      全选
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-3 gap-y-3 gap-x-4">
+                    {group.countries.map((c) => (
+                      <label
+                        key={c.code}
+                        className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={selected.includes(c.code)}
+                          onCheckedChange={() => toggle(c.code)}
+                        />
+                        <span className="truncate">
+                          {c.name} [{c.code}]
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </TabsContent>
+        </Tabs>
+
+        <div className="flex items-center justify-between border-t border-slate-200 px-6 py-3 bg-white">
+          <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+            <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+            全选
+            <span className="ml-3 text-slate-500">已选国家地区: {selected.length}</span>
+          </label>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+              取消
+            </Button>
+            <Button
+              size="sm"
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={() => onSave(selected)}
+            >
+              保存
+            </Button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
