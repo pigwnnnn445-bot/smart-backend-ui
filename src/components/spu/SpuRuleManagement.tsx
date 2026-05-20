@@ -694,7 +694,7 @@ export function SpuRuleManagement() {
                                 </button>
                                 <button
                                   className="text-rose-500 hover:underline inline-flex items-center gap-1"
-                                  onClick={() => toggleStatus(r)}
+                                  onClick={() => setStatusConfirm(r)}
                                 >
                                   <Power className="h-3 w-3" />
                                   {r.status === "已启用" ? "停用" : "启用"}
