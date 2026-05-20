@@ -728,11 +728,14 @@ export function SpuRuleManagement() {
               <Input
                 value={draft.content}
                 onChange={(e) =>
-                  setDraft({
-                    ...draft,
-                    content: e.target.value,
-                    standard: normalizeTerm(e.target.value),
-                  })
+                  {
+                    setDraft({
+                      ...draft,
+                      content: e.target.value,
+                      standard: normalizeTerm(e.target.value),
+                    });
+                    if (duplicateError) setDuplicateError("");
+                  }
                 }
                 placeholder="请输入词条内容"
               />
