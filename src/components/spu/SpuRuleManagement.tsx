@@ -89,6 +89,45 @@ const DIRECT_FLAGS: DirectFlag[] = ["是", "否"];
 const STATUSES: Status[] = ["已启用", "已停用"];
 const SCOPES: Scope[] = ["部分IP生效", "部分IP不生效", "全部IP生效", "全部IP不生效"];
 
+// 国家/地区数据（按大洲分组）
+const REGION_GROUPS: { continent: string; countries: { code: string; name: string }[] }[] = [
+  {
+    continent: "欧洲",
+    countries: [
+      { code: "AL", name: "阿尔巴尼亚" }, { code: "AD", name: "安道尔" }, { code: "AT", name: "奥地利" },
+      { code: "BY", name: "白俄罗斯" }, { code: "BE", name: "比利时" }, { code: "BA", name: "波斯尼亚和黑塞哥维那" },
+      { code: "BG", name: "保加利亚" }, { code: "HR", name: "克罗地亚" }, { code: "CY", name: "塞浦路斯" },
+      { code: "CZ", name: "捷克" }, { code: "DK", name: "丹麦" }, { code: "EE", name: "爱沙尼亚" },
+      { code: "FO", name: "法罗群岛" }, { code: "FI", name: "芬兰" }, { code: "FR", name: "法国" },
+      { code: "DE", name: "德国" }, { code: "GI", name: "直布罗陀" }, { code: "GR", name: "希腊" },
+      { code: "HU", name: "匈牙利" }, { code: "IS", name: "冰岛" }, { code: "IE", name: "爱尔兰" },
+      { code: "IT", name: "意大利" }, { code: "LV", name: "拉脱维亚" }, { code: "LI", name: "列支敦士登" },
+      { code: "LT", name: "立陶宛" }, { code: "LU", name: "卢森堡" }, { code: "MK", name: "北马其顿" },
+      { code: "MT", name: "马耳他" }, { code: "MD", name: "摩尔多瓦" }, { code: "MC", name: "摩纳哥" },
+      { code: "NL", name: "荷兰" }, { code: "NO", name: "挪威" }, { code: "PL", name: "波兰" },
+      { code: "PT", name: "葡萄牙" }, { code: "RO", name: "罗马尼亚" }, { code: "RU", name: "俄罗斯" },
+      { code: "SM", name: "圣马力诺" }, { code: "SK", name: "斯洛伐克" }, { code: "SI", name: "斯洛文尼亚" },
+      { code: "ES", name: "西班牙" }, { code: "SE", name: "瑞典" }, { code: "CH", name: "瑞士" },
+    ],
+  },
+  {
+    continent: "亚洲",
+    countries: [
+      { code: "CN", name: "中国" }, { code: "JP", name: "日本" }, { code: "KR", name: "韩国" },
+      { code: "SG", name: "新加坡" }, { code: "MY", name: "马来西亚" }, { code: "TH", name: "泰国" },
+      { code: "ID", name: "印度尼西亚" }, { code: "PH", name: "菲律宾" }, { code: "VN", name: "越南" },
+      { code: "IN", name: "印度" },
+    ],
+  },
+  {
+    continent: "美洲",
+    countries: [
+      { code: "US", name: "美国" }, { code: "CA", name: "加拿大" }, { code: "MX", name: "墨西哥" },
+      { code: "BR", name: "巴西" }, { code: "AR", name: "阿根廷" }, { code: "CL", name: "智利" },
+    ],
+  },
+];
+
 // 标准化词生成规则：
 // 1. 全角转半角  2. 英文字母转小写  3. 去除前后空格
 // 4. 去除中间空格（仅英文/数字组合）  5. 去除常见连接符（空格、-、_、.、·）
