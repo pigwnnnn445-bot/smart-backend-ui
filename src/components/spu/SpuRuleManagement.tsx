@@ -55,7 +55,7 @@ import { cn } from "@/lib/utils";
 type TermType = string;
 type MatchType = "精准匹配" | "前缀匹配" | "模糊匹配";
 type DirectFlag = "是" | "否";
-type Status = "已启用" | "已停用";
+type Status = "草稿" | "已启用" | "已停用";
 type Scope = "部分IP生效" | "部分IP不生效" | "全部IP生效" | "全部IP不生效";
 
 interface RuleRow {
@@ -86,7 +86,7 @@ const TERM_TYPES: TermType[] = [
 ];
 const MATCH_TYPES: MatchType[] = ["精准匹配", "前缀匹配", "模糊匹配"];
 const DIRECT_FLAGS: DirectFlag[] = ["是", "否"];
-const STATUSES: Status[] = ["已启用", "已停用"];
+const STATUSES: Status[] = ["草稿", "已启用", "已停用"];
 const SCOPES: Scope[] = ["部分IP生效", "部分IP不生效", "全部IP生效", "全部IP不生效"];
 
 // 国家/地区数据（按大洲分组）
