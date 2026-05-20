@@ -12,6 +12,7 @@ import {
   Bell,
   User,
   Menu,
+  FileText,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,30 @@ interface RuleRow {
 }
 
 const SPU_LIST = ["Netflix", "Spotify", "Tidal", "ChatGPT"];
+
+interface SpuInfo {
+  id: string;
+  name: string;
+  category: string;
+  productStatus: "在售" | "下架";
+  inSearch: boolean;
+}
+
+const SPU_INFOS: SpuInfo[] = [
+  { id: "SPU10001", name: "Netflix", category: "影视会员", productStatus: "在售", inSearch: true },
+  { id: "SPU10002", name: "Spotify", category: "音乐会员", productStatus: "在售", inSearch: true },
+  { id: "SPU10003", name: "Tidal", category: "音乐会员", productStatus: "在售", inSearch: false },
+  { id: "SPU10004", name: "ChatGPT", category: "AI工具", productStatus: "在售", inSearch: true },
+];
+
+interface OpLog {
+  id: string;
+  spu: string;
+  action: string;
+  target: string;
+  operator: string;
+  at: string;
+}
 
 const TERM_TYPES: TermType[] = [
   "商品词",
@@ -199,10 +224,45 @@ const blank: RuleRow = {
 };
 
 export function SpuRuleManagement() {
+  const [view, setView] = useState<"overview" | "manage">("overview");
   const [activeSpu, setActiveSpu] = useState("ChatGPT");
   const [enabledSpu, setEnabledSpu] = useState<Record<string, boolean>>(
     Object.fromEntries(SPU_LIST.map((s) => [s, true])),
   );
+  // SPU 词库状态（已启用 / 已停用），区别于 enabledSpu（左侧勾选）
+  const [libStatus, setLibStatus] = useState<Record<string, "已启用" | "已停用">>(
+    Object.fromEntries(SPU_LIST.map((s) => [s, "已启用" as const])),
+  );
+  const [libConfirm, setLibConfirm] = useState<SpuInfo | null>(null);
+  const [logSpu, setLogSpu] = useState<string | null>(null);
+  const [logs, setLogs] = useState<OpLog[]>([
+    {
+      id: "l0",
+      spu: "ChatGPT",
+      action: "新增词条",
+      target: "Open AI",
+      operator: "Alex",
+      at: "2026-05-20 16:00:24",
+    },
+  ]);
+
+  function nowStr() {
+    return new Date().toISOString().replace("T", " ").slice(0, 19);
+  }
+  function pushLog(entry: Omit<OpLog, "id" | "at" | "operator"> & { operator?: string }) {
+    setLogs((prev) => [
+      {
+        id: crypto.randomUUID(),
+        at: nowStr(),
+        operator: entry.operator ?? "Alex",
+        spu: entry.spu,
+        action: entry.action,
+        target: entry.target,
+      },
+      ...prev,
+    ]);
+  }
+
   const [hideDisabled, setHideDisabled] = useState(true);
   const [reverseOrder, setReverseOrder] = useState(true);
 
@@ -327,11 +387,47 @@ export function SpuRuleManagement() {
   }
 
   function toggleStatus(row: RuleRow) {
+    const next: Status = row.status === "已启用" ? "已停用" : "已启用";
     setRows((prev) =>
       prev.map((p) =>
-        p.id === row.id ? { ...p, status: p.status === "已启用" ? "已停用" : "已启用" } : p,
+        p.id === row.id ? { ...p, status: next, updatedAt: nowStr() } : p,
       ),
     );
+    pushLog({
+      spu: activeSpu,
+      action: next === "已启用" ? "启用词条" : "停用词条",
+      target: row.content,
+    });
+  }
+
+  // 总览表数据
+  const overviewRows = useMemo(() => {
+    return SPU_INFOS.map((s) => {
+      const spuRows = s.name === activeSpu ? rows : [];
+      const termCount = spuRows.length;
+      const enabledCount = spuRows.filter((r) => r.status === "已启用").length;
+      const last = spuRows[0];
+      return {
+        ...s,
+        termCount,
+        enabledCount,
+        libStatus: libStatus[s.name] ?? "已启用",
+        updater: last?.updater ?? "—",
+        updatedAt: last?.updatedAt ?? "—",
+      };
+    });
+  }, [rows, libStatus, activeSpu]);
+
+  function confirmToggleLib() {
+    if (!libConfirm) return;
+    const next = libStatus[libConfirm.name] === "已启用" ? "已停用" : "已启用";
+    setLibStatus((p) => ({ ...p, [libConfirm.name]: next }));
+    pushLog({
+      spu: libConfirm.name,
+      action: next === "已启用" ? "启用词库" : "停用词库",
+      target: libConfirm.name,
+    });
+    setLibConfirm(null);
   }
 
   return (
