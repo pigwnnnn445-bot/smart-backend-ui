@@ -229,6 +229,7 @@ export function SpuRuleManagement() {
   const [scopeError, setScopeError] = useState("");
   const [duplicateError, setDuplicateError] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
+  const [statusConfirm, setStatusConfirm] = useState<RuleRow | null>(null);
   const [customTermTypes, setCustomTermTypes] = useState<string[]>([]);
   const [customTermInput, setCustomTermInput] = useState("");
   const [isCustomTerm, setIsCustomTerm] = useState(false);
@@ -494,7 +495,7 @@ export function SpuRuleManagement() {
                   <div className="flex items-center gap-2">
                     <Label className="w-24 shrink-0 text-right text-slate-600">词条类型</Label>
                     <MultiSelect
-                      options={TERM_TYPES}
+                      options={allTermTypes}
                       value={filters.termTypes}
                       onChange={(v) =>
                         setFilters((f) => ({ ...f, termTypes: v as TermType[] }))
@@ -693,7 +694,7 @@ export function SpuRuleManagement() {
                                 </button>
                                 <button
                                   className="text-rose-500 hover:underline inline-flex items-center gap-1"
-                                  onClick={() => toggleStatus(r)}
+                                  onClick={() => setStatusConfirm(r)}
                                 >
                                   <Power className="h-3 w-3" />
                                   {r.status === "已启用" ? "停用" : "启用"}
@@ -920,6 +921,38 @@ export function SpuRuleManagement() {
           if (v.length > 0) setScopeError("");
         }}
       />
+
+      <Dialog
+        open={!!statusConfirm}
+        onOpenChange={(o) => !o && setStatusConfirm(null)}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {statusConfirm?.status === "已启用" ? "确认停用" : "确认启用"}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-600">
+            {statusConfirm?.status === "已启用"
+              ? `停用后，词条「${statusConfirm?.content}」将不再参与前台搜索召回。是否确认停用？`
+              : `启用后，词条「${statusConfirm?.content}」将参与前台搜索召回。是否确认启用？`}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusConfirm(null)}>
+              取消
+            </Button>
+            <Button
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={() => {
+                if (statusConfirm) toggleStatus(statusConfirm);
+                setStatusConfirm(null);
+              }}
+            >
+              确认
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
