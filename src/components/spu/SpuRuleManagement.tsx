@@ -671,7 +671,9 @@ export function SpuRuleManagement() {
                                   "border-0",
                                   r.status === "已启用"
                                     ? "bg-emerald-100 text-emerald-700"
-                                    : "bg-slate-200 text-slate-600",
+                                    : r.status === "草稿"
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-slate-200 text-slate-600",
                                 )}
                               >
                                 {r.status}
