@@ -261,7 +261,11 @@ export function SpuRuleManagement() {
         !r.standard.toLowerCase().includes(filters.standard.toLowerCase())
       )
         return false;
-      if (filters.termTypes.length && !filters.termTypes.includes(r.termType)) return false;
+      if (
+        filters.termTypes.length &&
+        !r.termType.some((t) => filters.termTypes.includes(t))
+      )
+        return false;
       if (filters.matchTypes.length && !filters.matchTypes.includes(r.matchType)) return false;
       if (filters.directs.length && !filters.directs.includes(r.direct)) return false;
       if (filters.statuses.length && !filters.statuses.includes(r.status)) return false;
@@ -302,7 +306,9 @@ export function SpuRuleManagement() {
       if (!customTermTypes.includes(name)) {
         setCustomTermTypes((prev) => [...prev, name]);
       }
-      draft.termType = name;
+      if (!draft.termType.includes(name)) {
+        draft.termType = [...draft.termType, name];
+      }
     }
     if (
       (draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") &&
