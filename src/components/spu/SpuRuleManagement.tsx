@@ -42,10 +42,11 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 type TermType = "商品词" | "品牌词" | "别名词" | "错词" | "短词" | "场景词" | "品类词";
-type MatchType = "精准匹配" | "前缀匹配";
+type MatchType = "精准匹配" | "前缀匹配" | "模糊匹配";
 type DirectFlag = "是" | "否";
 type Status = "已启用" | "已停用";
 
@@ -73,7 +74,8 @@ const TERM_TYPES: TermType[] = [
   "场景词",
   "品类词",
 ];
-const MATCH_TYPES: MatchType[] = ["精准匹配", "前缀匹配"];
+const MATCH_TYPES: MatchType[] = ["精准匹配", "前缀匹配", "模糊匹配"];
+const DIRECT_FLAGS: DirectFlag[] = ["是", "否"];
 const STATUSES: Status[] = ["已启用", "已停用"];
 
 const NAV = [
@@ -92,7 +94,7 @@ const NAV = [
   "SPU配置",
 ];
 
-const SPU_SUBNAV = ["SPU基础配置", "SPU管理", "SPU规则管理", "SPU内容配置"];
+const SPU_SUBNAV = ["SPU基础配置", "SPU管理", "SPU搜索配置", "SPU内容配置"];
 
 const initialRows: RuleRow[] = [
   {
