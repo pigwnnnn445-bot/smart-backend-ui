@@ -680,6 +680,23 @@ export function SpuRuleManagement() {
                 </SelectContent>
               </Select>
             </Field>
+            <Field label="生效范围" required>
+              <Select
+                value={draft.scope}
+                onValueChange={(v) => setDraft({ ...draft, scope: v as Scope })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SCOPES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
             <div className="col-span-2">
               <Field label="备注">
                 <Textarea
