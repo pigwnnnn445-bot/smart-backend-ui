@@ -544,7 +544,6 @@ export function SpuRuleManagement() {
                                 {r.status}
                               </Badge>
                             </TableCell>
-                            <TableCell>{r.updater}</TableCell>
                             <TableCell>
                               <Badge
                                 className={cn(
@@ -561,6 +560,7 @@ export function SpuRuleManagement() {
                                 {r.scope}
                               </Badge>
                             </TableCell>
+                            <TableCell>{r.updater}</TableCell>
                             <TableCell className="whitespace-nowrap">{r.updatedAt}</TableCell>
                             <TableCell className="max-w-[200px] truncate" title={r.remark}>
                               {r.remark}
