@@ -625,7 +625,13 @@ export function SpuRuleManagement() {
             <Field label="词条内容" required>
               <Input
                 value={draft.content}
-                onChange={(e) => setDraft({ ...draft, content: e.target.value })}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    content: e.target.value,
+                    standard: normalizeTerm(e.target.value),
+                  })
+                }
                 placeholder="请输入词条内容"
               />
             </Field>
