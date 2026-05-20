@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   Filter,
@@ -43,6 +43,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 type TermType = "商品词" | "品牌词" | "别名词" | "错词" | "短词" | "场景词" | "品类词";
@@ -60,6 +67,7 @@ interface RuleRow {
   direct: DirectFlag;
   status: Status;
   scope: Scope;
+  regions: string[];
   updater: string;
   updatedAt: string;
   remark: string;
@@ -80,6 +88,45 @@ const MATCH_TYPES: MatchType[] = ["精准匹配", "前缀匹配", "模糊匹配"
 const DIRECT_FLAGS: DirectFlag[] = ["是", "否"];
 const STATUSES: Status[] = ["已启用", "已停用"];
 const SCOPES: Scope[] = ["部分IP生效", "部分IP不生效", "全部IP生效", "全部IP不生效"];
+
+// 国家/地区数据（按大洲分组）
+const REGION_GROUPS: { continent: string; countries: { code: string; name: string }[] }[] = [
+  {
+    continent: "欧洲",
+    countries: [
+      { code: "AL", name: "阿尔巴尼亚" }, { code: "AD", name: "安道尔" }, { code: "AT", name: "奥地利" },
+      { code: "BY", name: "白俄罗斯" }, { code: "BE", name: "比利时" }, { code: "BA", name: "波斯尼亚和黑塞哥维那" },
+      { code: "BG", name: "保加利亚" }, { code: "HR", name: "克罗地亚" }, { code: "CY", name: "塞浦路斯" },
+      { code: "CZ", name: "捷克" }, { code: "DK", name: "丹麦" }, { code: "EE", name: "爱沙尼亚" },
+      { code: "FO", name: "法罗群岛" }, { code: "FI", name: "芬兰" }, { code: "FR", name: "法国" },
+      { code: "DE", name: "德国" }, { code: "GI", name: "直布罗陀" }, { code: "GR", name: "希腊" },
+      { code: "HU", name: "匈牙利" }, { code: "IS", name: "冰岛" }, { code: "IE", name: "爱尔兰" },
+      { code: "IT", name: "意大利" }, { code: "LV", name: "拉脱维亚" }, { code: "LI", name: "列支敦士登" },
+      { code: "LT", name: "立陶宛" }, { code: "LU", name: "卢森堡" }, { code: "MK", name: "北马其顿" },
+      { code: "MT", name: "马耳他" }, { code: "MD", name: "摩尔多瓦" }, { code: "MC", name: "摩纳哥" },
+      { code: "NL", name: "荷兰" }, { code: "NO", name: "挪威" }, { code: "PL", name: "波兰" },
+      { code: "PT", name: "葡萄牙" }, { code: "RO", name: "罗马尼亚" }, { code: "RU", name: "俄罗斯" },
+      { code: "SM", name: "圣马力诺" }, { code: "SK", name: "斯洛伐克" }, { code: "SI", name: "斯洛文尼亚" },
+      { code: "ES", name: "西班牙" }, { code: "SE", name: "瑞典" }, { code: "CH", name: "瑞士" },
+    ],
+  },
+  {
+    continent: "亚洲",
+    countries: [
+      { code: "CN", name: "中国" }, { code: "JP", name: "日本" }, { code: "KR", name: "韩国" },
+      { code: "SG", name: "新加坡" }, { code: "MY", name: "马来西亚" }, { code: "TH", name: "泰国" },
+      { code: "ID", name: "印度尼西亚" }, { code: "PH", name: "菲律宾" }, { code: "VN", name: "越南" },
+      { code: "IN", name: "印度" },
+    ],
+  },
+  {
+    continent: "美洲",
+    countries: [
+      { code: "US", name: "美国" }, { code: "CA", name: "加拿大" }, { code: "MX", name: "墨西哥" },
+      { code: "BR", name: "巴西" }, { code: "AR", name: "阿根廷" }, { code: "CL", name: "智利" },
+    ],
+  },
+];
 
 // 标准化词生成规则：
 // 1. 全角转半角  2. 英文字母转小写  3. 去除前后空格
@@ -130,6 +177,7 @@ const initialRows: RuleRow[] = [
     direct: "是",
     status: "已启用",
     scope: "全部IP生效",
+    regions: [],
     updater: "Alex",
     updatedAt: "2026-05-20 16:00:24",
     remark: "官方品牌词",
@@ -158,6 +206,7 @@ const blank: RuleRow = {
   direct: "是",
   status: "已启用",
   scope: "全部IP生效",
+  regions: [],
   updater: "Alex",
   updatedAt: "",
   remark: "",
@@ -191,6 +240,8 @@ export function SpuRuleManagement() {
   const [editOpen, setEditOpen] = useState(false);
   const [draft, setDraft] = useState<RuleRow>(blank);
   const [mode, setMode] = useState<"create" | "edit">("create");
+  const [scopeError, setScopeError] = useState("");
+  const [regionSheetOpen, setRegionSheetOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -222,6 +273,18 @@ export function SpuRuleManagement() {
   }
 
   function saveDraft() {
+    if (
+      (draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") &&
+      draft.regions.length === 0
+    ) {
+      setScopeError(
+        draft.scope === "部分IP生效"
+          ? "请选择「生效」的国家/地区"
+          : "请选择「不生效」的国家/地区",
+      );
+      return;
+    }
+    setScopeError("");
     const now = new Date()
       .toISOString()
       .replace("T", " ")
@@ -710,21 +773,40 @@ export function SpuRuleManagement() {
               </Select>
             </Field>
             <Field label="生效范围" required>
-              <Select
-                value={draft.scope}
-                onValueChange={(v) => setDraft({ ...draft, scope: v as Scope })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SCOPES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={draft.scope}
+                  onValueChange={(v) =>
+                    setDraft({ ...draft, scope: v as Scope, regions: [] })
+                  }
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SCOPES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 shrink-0"
+                    onClick={() => setRegionSheetOpen(true)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    编辑{draft.regions.length > 0 ? ` (${draft.regions.length})` : ""}
+                  </Button>
+                )}
+              </div>
+              {scopeError && (
+                <p className="text-xs text-rose-500 mt-1">{scopeError}</p>
+              )}
             </Field>
             <div className="col-span-2">
               <Field label="备注">
@@ -751,6 +833,18 @@ export function SpuRuleManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RegionSheet
+        open={regionSheetOpen}
+        onOpenChange={setRegionSheetOpen}
+        title={`配置 ${draft.content || "词条"} 生效范围`}
+        value={draft.regions}
+        onSave={(v) => {
+          setDraft({ ...draft, regions: v });
+          setRegionSheetOpen(false);
+          if (v.length > 0) setScopeError("");
+        }}
+      />
     </div>
   );
 }
@@ -831,5 +925,144 @@ function MultiSelect({
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+function RegionSheet({
+  open,
+  onOpenChange,
+  title,
+  value,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  title: string;
+  value: string[];
+  onSave: (v: string[]) => void;
+}) {
+  const [selected, setSelected] = useState<string[]>(value);
+  const [tab, setTab] = useState("select");
+
+  // 打开时同步外部值
+  useEffect(() => {
+    if (open) setSelected(value);
+  }, [open, value]);
+
+  const toggle = (code: string) => {
+    setSelected((p) => (p.includes(code) ? p.filter((c) => c !== code) : [...p, code]));
+  };
+
+  const allCodes = REGION_GROUPS.flatMap((g) => g.countries.map((c) => c.code));
+  const allSelected = allCodes.every((c) => selected.includes(c));
+
+  const toggleAll = () => {
+    setSelected(allSelected ? [] : allCodes);
+  };
+
+  const toggleContinent = (continent: string) => {
+    const codes = REGION_GROUPS.find((g) => g.continent === continent)!.countries.map(
+      (c) => c.code,
+    );
+    const allIn = codes.every((c) => selected.includes(c));
+    setSelected((p) =>
+      allIn ? p.filter((c) => !codes.includes(c)) : Array.from(new Set([...p, ...codes])),
+    );
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="!w-2/5 !max-w-none p-0 flex flex-col"
+      >
+        <SheetHeader className="px-6 py-4 border-b border-slate-200">
+          <SheetTitle className="text-base">{title}</SheetTitle>
+        </SheetHeader>
+
+        <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col min-h-0">
+          <div className="px-6 pt-3 border-b border-slate-200">
+            <TabsList className="bg-transparent p-0 h-auto gap-6">
+              <TabsTrigger
+                value="add"
+                className="px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 data-[state=active]:shadow-none bg-transparent"
+              >
+                添加国家地区
+              </TabsTrigger>
+              <TabsTrigger
+                value="select"
+                className="px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 data-[state=active]:shadow-none bg-transparent"
+              >
+                选择国家地区
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="add" className="flex-1 overflow-auto px-6 py-4 m-0">
+            <p className="text-sm text-slate-500">在此添加自定义国家/地区。</p>
+          </TabsContent>
+
+          <TabsContent value="select" className="flex-1 overflow-auto px-6 py-4 m-0 space-y-6">
+            {REGION_GROUPS.map((group) => {
+              const codes = group.countries.map((c) => c.code);
+              const allIn = codes.every((c) => selected.includes(c));
+              const someIn = codes.some((c) => selected.includes(c));
+              return (
+                <div key={group.continent}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-base font-semibold text-slate-800">
+                      {group.continent}
+                    </span>
+                    <label className="flex items-center gap-1.5 text-sm text-slate-600 cursor-pointer">
+                      <Checkbox
+                        checked={allIn ? true : someIn ? "indeterminate" : false}
+                        onCheckedChange={() => toggleContinent(group.continent)}
+                      />
+                      全选
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-3 gap-y-3 gap-x-4">
+                    {group.countries.map((c) => (
+                      <label
+                        key={c.code}
+                        className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={selected.includes(c.code)}
+                          onCheckedChange={() => toggle(c.code)}
+                        />
+                        <span className="truncate">
+                          {c.name} [{c.code}]
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </TabsContent>
+        </Tabs>
+
+        <div className="flex items-center justify-between border-t border-slate-200 px-6 py-3 bg-white">
+          <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+            <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+            全选
+            <span className="ml-3 text-slate-500">已选国家地区: {selected.length}</span>
+          </label>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+              取消
+            </Button>
+            <Button
+              size="sm"
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={() => onSave(selected)}
+            >
+              保存
+            </Button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
