@@ -945,7 +945,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="min-w-0 space-y-1.5">
       <Label className="text-slate-600">
         {required && <span className="text-rose-500">* </span>}
         {label}
