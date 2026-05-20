@@ -494,7 +494,7 @@ export function SpuRuleManagement() {
                   <div className="flex items-center gap-2">
                     <Label className="w-24 shrink-0 text-right text-slate-600">词条类型</Label>
                     <MultiSelect
-                      options={TERM_TYPES}
+                      options={allTermTypes}
                       value={filters.termTypes}
                       onChange={(v) =>
                         setFilters((f) => ({ ...f, termTypes: v as TermType[] }))
