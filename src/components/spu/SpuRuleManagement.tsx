@@ -43,6 +43,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 type TermType = "商品词" | "品牌词" | "别名词" | "错词" | "短词" | "场景词" | "品类词";
@@ -60,6 +67,7 @@ interface RuleRow {
   direct: DirectFlag;
   status: Status;
   scope: Scope;
+  regions: string[];
   updater: string;
   updatedAt: string;
   remark: string;
@@ -130,6 +138,7 @@ const initialRows: RuleRow[] = [
     direct: "是",
     status: "已启用",
     scope: "全部IP生效",
+    regions: [],
     updater: "Alex",
     updatedAt: "2026-05-20 16:00:24",
     remark: "官方品牌词",
@@ -158,6 +167,7 @@ const blank: RuleRow = {
   direct: "是",
   status: "已启用",
   scope: "全部IP生效",
+  regions: [],
   updater: "Alex",
   updatedAt: "",
   remark: "",
