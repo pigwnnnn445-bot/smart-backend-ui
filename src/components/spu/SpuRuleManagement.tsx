@@ -752,7 +752,7 @@ export function SpuRuleManagement() {
             </Field>
             <Field label="词条类型" required>
               <div className="flex items-center gap-2">
-                <div className="flex-1">
+                <div className="w-[200px] shrink-0">
                   <MultiSelect
                     options={allTermTypes}
                     value={draft.termType}
