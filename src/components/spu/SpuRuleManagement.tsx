@@ -396,23 +396,51 @@ export function SpuRuleManagement() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Label className="w-24 shrink-0 text-right text-slate-600">指向当前SPU</Label>
-                    <MultiSelect
-                      options={DIRECT_FLAGS}
-                      value={filters.directs}
-                      onChange={(v) =>
-                        setFilters((f) => ({ ...f, directs: v as DirectFlag[] }))
+                    <Select
+                      value={filters.directs[0] ?? "all"}
+                      onValueChange={(v) =>
+                        setFilters((f) => ({
+                          ...f,
+                          directs: v === "all" ? [] : [v as DirectFlag],
+                        }))
                       }
-                    />
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue placeholder="请选择" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">全部</SelectItem>
+                        {DIRECT_FLAGS.map((d) => (
+                          <SelectItem key={d} value={d}>
+                            {d}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex items-center gap-2">
                     <Label className="w-24 shrink-0 text-right text-slate-600">词条状态</Label>
-                    <MultiSelect
-                      options={STATUSES}
-                      value={filters.statuses}
-                      onChange={(v) =>
-                        setFilters((f) => ({ ...f, statuses: v as Status[] }))
+                    <Select
+                      value={filters.statuses[0] ?? "all"}
+                      onValueChange={(v) =>
+                        setFilters((f) => ({
+                          ...f,
+                          statuses: v === "all" ? [] : [v as Status],
+                        }))
                       }
-                    />
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue placeholder="请选择" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">全部</SelectItem>
+                        {STATUSES.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
