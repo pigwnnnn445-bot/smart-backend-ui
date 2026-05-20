@@ -833,6 +833,18 @@ export function SpuRuleManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RegionSheet
+        open={regionSheetOpen}
+        onOpenChange={setRegionSheetOpen}
+        title={`配置 ${draft.content || "词条"} 生效范围`}
+        value={draft.regions}
+        onSave={(v) => {
+          setDraft({ ...draft, regions: v });
+          setRegionSheetOpen(false);
+          if (v.length > 0) setScopeError("");
+        }}
+      />
     </div>
   );
 }
