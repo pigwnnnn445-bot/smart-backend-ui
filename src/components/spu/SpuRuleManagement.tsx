@@ -145,11 +145,20 @@ export function SpuRuleManagement() {
   const [hideDisabled, setHideDisabled] = useState(true);
   const [reverseOrder, setReverseOrder] = useState(true);
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<{
+    content: string;
+    standard: string;
+    termTypes: TermType[];
+    matchTypes: MatchType[];
+    directs: DirectFlag[];
+    statuses: Status[];
+  }>({
     content: "",
     standard: "",
-    matchType: "",
-    status: "",
+    termTypes: [],
+    matchTypes: [],
+    directs: [],
+    statuses: [],
   });
 
   const [rows, setRows] = useState<RuleRow[]>(initialRows);
@@ -166,8 +175,10 @@ export function SpuRuleManagement() {
         !r.standard.toLowerCase().includes(filters.standard.toLowerCase())
       )
         return false;
-      if (filters.matchType && r.matchType !== filters.matchType) return false;
-      if (filters.status && r.status !== filters.status) return false;
+      if (filters.termTypes.length && !filters.termTypes.includes(r.termType)) return false;
+      if (filters.matchTypes.length && !filters.matchTypes.includes(r.matchType)) return false;
+      if (filters.directs.length && !filters.directs.includes(r.direct)) return false;
+      if (filters.statuses.length && !filters.statuses.includes(r.status)) return false;
       return true;
     });
   }, [rows, filters]);
@@ -241,7 +252,7 @@ export function SpuRuleManagement() {
                         key={sub}
                         className={cn(
                           "pl-12 py-2 cursor-pointer hover:bg-blue-50",
-                          sub === "SPU规则管理" &&
+                          sub === "SPU搜索配置" &&
                             "bg-blue-500 text-white hover:bg-blue-500",
                         )}
                       >
@@ -264,7 +275,7 @@ export function SpuRuleManagement() {
           <RefreshCw className="h-4 w-4 text-slate-500" />
           <div className="text-slate-500">
             SPU配置 <span className="px-1">/</span>
-            <span className="text-slate-700">SPU规则管理</span>
+            <span className="text-slate-700">SPU搜索配置</span>
           </div>
           <div className="ml-auto flex items-center gap-3">
             <div className="w-72">
