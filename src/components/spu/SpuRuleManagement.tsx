@@ -644,11 +644,21 @@ export function SpuRuleManagement() {
                             <TableCell>{r.content}</TableCell>
                             <TableCell>{r.standard}</TableCell>
                             <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                {r.termType.map((t) => (
-                                  <Badge key={t} className={cn("border-0", termBadge(t))}>
+                              <div
+                                className="w-[160px] truncate"
+                                title={r.termType.join("、")}
+                              >
+                                {r.termType.map((t, i) => (
+                                  <span
+                                    key={t}
+                                    className={cn(
+                                      "inline-block rounded px-1.5 py-0.5 text-xs",
+                                      i > 0 && "ml-1",
+                                      termBadge(t),
+                                    )}
+                                  >
                                     {t}
-                                  </Badge>
+                                  </span>
                                 ))}
                               </div>
                             </TableCell>
