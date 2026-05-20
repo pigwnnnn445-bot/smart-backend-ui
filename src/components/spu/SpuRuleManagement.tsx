@@ -55,7 +55,7 @@ import { cn } from "@/lib/utils";
 type TermType = string;
 type MatchType = "精准匹配" | "前缀匹配" | "模糊匹配";
 type DirectFlag = "是" | "否";
-type Status = "已启用" | "已停用";
+type Status = "草稿" | "已启用" | "已停用";
 type Scope = "部分IP生效" | "部分IP不生效" | "全部IP生效" | "全部IP不生效";
 
 interface RuleRow {
@@ -86,7 +86,7 @@ const TERM_TYPES: TermType[] = [
 ];
 const MATCH_TYPES: MatchType[] = ["精准匹配", "前缀匹配", "模糊匹配"];
 const DIRECT_FLAGS: DirectFlag[] = ["是", "否"];
-const STATUSES: Status[] = ["已启用", "已停用"];
+const STATUSES: Status[] = ["草稿", "已启用", "已停用"];
 const SCOPES: Scope[] = ["部分IP生效", "部分IP不生效", "全部IP生效", "全部IP不生效"];
 
 // 国家/地区数据（按大洲分组）
@@ -243,6 +243,7 @@ export function SpuRuleManagement() {
   const [scopeError, setScopeError] = useState("");
   const [duplicateError, setDuplicateError] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
+  const [publishEnabled, setPublishEnabled] = useState(true);
   const [customTermTypes, setCustomTermTypes] = useState<string[]>([]);
   const [customTermInput, setCustomTermInput] = useState("");
   const [isCustomTerm, setIsCustomTerm] = useState(false);
@@ -282,6 +283,7 @@ export function SpuRuleManagement() {
     setCustomTermError("");
     setDuplicateError("");
     setScopeError("");
+    setPublishEnabled(true);
     setEditOpen(true);
   }
 
@@ -293,10 +295,11 @@ export function SpuRuleManagement() {
     setCustomTermError("");
     setDuplicateError("");
     setScopeError("");
+    setPublishEnabled(row.status !== "已停用");
     setEditOpen(true);
   }
 
-  function saveDraft() {
+  function saveDraft(action: "draft" | "publish") {
     if (draft.termType.length === 0) return;
     const dup = rows.find(
       (r) => r.id !== draft.id && r.standard && r.standard === draft.standard,
@@ -324,7 +327,14 @@ export function SpuRuleManagement() {
       .toISOString()
       .replace("T", " ")
       .slice(0, 19);
-    const payload = { ...draft, updatedAt: now };
+    let nextStatus: Status;
+    if (action === "draft") {
+      // 新增时进入草稿；编辑已发布词条仅存草稿，前台仍用原线上版本，保持原状态展示
+      nextStatus = mode === "create" ? "草稿" : draft.status;
+    } else {
+      nextStatus = publishEnabled ? "已启用" : "已停用";
+    }
+    const payload = { ...draft, status: nextStatus, updatedAt: now };
     setRows((prev) => {
       const exists = prev.some((p) => p.id === payload.id);
       return exists ? prev.map((p) => (p.id === payload.id ? payload : p)) : [payload, ...prev];
@@ -661,7 +671,9 @@ export function SpuRuleManagement() {
                                   "border-0",
                                   r.status === "已启用"
                                     ? "bg-emerald-100 text-emerald-700"
-                                    : "bg-slate-200 text-slate-600",
+                                    : r.status === "草稿"
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-slate-200 text-slate-600",
                                 )}
                               >
                                 {r.status}
@@ -846,22 +858,13 @@ export function SpuRuleManagement() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="词条状态" required>
-              <Select
-                value={draft.status}
-                onValueChange={(v) => setDraft({ ...draft, status: v as Status })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Field label="发布后启用">
+              <div className="flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3">
+                <Switch checked={publishEnabled} onCheckedChange={setPublishEnabled} />
+                <span className="text-xs text-slate-500">
+                  开启后，点击"保存并发布"词条状态为已启用；关闭则为已停用
+                </span>
+              </div>
             </Field>
             <Field label="生效范围" required>
               <div className="flex items-center gap-2">
@@ -914,11 +917,18 @@ export function SpuRuleManagement() {
               取消
             </Button>
             <Button
-              onClick={saveDraft}
+              variant="outline"
+              onClick={() => saveDraft("draft")}
+              disabled={!draft.content || !draft.standard}
+            >
+              保存草稿
+            </Button>
+            <Button
+              onClick={() => saveDraft("publish")}
               className="bg-blue-500 hover:bg-blue-600"
               disabled={!draft.content || !draft.standard}
             >
-              保存
+              保存并发布
             </Button>
           </DialogFooter>
         </DialogContent>
