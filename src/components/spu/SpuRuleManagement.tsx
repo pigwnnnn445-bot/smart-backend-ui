@@ -794,9 +794,8 @@ export function SpuRuleManagement() {
                 {(draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") && (
                   <Button
                     type="button"
-                    variant="outline"
                     size="sm"
-                    className="h-9 shrink-0"
+                    className="h-9 shrink-0 bg-blue-500 hover:bg-blue-600 text-white"
                     onClick={() => setRegionSheetOpen(true)}
                   >
                     <Pencil className="h-3.5 w-3.5" />
