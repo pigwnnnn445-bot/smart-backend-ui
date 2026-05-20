@@ -856,22 +856,13 @@ export function SpuRuleManagement() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="词条状态" required>
-              <Select
-                value={draft.status}
-                onValueChange={(v) => setDraft({ ...draft, status: v as Status })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Field label="发布后启用">
+              <div className="flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3">
+                <Switch checked={publishEnabled} onCheckedChange={setPublishEnabled} />
+                <span className="text-xs text-slate-500">
+                  开启后，点击"保存并发布"词条状态为已启用；关闭则为已停用
+                </span>
+              </div>
             </Field>
             <Field label="生效范围" required>
               <div className="flex items-center gap-2">
@@ -924,11 +915,18 @@ export function SpuRuleManagement() {
               取消
             </Button>
             <Button
-              onClick={saveDraft}
+              variant="outline"
+              onClick={() => saveDraft("draft")}
+              disabled={!draft.content || !draft.standard}
+            >
+              保存草稿
+            </Button>
+            <Button
+              onClick={() => saveDraft("publish")}
               className="bg-blue-500 hover:bg-blue-600"
               disabled={!draft.content || !draft.standard}
             >
-              保存
+              保存并发布
             </Button>
           </DialogFooter>
         </DialogContent>
