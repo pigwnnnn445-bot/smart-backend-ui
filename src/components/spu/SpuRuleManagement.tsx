@@ -921,6 +921,38 @@ export function SpuRuleManagement() {
           if (v.length > 0) setScopeError("");
         }}
       />
+
+      <Dialog
+        open={!!statusConfirm}
+        onOpenChange={(o) => !o && setStatusConfirm(null)}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {statusConfirm?.status === "已启用" ? "确认停用" : "确认启用"}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-600">
+            {statusConfirm?.status === "已启用"
+              ? `停用后，词条「${statusConfirm?.content}」将不再参与前台搜索召回。是否确认停用？`
+              : `启用后，词条「${statusConfirm?.content}」将参与前台搜索召回。是否确认启用？`}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusConfirm(null)}>
+              取消
+            </Button>
+            <Button
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={() => {
+                if (statusConfirm) toggleStatus(statusConfirm);
+                setStatusConfirm(null);
+              }}
+            >
+              确认
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
