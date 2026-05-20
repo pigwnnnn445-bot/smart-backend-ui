@@ -62,7 +62,7 @@ interface RuleRow {
   id: string;
   content: string;
   standard: string;
-  termType: TermType;
+  termType: TermType[];
   matchType: MatchType;
   direct: DirectFlag;
   status: Status;
@@ -172,7 +172,7 @@ const initialRows: RuleRow[] = [
     id: "1",
     content: "Open AI",
     standard: "openai",
-    termType: "品牌词",
+    termType: ["品牌词"],
     matchType: "精准匹配",
     direct: "是",
     status: "已启用",
@@ -201,7 +201,7 @@ const blank: RuleRow = {
   id: "",
   content: "",
   standard: "",
-  termType: "品牌词",
+  termType: ["品牌词"],
   matchType: "精准匹配",
   direct: "是",
   status: "已启用",
@@ -261,7 +261,11 @@ export function SpuRuleManagement() {
         !r.standard.toLowerCase().includes(filters.standard.toLowerCase())
       )
         return false;
-      if (filters.termTypes.length && !filters.termTypes.includes(r.termType)) return false;
+      if (
+        filters.termTypes.length &&
+        !r.termType.some((t) => filters.termTypes.includes(t))
+      )
+        return false;
       if (filters.matchTypes.length && !filters.matchTypes.includes(r.matchType)) return false;
       if (filters.directs.length && !filters.directs.includes(r.direct)) return false;
       if (filters.statuses.length && !filters.statuses.includes(r.status)) return false;
@@ -288,22 +292,7 @@ export function SpuRuleManagement() {
   }
 
   function saveDraft() {
-    if (isCustomTerm) {
-      const name = customTermInput.trim();
-      if (!name) {
-        setCustomTermError("请输入自定义类型名称");
-        return;
-      }
-      if (allTermTypes.includes(name)) {
-        setCustomTermError("该类型名称已存在");
-        return;
-      }
-      setCustomTermError("");
-      if (!customTermTypes.includes(name)) {
-        setCustomTermTypes((prev) => [...prev, name]);
-      }
-      draft.termType = name;
-    }
+    if (draft.termType.length === 0) return;
     if (
       (draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") &&
       draft.regions.length === 0
@@ -630,9 +619,13 @@ export function SpuRuleManagement() {
                             <TableCell>{r.content}</TableCell>
                             <TableCell>{r.standard}</TableCell>
                             <TableCell>
-                              <Badge className={cn("border-0", termBadge(r.termType))}>
-                                {r.termType}
-                              </Badge>
+                              <div className="flex flex-wrap gap-1">
+                                {r.termType.map((t) => (
+                                  <Badge key={t} className={cn("border-0", termBadge(t))}>
+                                    {t}
+                                  </Badge>
+                                ))}
+                              </div>
                             </TableCell>
                             <TableCell>{r.matchType}</TableCell>
                             <TableCell>
@@ -739,34 +732,31 @@ export function SpuRuleManagement() {
               />
             </Field>
             <Field label="词条类型" required>
-              <Select
-                value={isCustomTerm ? "__custom__" : draft.termType}
-                onValueChange={(v) => {
-                  if (v === "__custom__") {
-                    setIsCustomTerm(true);
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <MultiSelect
+                    options={allTermTypes}
+                    value={draft.termType}
+                    onChange={(v) => setDraft({ ...draft, termType: v as TermType[] })}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={isCustomTerm ? "secondary" : "outline"}
+                  className="h-9 shrink-0"
+                  onClick={() => {
+                    setIsCustomTerm((v) => !v);
                     setCustomTermInput("");
                     setCustomTermError("");
-                  } else {
-                    setIsCustomTerm(false);
-                    setCustomTermError("");
-                    setDraft({ ...draft, termType: v as TermType });
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {allTermTypes.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="__custom__">自定义</SelectItem>
-                </SelectContent>
-              </Select>
+                  }}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  自定义
+                </Button>
+              </div>
               {isCustomTerm && (
-                <div className="mt-1.5">
+                <div className="mt-1.5 flex items-center gap-2">
                   <Input
                     value={customTermInput}
                     onChange={(e) => {
@@ -775,10 +765,33 @@ export function SpuRuleManagement() {
                     }}
                     placeholder="请输入自定义类型名称"
                   />
-                  {customTermError && (
-                    <p className="text-xs text-rose-500 mt-1">{customTermError}</p>
-                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-9 shrink-0 bg-blue-500 hover:bg-blue-600 text-white"
+                    onClick={() => {
+                      const name = customTermInput.trim();
+                      if (!name) {
+                        setCustomTermError("请输入自定义类型名称");
+                        return;
+                      }
+                      if (allTermTypes.includes(name)) {
+                        setCustomTermError("该类型名称已存在");
+                        return;
+                      }
+                      setCustomTermTypes((prev) => [...prev, name]);
+                      setDraft({ ...draft, termType: [...draft.termType, name] });
+                      setIsCustomTerm(false);
+                      setCustomTermInput("");
+                      setCustomTermError("");
+                    }}
+                  >
+                    确定
+                  </Button>
                 </div>
+              )}
+              {isCustomTerm && customTermError && (
+                <p className="text-xs text-rose-500 mt-1">{customTermError}</p>
               )}
             </Field>
             <Field label="匹配方式" required>
