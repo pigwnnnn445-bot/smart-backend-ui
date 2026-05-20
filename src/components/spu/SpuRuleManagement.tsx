@@ -736,6 +736,9 @@ export function SpuRuleManagement() {
                 }
                 placeholder="请输入词条内容"
               />
+              {duplicateError && (
+                <p className="text-xs text-rose-500 mt-1">{duplicateError}</p>
+              )}
             </Field>
             <Field label="标准化词" required>
               <Input
