@@ -240,6 +240,8 @@ export function SpuRuleManagement() {
   const [editOpen, setEditOpen] = useState(false);
   const [draft, setDraft] = useState<RuleRow>(blank);
   const [mode, setMode] = useState<"create" | "edit">("create");
+  const [scopeError, setScopeError] = useState("");
+  const [regionSheetOpen, setRegionSheetOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -271,6 +273,18 @@ export function SpuRuleManagement() {
   }
 
   function saveDraft() {
+    if (
+      (draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") &&
+      draft.regions.length === 0
+    ) {
+      setScopeError(
+        draft.scope === "部分IP生效"
+          ? "请选择「生效」的国家/地区"
+          : "请选择「不生效」的国家/地区",
+      );
+      return;
+    }
+    setScopeError("");
     const now = new Date()
       .toISOString()
       .replace("T", " ")
