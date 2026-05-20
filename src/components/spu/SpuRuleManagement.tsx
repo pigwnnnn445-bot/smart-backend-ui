@@ -636,9 +636,13 @@ export function SpuRuleManagement() {
                             <TableCell>{r.content}</TableCell>
                             <TableCell>{r.standard}</TableCell>
                             <TableCell>
-                              <Badge className={cn("border-0", termBadge(r.termType))}>
-                                {r.termType}
-                              </Badge>
+                              <div className="flex flex-wrap gap-1">
+                                {r.termType.map((t) => (
+                                  <Badge key={t} className={cn("border-0", termBadge(t))}>
+                                    {t}
+                                  </Badge>
+                                ))}
+                              </div>
                             </TableCell>
                             <TableCell>{r.matchType}</TableCell>
                             <TableCell>
