@@ -42,10 +42,11 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 type TermType = "商品词" | "品牌词" | "别名词" | "错词" | "短词" | "场景词" | "品类词";
-type MatchType = "精准匹配" | "前缀匹配";
+type MatchType = "精准匹配" | "前缀匹配" | "模糊匹配";
 type DirectFlag = "是" | "否";
 type Status = "已启用" | "已停用";
 
@@ -73,7 +74,8 @@ const TERM_TYPES: TermType[] = [
   "场景词",
   "品类词",
 ];
-const MATCH_TYPES: MatchType[] = ["精准匹配", "前缀匹配"];
+const MATCH_TYPES: MatchType[] = ["精准匹配", "前缀匹配", "模糊匹配"];
+const DIRECT_FLAGS: DirectFlag[] = ["是", "否"];
 const STATUSES: Status[] = ["已启用", "已停用"];
 
 const NAV = [
@@ -92,7 +94,7 @@ const NAV = [
   "SPU配置",
 ];
 
-const SPU_SUBNAV = ["SPU基础配置", "SPU管理", "SPU规则管理", "SPU内容配置"];
+const SPU_SUBNAV = ["SPU基础配置", "SPU管理", "SPU搜索配置", "SPU内容配置"];
 
 const initialRows: RuleRow[] = [
   {
@@ -143,11 +145,20 @@ export function SpuRuleManagement() {
   const [hideDisabled, setHideDisabled] = useState(true);
   const [reverseOrder, setReverseOrder] = useState(true);
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<{
+    content: string;
+    standard: string;
+    termTypes: TermType[];
+    matchTypes: MatchType[];
+    directs: DirectFlag[];
+    statuses: Status[];
+  }>({
     content: "",
     standard: "",
-    matchType: "",
-    status: "",
+    termTypes: [],
+    matchTypes: [],
+    directs: [],
+    statuses: [],
   });
 
   const [rows, setRows] = useState<RuleRow[]>(initialRows);
@@ -164,8 +175,10 @@ export function SpuRuleManagement() {
         !r.standard.toLowerCase().includes(filters.standard.toLowerCase())
       )
         return false;
-      if (filters.matchType && r.matchType !== filters.matchType) return false;
-      if (filters.status && r.status !== filters.status) return false;
+      if (filters.termTypes.length && !filters.termTypes.includes(r.termType)) return false;
+      if (filters.matchTypes.length && !filters.matchTypes.includes(r.matchType)) return false;
+      if (filters.directs.length && !filters.directs.includes(r.direct)) return false;
+      if (filters.statuses.length && !filters.statuses.includes(r.status)) return false;
       return true;
     });
   }, [rows, filters]);
@@ -239,7 +252,7 @@ export function SpuRuleManagement() {
                         key={sub}
                         className={cn(
                           "pl-12 py-2 cursor-pointer hover:bg-blue-50",
-                          sub === "SPU规则管理" &&
+                          sub === "SPU搜索配置" &&
                             "bg-blue-500 text-white hover:bg-blue-500",
                         )}
                       >
@@ -262,7 +275,7 @@ export function SpuRuleManagement() {
           <RefreshCw className="h-4 w-4 text-slate-500" />
           <div className="text-slate-500">
             SPU配置 <span className="px-1">/</span>
-            <span className="text-slate-700">SPU规则管理</span>
+            <span className="text-slate-700">SPU搜索配置</span>
           </div>
           <div className="ml-auto flex items-center gap-3">
             <div className="w-72">
@@ -338,11 +351,9 @@ export function SpuRuleManagement() {
               {/* Right: filters + table */}
               <div className="min-w-0 flex-1 p-4">
                 {/* Filters */}
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   <div className="flex items-center gap-2">
-                    <Label className="w-16 shrink-0 text-right text-slate-600">
-                      词条内容
-                    </Label>
+                    <Label className="w-24 shrink-0 text-right text-slate-600">词条内容</Label>
                     <Input
                       placeholder="请输入词条内容"
                       className="h-8"
@@ -353,9 +364,7 @@ export function SpuRuleManagement() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label className="w-16 shrink-0 text-right text-slate-600">
-                      标准化词
-                    </Label>
+                    <Label className="w-24 shrink-0 text-right text-slate-600">标准化词</Label>
                     <Input
                       placeholder="请输入标准化词"
                       className="h-8"
@@ -366,50 +375,44 @@ export function SpuRuleManagement() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label className="w-16 shrink-0 text-right text-slate-600">
-                      匹配方式
-                    </Label>
-                    <Select
-                      value={filters.matchType}
-                      onValueChange={(v) =>
-                        setFilters((f) => ({ ...f, matchType: v === "all" ? "" : v }))
+                    <Label className="w-24 shrink-0 text-right text-slate-600">词条类型</Label>
+                    <MultiSelect
+                      options={TERM_TYPES}
+                      value={filters.termTypes}
+                      onChange={(v) =>
+                        setFilters((f) => ({ ...f, termTypes: v as TermType[] }))
                       }
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="请选择" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">全部</SelectItem>
-                        {MATCH_TYPES.map((m) => (
-                          <SelectItem key={m} value={m}>
-                            {m}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label className="w-16 shrink-0 text-right text-slate-600">
-                      词条状态
-                    </Label>
-                    <Select
-                      value={filters.status}
-                      onValueChange={(v) =>
-                        setFilters((f) => ({ ...f, status: v === "all" ? "" : v }))
+                    <Label className="w-24 shrink-0 text-right text-slate-600">匹配方式</Label>
+                    <MultiSelect
+                      options={MATCH_TYPES}
+                      value={filters.matchTypes}
+                      onChange={(v) =>
+                        setFilters((f) => ({ ...f, matchTypes: v as MatchType[] }))
                       }
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="请选择" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">全部</SelectItem>
-                        {STATUSES.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label className="w-24 shrink-0 text-right text-slate-600">指向当前SPU</Label>
+                    <MultiSelect
+                      options={DIRECT_FLAGS}
+                      value={filters.directs}
+                      onChange={(v) =>
+                        setFilters((f) => ({ ...f, directs: v as DirectFlag[] }))
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label className="w-24 shrink-0 text-right text-slate-600">词条状态</Label>
+                    <MultiSelect
+                      options={STATUSES}
+                      value={filters.statuses}
+                      onChange={(v) =>
+                        setFilters((f) => ({ ...f, statuses: v as Status[] }))
+                      }
+                    />
                   </div>
                 </div>
 
@@ -422,7 +425,14 @@ export function SpuRuleManagement() {
                     variant="outline"
                     className="h-8"
                     onClick={() =>
-                      setFilters({ content: "", standard: "", matchType: "", status: "" })
+                      setFilters({
+                        content: "",
+                        standard: "",
+                        termTypes: [],
+                        matchTypes: [],
+                        directs: [],
+                        statuses: [],
+                      })
                     }
                   >
                     <RotateCcw className="h-3.5 w-3.5" /> 重置
@@ -666,5 +676,64 @@ function Field({
       </Label>
       {children}
     </div>
+  );
+}
+
+function MultiSelect({
+  options,
+  value,
+  onChange,
+  placeholder = "请选择",
+}: {
+  options: readonly string[];
+  value: string[];
+  onChange: (v: string[]) => void;
+  placeholder?: string;
+}) {
+  const toggle = (opt: string) => {
+    onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt]);
+  };
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-8 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm hover:bg-slate-50"
+        >
+          <span className={cn("truncate", value.length === 0 && "text-slate-400")}>
+            {value.length === 0 ? placeholder : value.join("、")}
+          </span>
+          <ChevronDown className="ml-2 h-3.5 w-3.5 text-slate-400" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-1" align="start">
+        <div className="flex items-center justify-between px-2 py-1.5 text-xs text-slate-500">
+          <span>{value.length > 0 ? `已选 ${value.length}` : "多选"}</span>
+          {value.length > 0 && (
+            <button
+              type="button"
+              className="text-blue-600 hover:underline"
+              onClick={() => onChange([])}
+            >
+              清空
+            </button>
+          )}
+        </div>
+        <div className="max-h-64 overflow-y-auto">
+          {options.map((opt) => {
+            const checked = value.includes(opt);
+            return (
+              <label
+                key={opt}
+                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-slate-50"
+              >
+                <Checkbox checked={checked} onCheckedChange={() => toggle(opt)} />
+                <span>{opt}</span>
+              </label>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
