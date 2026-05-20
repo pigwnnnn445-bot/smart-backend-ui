@@ -12,6 +12,7 @@ import {
   Bell,
   User,
   Menu,
+  FileText,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,30 @@ interface RuleRow {
 }
 
 const SPU_LIST = ["Netflix", "Spotify", "Tidal", "ChatGPT"];
+
+interface SpuInfo {
+  id: string;
+  name: string;
+  category: string;
+  productStatus: "在售" | "下架";
+  inSearch: boolean;
+}
+
+const SPU_INFOS: SpuInfo[] = [
+  { id: "SPU10001", name: "Netflix", category: "影视会员", productStatus: "在售", inSearch: true },
+  { id: "SPU10002", name: "Spotify", category: "音乐会员", productStatus: "在售", inSearch: true },
+  { id: "SPU10003", name: "Tidal", category: "音乐会员", productStatus: "在售", inSearch: false },
+  { id: "SPU10004", name: "ChatGPT", category: "AI工具", productStatus: "在售", inSearch: true },
+];
+
+interface OpLog {
+  id: string;
+  spu: string;
+  action: string;
+  target: string;
+  operator: string;
+  at: string;
+}
 
 const TERM_TYPES: TermType[] = [
   "商品词",
@@ -199,10 +224,45 @@ const blank: RuleRow = {
 };
 
 export function SpuRuleManagement() {
+  const [view, setView] = useState<"overview" | "manage">("overview");
   const [activeSpu, setActiveSpu] = useState("ChatGPT");
   const [enabledSpu, setEnabledSpu] = useState<Record<string, boolean>>(
     Object.fromEntries(SPU_LIST.map((s) => [s, true])),
   );
+  // SPU 词库状态（已启用 / 已停用），区别于 enabledSpu（左侧勾选）
+  const [libStatus, setLibStatus] = useState<Record<string, "已启用" | "已停用">>(
+    Object.fromEntries(SPU_LIST.map((s) => [s, "已启用" as const])),
+  );
+  const [libConfirm, setLibConfirm] = useState<SpuInfo | null>(null);
+  const [logSpu, setLogSpu] = useState<string | null>(null);
+  const [logs, setLogs] = useState<OpLog[]>([
+    {
+      id: "l0",
+      spu: "ChatGPT",
+      action: "新增词条",
+      target: "Open AI",
+      operator: "Alex",
+      at: "2026-05-20 16:00:24",
+    },
+  ]);
+
+  function nowStr() {
+    return new Date().toISOString().replace("T", " ").slice(0, 19);
+  }
+  function pushLog(entry: Omit<OpLog, "id" | "at" | "operator"> & { operator?: string }) {
+    setLogs((prev) => [
+      {
+        id: crypto.randomUUID(),
+        at: nowStr(),
+        operator: entry.operator ?? "Alex",
+        spu: entry.spu,
+        action: entry.action,
+        target: entry.target,
+      },
+      ...prev,
+    ]);
+  }
+
   const [hideDisabled, setHideDisabled] = useState(true);
   const [reverseOrder, setReverseOrder] = useState(true);
 
@@ -323,15 +383,63 @@ export function SpuRuleManagement() {
       const exists = prev.some((p) => p.id === payload.id);
       return exists ? prev.map((p) => (p.id === payload.id ? payload : p)) : [payload, ...prev];
     });
+    pushLog({
+      spu: activeSpu,
+      action:
+        mode === "create"
+          ? action === "publish"
+            ? "新增并发布词条"
+            : "新增词条草稿"
+          : action === "publish"
+            ? "编辑并发布词条"
+            : "编辑词条草稿",
+      target: payload.content,
+    });
     setEditOpen(false);
   }
 
   function toggleStatus(row: RuleRow) {
+    const next: Status = row.status === "已启用" ? "已停用" : "已启用";
     setRows((prev) =>
       prev.map((p) =>
-        p.id === row.id ? { ...p, status: p.status === "已启用" ? "已停用" : "已启用" } : p,
+        p.id === row.id ? { ...p, status: next, updatedAt: nowStr() } : p,
       ),
     );
+    pushLog({
+      spu: activeSpu,
+      action: next === "已启用" ? "启用词条" : "停用词条",
+      target: row.content,
+    });
+  }
+
+  // 总览表数据
+  const overviewRows = useMemo(() => {
+    return SPU_INFOS.map((s) => {
+      const spuRows = s.name === activeSpu ? rows : [];
+      const termCount = spuRows.length;
+      const enabledCount = spuRows.filter((r) => r.status === "已启用").length;
+      const last = spuRows[0];
+      return {
+        ...s,
+        termCount,
+        enabledCount,
+        libStatus: libStatus[s.name] ?? "已启用",
+        updater: last?.updater ?? "—",
+        updatedAt: last?.updatedAt ?? "—",
+      };
+    });
+  }, [rows, libStatus, activeSpu]);
+
+  function confirmToggleLib() {
+    if (!libConfirm) return;
+    const next = libStatus[libConfirm.name] === "已启用" ? "已停用" : "已启用";
+    setLibStatus((p) => ({ ...p, [libConfirm.name]: next }));
+    pushLog({
+      spu: libConfirm.name,
+      action: next === "已启用" ? "启用词库" : "停用词库",
+      target: libConfirm.name,
+    });
+    setLibConfirm(null);
   }
 
   return (
@@ -414,14 +522,28 @@ export function SpuRuleManagement() {
               {/* Left col: SPU词库管理 */}
               <div className="w-44 shrink-0 border-r border-slate-200 p-4">
                 <div className="space-y-2 text-slate-700">
-                  <div className="py-1.5 cursor-pointer">SPU词库管理</div>
-                  <div className="py-1.5 cursor-pointer text-blue-600 font-medium">
+                  <div
+                    onClick={() => setView("overview")}
+                    className={cn(
+                      "py-1.5 cursor-pointer",
+                      view === "overview" && "text-blue-600 font-medium",
+                    )}
+                  >
+                    SPU词库总览
+                  </div>
+                  <div
+                    onClick={() => setView("manage")}
+                    className={cn(
+                      "py-1.5 cursor-pointer",
+                      view === "manage" && "text-blue-600 font-medium",
+                    )}
+                  >
                     SPU词库管理
                   </div>
                 </div>
               </div>
 
-              {/* SPU list */}
+              {view === "manage" && (
               <div className="w-52 shrink-0 border-r border-slate-200 p-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs">
@@ -465,9 +587,22 @@ export function SpuRuleManagement() {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Right: filters + table */}
               <div className="min-w-0 flex-1 p-4">
+                {view === "overview" ? (
+                  <OverviewTable
+                    rows={overviewRows}
+                    onEdit={(spu) => {
+                      setActiveSpu(spu);
+                      setView("manage");
+                    }}
+                    onToggleLib={(s) => setLibConfirm(s)}
+                    onViewLog={(spu) => setLogSpu(spu)}
+                  />
+                ) : (
+                <>
                 {/* Filters */}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   <div className="flex items-center gap-2">
@@ -707,6 +842,8 @@ export function SpuRuleManagement() {
                     </TableBody>
                   </Table>
                 </div>
+                </>
+                )}
               </div>
             </div>
           </div>
@@ -953,7 +1090,200 @@ export function SpuRuleManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 词库停用/启用 二次确认 */}
+      <Dialog
+        open={!!libConfirm}
+        onOpenChange={(o) => !o && setLibConfirm(null)}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {libConfirm && libStatus[libConfirm.name] === "已启用"
+                ? "确认停用词库"
+                : "确认启用词库"}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-600">
+            {libConfirm && libStatus[libConfirm.name] === "已启用"
+              ? `停用后，SPU「${libConfirm.name}」下的全部词条将不再参与前台搜索召回。是否确认停用？`
+              : `启用后，SPU「${libConfirm?.name}」下已启用的词条将重新参与前台搜索召回。是否确认启用？`}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLibConfirm(null)}>
+              取消
+            </Button>
+            <Button className="bg-blue-500 hover:bg-blue-600" onClick={confirmToggleLib}>
+              确认
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 查看日志 */}
+      <Dialog open={!!logSpu} onOpenChange={(o) => !o && setLogSpu(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>操作日志 - {logSpu}</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-auto rounded border border-slate-200">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50">
+                  <TableHead className="whitespace-nowrap">操作时间</TableHead>
+                  <TableHead>操作类型</TableHead>
+                  <TableHead>对象</TableHead>
+                  <TableHead>操作人</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.filter((l) => l.spu === logSpu).length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-10 text-center text-slate-400">
+                      暂无操作记录
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  logs
+                    .filter((l) => l.spu === logSpu)
+                    .sort((a, b) => (a.at < b.at ? 1 : -1))
+                    .map((l) => (
+                      <TableRow key={l.id}>
+                        <TableCell className="whitespace-nowrap">{l.at}</TableCell>
+                        <TableCell>{l.action}</TableCell>
+                        <TableCell>{l.target}</TableCell>
+                        <TableCell>{l.operator}</TableCell>
+                      </TableRow>
+                    ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLogSpu(null)}>
+              关闭
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+interface OverviewRow extends SpuInfo {
+  termCount: number;
+  enabledCount: number;
+  libStatus: "已启用" | "已停用";
+  updater: string;
+  updatedAt: string;
+}
+
+function OverviewTable({
+  rows,
+  onEdit,
+  onToggleLib,
+  onViewLog,
+}: {
+  rows: OverviewRow[];
+  onEdit: (spu: string) => void;
+  onToggleLib: (s: SpuInfo) => void;
+  onViewLog: (spu: string) => void;
+}) {
+  return (
+    <>
+      <div className="mb-3 text-slate-700">SPU词库总览</div>
+      <div className="overflow-x-auto rounded border border-slate-200">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50">
+              <TableHead>SPU ID</TableHead>
+              <TableHead>SPU名称</TableHead>
+              <TableHead>SPU分类</TableHead>
+              <TableHead>商品状态</TableHead>
+              <TableHead>是否参与搜索</TableHead>
+              <TableHead>词条数量</TableHead>
+              <TableHead>已启用词条数</TableHead>
+              <TableHead>词库状态</TableHead>
+              <TableHead>最近更新人</TableHead>
+              <TableHead className="whitespace-nowrap">最近更新时间</TableHead>
+              <TableHead className="text-right">操作</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell className="whitespace-nowrap">{r.id}</TableCell>
+                <TableCell>{r.name}</TableCell>
+                <TableCell>{r.category}</TableCell>
+                <TableCell>
+                  <Badge
+                    className={cn(
+                      "border-0",
+                      r.productStatus === "在售"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-slate-200 text-slate-600",
+                    )}
+                  >
+                    {r.productStatus}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    className={cn(
+                      "border-0",
+                      r.inSearch
+                        ? "bg-sky-100 text-sky-700"
+                        : "bg-slate-100 text-slate-600",
+                    )}
+                  >
+                    {r.inSearch ? "是" : "否"}
+                  </Badge>
+                </TableCell>
+                <TableCell>{r.termCount}</TableCell>
+                <TableCell>{r.enabledCount}</TableCell>
+                <TableCell>
+                  <Badge
+                    className={cn(
+                      "border-0",
+                      r.libStatus === "已启用"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-slate-200 text-slate-600",
+                    )}
+                  >
+                    {r.libStatus}
+                  </Badge>
+                </TableCell>
+                <TableCell>{r.updater}</TableCell>
+                <TableCell className="whitespace-nowrap">{r.updatedAt}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-3 text-xs">
+                    <button
+                      className="text-blue-600 hover:underline inline-flex items-center gap-1"
+                      onClick={() => onEdit(r.name)}
+                    >
+                      <Pencil className="h-3 w-3" /> 编辑词库
+                    </button>
+                    <button
+                      className="text-rose-500 hover:underline inline-flex items-center gap-1"
+                      onClick={() => onToggleLib(r)}
+                    >
+                      <Power className="h-3 w-3" />
+                      {r.libStatus === "已启用" ? "停用" : "启用"}
+                    </button>
+                    <button
+                      className="text-slate-600 hover:underline inline-flex items-center gap-1"
+                      onClick={() => onViewLog(r.name)}
+                    >
+                      <FileText className="h-3 w-3" /> 查看日志
+                    </button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }
 
