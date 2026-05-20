@@ -81,6 +81,27 @@ const DIRECT_FLAGS: DirectFlag[] = ["是", "否"];
 const STATUSES: Status[] = ["已启用", "已停用"];
 const SCOPES: Scope[] = ["部分IP生效", "部分IP不生效", "全部IP生效", "全部IP不生效"];
 
+// 标准化词生成规则：
+// 1. 全角转半角  2. 英文字母转小写  3. 去除前后空格
+// 4. 去除中间空格（仅英文/数字组合）  5. 去除常见连接符（空格、-、_、.、·）
+function normalizeTerm(input: string): string {
+  if (!input) return "";
+  // 1. 全角转半角
+  let s = input.replace(/[\uFF01-\uFF5E]/g, (ch) =>
+    String.fromCharCode(ch.charCodeAt(0) - 0xFEE0),
+  ).replace(/\u3000/g, " ");
+  // 2. 小写
+  s = s.toLowerCase();
+  // 3. 去前后空格
+  s = s.trim();
+  if (!s) return "";
+  // 4. 去中间空格（英文/数字之间）
+  s = s.replace(/([a-z0-9])\s+([a-z0-9])/g, "$1$2");
+  // 5. 去常见连接符
+  s = s.replace(/[\s\-_.·]/g, "");
+  return s;
+}
+
 const NAV = [
   "智能回复",
   "用户管理",
@@ -611,8 +632,10 @@ export function SpuRuleManagement() {
             <Field label="标准化词" required>
               <Input
                 value={draft.standard}
-                onChange={(e) => setDraft({ ...draft, standard: e.target.value })}
-                placeholder="请输入标准化词"
+                readOnly
+                disabled
+                placeholder="根据词条内容自动生成"
+                className="bg-slate-50"
               />
             </Field>
             <Field label="词条类型" required>
