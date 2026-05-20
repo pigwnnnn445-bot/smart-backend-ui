@@ -510,14 +510,28 @@ export function SpuRuleManagement() {
               {/* Left col: SPU词库管理 */}
               <div className="w-44 shrink-0 border-r border-slate-200 p-4">
                 <div className="space-y-2 text-slate-700">
-                  <div className="py-1.5 cursor-pointer">SPU词库管理</div>
-                  <div className="py-1.5 cursor-pointer text-blue-600 font-medium">
+                  <div
+                    onClick={() => setView("overview")}
+                    className={cn(
+                      "py-1.5 cursor-pointer",
+                      view === "overview" && "text-blue-600 font-medium",
+                    )}
+                  >
+                    SPU词库总览
+                  </div>
+                  <div
+                    onClick={() => setView("manage")}
+                    className={cn(
+                      "py-1.5 cursor-pointer",
+                      view === "manage" && "text-blue-600 font-medium",
+                    )}
+                  >
                     SPU词库管理
                   </div>
                 </div>
               </div>
 
-              {/* SPU list */}
+              {view === "manage" && (
               <div className="w-52 shrink-0 border-r border-slate-200 p-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs">
@@ -561,9 +575,22 @@ export function SpuRuleManagement() {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Right: filters + table */}
               <div className="min-w-0 flex-1 p-4">
+                {view === "overview" ? (
+                  <OverviewTable
+                    rows={overviewRows}
+                    onEdit={(spu) => {
+                      setActiveSpu(spu);
+                      setView("manage");
+                    }}
+                    onToggleLib={(s) => setLibConfirm(s)}
+                    onViewLog={(spu) => setLogSpu(spu)}
+                  />
+                ) : (
+                <>
                 {/* Filters */}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   <div className="flex items-center gap-2">
