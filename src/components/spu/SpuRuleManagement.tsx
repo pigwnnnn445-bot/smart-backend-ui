@@ -82,6 +82,7 @@ interface RuleRow {
   updater: string;
   updatedAt: string;
   remark: string;
+  i18n?: Record<string, string>;
 }
 
 const SPU_LIST = ["Netflix", "Spotify", "Tidal", "ChatGPT"];
