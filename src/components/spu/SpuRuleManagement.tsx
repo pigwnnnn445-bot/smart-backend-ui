@@ -950,17 +950,10 @@ export function SpuRuleManagement() {
             <Field label="词条内容" required>
               <div className="flex items-center gap-2">
                 <Input
-                  value={draft.content}
-                  onChange={(e) => {
-                    setDraft({
-                      ...draft,
-                      content: e.target.value,
-                      standard: normalizeTerm(e.target.value),
-                    });
-                    if (duplicateError) setDuplicateError("");
-                  }}
-                  placeholder="请输入词条内容"
-                  className="flex-1"
+                  value={draft.i18n?.en || ""}
+                  readOnly
+                  placeholder="请点击右侧配置输入"
+                  className="flex-1 bg-slate-50 cursor-not-allowed"
                 />
                 <Button
                   type="button"
@@ -976,13 +969,24 @@ export function SpuRuleManagement() {
               )}
             </Field>
             <Field label="标准化词" required>
-              <Input
-                value={draft.standard}
-                readOnly
-                disabled
-                placeholder="根据词条内容自动生成"
-                className="bg-slate-50"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  value={draft.standard}
+                  readOnly
+                  disabled
+                  placeholder="根据词条内容自动生成"
+                  className="flex-1 bg-slate-50"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setStandardSheetOpen(true)}
+                  disabled={!draft.i18n || Object.keys(draft.i18n).length === 0}
+                >
+                  查看详情
+                </Button>
+              </div>
             </Field>
             <Field label="词条类型" required>
               <div className="flex min-w-0 items-center gap-2">
