@@ -323,6 +323,7 @@ export function SpuRuleManagement() {
   const [scopeError, setScopeError] = useState("");
   const [duplicateError, setDuplicateError] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
+  const [i18nSheetOpen, setI18nSheetOpen] = useState(false);
   const [statusConfirm, setStatusConfirm] = useState<RuleRow | null>(null);
   const [customTermTypes, setCustomTermTypes] = useState<string[]>([]);
   const [customTermInput, setCustomTermInput] = useState("");
