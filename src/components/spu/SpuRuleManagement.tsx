@@ -1837,8 +1837,20 @@ function I18nSheet({
                 });
                 setDraft(next);
               }}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const base = (draft.en || "").trim();
+                if (!base) return;
+                const next: Record<string, string> = { ...draft, en: base };
+                I18N_LANGS.forEach((l) => {
+                  if (l.code !== "en") next[l.code] = base;
+                });
+                setDraft(next);
+              }}
             >
-              非人工部分翻译
+              英文一键复制
             </Button>
           </div>
         </div>}
