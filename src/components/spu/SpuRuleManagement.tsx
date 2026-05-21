@@ -1837,7 +1837,9 @@ function I18nSheet({
                 });
                 setDraft(next);
               }}
-            <Button
+            >
+              非人工部分翻译
+            </Button>
               variant="outline"
               size="sm"
               onClick={() => {
