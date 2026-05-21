@@ -947,20 +947,29 @@ export function SpuRuleManagement() {
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <Field label="词条内容" required>
-              <Input
-                value={draft.content}
-                onChange={(e) =>
-                  {
+              <div className="flex items-center gap-2">
+                <Input
+                  value={draft.content}
+                  onChange={(e) => {
                     setDraft({
                       ...draft,
                       content: e.target.value,
                       standard: normalizeTerm(e.target.value),
                     });
                     if (duplicateError) setDuplicateError("");
-                  }
-                }
-                placeholder="请输入词条内容"
-              />
+                  }}
+                  placeholder="请输入词条内容"
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setI18nSheetOpen(true)}
+                >
+                  配置
+                </Button>
+              </div>
               {duplicateError && (
                 <p className="text-xs text-rose-500 mt-1">{duplicateError}</p>
               )}
