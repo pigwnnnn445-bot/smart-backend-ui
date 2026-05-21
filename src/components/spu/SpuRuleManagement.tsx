@@ -324,6 +324,7 @@ export function SpuRuleManagement() {
   const [duplicateError, setDuplicateError] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
   const [i18nSheetOpen, setI18nSheetOpen] = useState(false);
+  const [standardSheetOpen, setStandardSheetOpen] = useState(false);
   const [statusConfirm, setStatusConfirm] = useState<RuleRow | null>(null);
   const [customTermTypes, setCustomTermTypes] = useState<string[]>([]);
   const [customTermInput, setCustomTermInput] = useState("");
@@ -949,17 +950,10 @@ export function SpuRuleManagement() {
             <Field label="词条内容" required>
               <div className="flex items-center gap-2">
                 <Input
-                  value={draft.content}
-                  onChange={(e) => {
-                    setDraft({
-                      ...draft,
-                      content: e.target.value,
-                      standard: normalizeTerm(e.target.value),
-                    });
-                    if (duplicateError) setDuplicateError("");
-                  }}
-                  placeholder="请输入词条内容"
-                  className="flex-1"
+                  value={draft.i18n?.en || ""}
+                  readOnly
+                  placeholder="请点击右侧配置输入"
+                  className="flex-1 bg-slate-50 cursor-not-allowed"
                 />
                 <Button
                   type="button"
@@ -975,13 +969,24 @@ export function SpuRuleManagement() {
               )}
             </Field>
             <Field label="标准化词" required>
-              <Input
-                value={draft.standard}
-                readOnly
-                disabled
-                placeholder="根据词条内容自动生成"
-                className="bg-slate-50"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  value={draft.standard}
+                  readOnly
+                  disabled
+                  placeholder="根据词条内容自动生成"
+                  className="flex-1 bg-slate-50"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setStandardSheetOpen(true)}
+                  disabled={!draft.i18n || Object.keys(draft.i18n).length === 0}
+                >
+                  查看详情
+                </Button>
+              </div>
             </Field>
             <Field label="词条类型" required>
               <div className="flex min-w-0 items-center gap-2">
@@ -1163,9 +1168,28 @@ export function SpuRuleManagement() {
         zhValue={draft.content}
         value={draft.i18n || {}}
         onSave={(v) => {
-          setDraft({ ...draft, i18n: v });
+          const en = (v.en || "").trim();
+          setDraft({
+            ...draft,
+            i18n: v,
+            content: en,
+            standard: en ? normalizeTerm(en) : "",
+          });
+          if (duplicateError) setDuplicateError("");
           setI18nSheetOpen(false);
         }}
+      />
+
+      <I18nSheet
+        open={standardSheetOpen}
+        onOpenChange={setStandardSheetOpen}
+        zhValue={draft.content}
+        value={Object.fromEntries(
+          Object.entries(draft.i18n || {}).map(([k, v]) => [k, normalizeTerm(v || "")])
+        )}
+        onSave={() => setStandardSheetOpen(false)}
+        readOnly
+        title="查看标准化词"
       />
 
       <Dialog
@@ -1727,12 +1751,16 @@ function I18nSheet({
   zhValue,
   value,
   onSave,
+  readOnly = false,
+  title = "配置内容",
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   zhValue: string;
   value: Record<string, string>;
   onSave: (v: Record<string, string>) => void;
+  readOnly?: boolean;
+  title?: string;
 }) {
   const [draft, setDraft] = useState<Record<string, string>>(value);
 
@@ -1761,10 +1789,10 @@ function I18nSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="!w-2/5 !max-w-none p-0 flex flex-col">
         <SheetHeader className="px-6 py-4 border-b border-slate-200">
-          <SheetTitle className="text-base">配置内容</SheetTitle>
+          <SheetTitle className="text-base">{title}</SheetTitle>
         </SheetHeader>
 
-        <div className="px-6 pt-4 pb-2 flex items-center justify-between">
+        {!readOnly && <div className="px-6 pt-4 pb-2 flex items-center justify-between">
           <span className="text-sm text-slate-600">文案</span>
           <div className="flex gap-2">
             <Button
@@ -1813,7 +1841,7 @@ function I18nSheet({
               非人工部分翻译
             </Button>
           </div>
-        </div>
+        </div>}
 
         <div className="flex-1 overflow-auto px-6 pb-4">
           <div className="border border-slate-200 rounded-md overflow-hidden">
@@ -1828,12 +1856,14 @@ function I18nSheet({
               >
                 <span className="text-sm text-slate-700">
                   {l.label}
-                  {l.required && <span className="text-rose-500 ml-1">*</span>}
+                  {!readOnly && l.required && <span className="text-rose-500 ml-1">*</span>}
                 </span>
                 <Input
                   value={draft[l.code] || ""}
                   onChange={(e) => update(l.code, e.target.value)}
                   placeholder={`请输入${l.label}文案`}
+                  readOnly={readOnly}
+                  className={readOnly ? "bg-slate-50" : ""}
                 />
               </div>
             ))}
@@ -1842,15 +1872,15 @@ function I18nSheet({
 
         <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-6 py-3 bg-white">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-            取消
+            {readOnly ? "关闭" : "取消"}
           </Button>
-          <Button
+          {!readOnly && <Button
             size="sm"
             className="bg-blue-500 hover:bg-blue-600"
             onClick={handleSave}
           >
             保存
-          </Button>
+          </Button>}
         </div>
       </SheetContent>
     </Sheet>
