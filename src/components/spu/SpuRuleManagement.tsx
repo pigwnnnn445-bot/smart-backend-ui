@@ -1146,21 +1146,29 @@ export function SpuRuleManagement() {
       {/* 词库停用/启用 二次确认 */}
       <Dialog
         open={!!libConfirm}
-        onOpenChange={(o) => !o && setLibConfirm(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setLibConfirm(null);
+            setLibError("");
+          }
+        }}
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              {libConfirm && libStatus[libConfirm.name] === "已启用"
+              {libConfirm && computeLibStatus(libConfirm.name) === "已启用"
                 ? "确认停用词库"
                 : "确认启用词库"}
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-slate-600">
-            {libConfirm && libStatus[libConfirm.name] === "已启用"
-              ? `停用后，SPU「${libConfirm.name}」下的全部词条将不再参与前台搜索召回。是否确认停用？`
-              : `启用后，SPU「${libConfirm?.name}」下已启用的词条将重新参与前台搜索召回。是否确认启用？`}
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm text-slate-600">
+              {libConfirm && computeLibStatus(libConfirm.name) === "已启用"
+                ? `停用后，SPU「${libConfirm.name}」词库下的全部词条将不再参与前台搜索召回。是否确认停用？`
+                : `启用后，SPU「${libConfirm?.name}」词库下已启用的词条将参与前台搜索召回。是否确认启用？`}
+            </p>
+            {libError && <p className="text-xs text-rose-500">{libError}</p>}
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setLibConfirm(null)}>
               取消
