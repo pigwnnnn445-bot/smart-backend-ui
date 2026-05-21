@@ -1157,6 +1157,17 @@ export function SpuRuleManagement() {
         }}
       />
 
+      <I18nSheet
+        open={i18nSheetOpen}
+        onOpenChange={setI18nSheetOpen}
+        zhValue={draft.content}
+        value={draft.i18n || {}}
+        onSave={(v) => {
+          setDraft({ ...draft, i18n: v });
+          setI18nSheetOpen(false);
+        }}
+      />
+
       <Dialog
         open={!!statusConfirm}
         onOpenChange={(o) => !o && setStatusConfirm(null)}
