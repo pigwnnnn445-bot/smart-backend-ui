@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type TermType = string;
 type MatchType = "精准匹配" | "前缀匹配" | "模糊匹配";
@@ -237,7 +238,7 @@ const blank: RuleRow = {
   id: "",
   content: "",
   standard: "",
-  termType: ["品牌词"],
+  termType: [],
   matchType: "精准匹配",
   direct: "是",
   status: "已启用",
