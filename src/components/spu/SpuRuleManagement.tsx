@@ -1709,3 +1709,150 @@ function RegionSheet({
     </Sheet>
   );
 }
+
+const I18N_LANGS: { code: string; label: string; required?: boolean }[] = [
+  { code: "zh", label: "简体中文[zh]", required: true },
+  { code: "en", label: "英语[en]", required: true },
+  { code: "es", label: "西班牙语[es]" },
+  { code: "ko", label: "韩语[ko]" },
+  { code: "it", label: "意大利语[it]" },
+  { code: "fr", label: "法语[fr]" },
+  { code: "de", label: "德语[de]" },
+  { code: "pl", label: "波兰语[pl]" },
+];
+
+function I18nSheet({
+  open,
+  onOpenChange,
+  zhValue,
+  value,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  zhValue: string;
+  value: Record<string, string>;
+  onSave: (v: Record<string, string>) => void;
+}) {
+  const [draft, setDraft] = useState<Record<string, string>>(value);
+
+  useEffect(() => {
+    if (open) {
+      setDraft({ ...value, zh: value.zh || zhValue || "" });
+    }
+  }, [open, value, zhValue]);
+
+  const update = (code: string, v: string) =>
+    setDraft((p) => ({ ...p, [code]: v }));
+
+  const handleSave = () => {
+    if (!(draft.zh || "").trim()) {
+      toast.error("请输入简体中文文案");
+      return;
+    }
+    if (!(draft.en || "").trim()) {
+      toast.error("请输入英语文案");
+      return;
+    }
+    onSave(draft);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="!w-2/5 !max-w-none p-0 flex flex-col">
+        <SheetHeader className="px-6 py-4 border-b border-slate-200">
+          <SheetTitle className="text-base">配置内容</SheetTitle>
+        </SheetHeader>
+
+        <div className="px-6 pt-4 pb-2 flex items-center justify-between">
+          <span className="text-sm text-slate-600">文案</span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const base = (draft.zh || zhValue || "").trim();
+                if (!base) return;
+                const next = { ...draft };
+                I18N_LANGS.forEach((l) => {
+                  if (!next[l.code]) next[l.code] = base;
+                });
+                setDraft(next);
+              }}
+            >
+              填充
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const base = (draft.zh || zhValue || "").trim();
+                if (!base) return;
+                const next: Record<string, string> = { ...draft, zh: base };
+                I18N_LANGS.forEach((l) => {
+                  if (l.code !== "zh") next[l.code] = base;
+                });
+                setDraft(next);
+              }}
+            >
+              全部翻译
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const base = (draft.zh || zhValue || "").trim();
+                if (!base) return;
+                const next = { ...draft };
+                I18N_LANGS.forEach((l) => {
+                  if (l.code !== "zh" && !next[l.code]) next[l.code] = base;
+                });
+                setDraft(next);
+              }}
+            >
+              非人工部分翻译
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto px-6 pb-4">
+          <div className="border border-slate-200 rounded-md overflow-hidden">
+            <div className="grid grid-cols-[160px_1fr] bg-slate-50 px-4 py-2 text-sm text-slate-600">
+              <span>语言</span>
+              <span>文案</span>
+            </div>
+            {I18N_LANGS.map((l) => (
+              <div
+                key={l.code}
+                className="grid grid-cols-[160px_1fr] items-center px-4 py-3 border-t border-slate-100"
+              >
+                <span className="text-sm text-slate-700">
+                  {l.label}
+                  {l.required && <span className="text-rose-500 ml-1">*</span>}
+                </span>
+                <Input
+                  value={draft[l.code] || ""}
+                  onChange={(e) => update(l.code, e.target.value)}
+                  placeholder={`请输入${l.label}文案`}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-6 py-3 bg-white">
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            取消
+          </Button>
+          <Button
+            size="sm"
+            className="bg-blue-500 hover:bg-blue-600"
+            onClick={handleSave}
+          >
+            保存
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
