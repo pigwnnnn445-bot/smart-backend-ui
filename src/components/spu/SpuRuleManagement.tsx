@@ -1274,9 +1274,85 @@ function OverviewTable({
   onToggleLib: (s: SpuInfo) => void;
   onViewLog: (spu: string) => void;
 }) {
+  const [filters, setFilters] = useState({
+    spuId: "",
+    spuName: "",
+    category: "",
+    libStatus: [] as LibStatus[],
+  });
+
+  const filtered = useMemo(() => {
+    return rows.filter((r) => {
+      if (filters.spuId && !r.id.toLowerCase().includes(filters.spuId.toLowerCase())) return false;
+      if (filters.spuName && !r.name.toLowerCase().includes(filters.spuName.toLowerCase())) return false;
+      if (filters.category && r.category !== filters.category) return false;
+      if (filters.libStatus.length && !filters.libStatus.includes(r.libStatus)) return false;
+      return true;
+    });
+  }, [rows, filters]);
+
   return (
     <>
       <div className="mb-3 text-slate-700">SPU词库管理</div>
+      <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="flex items-center gap-2">
+          <Label className="w-20 shrink-0 text-right text-slate-600">SPU ID</Label>
+          <Input
+            placeholder="请输入SPU ID"
+            className="h-8"
+            value={filters.spuId}
+            onChange={(e) => setFilters((f) => ({ ...f, spuId: e.target.value }))}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Label className="w-20 shrink-0 text-right text-slate-600">SPU名称</Label>
+          <Input
+            placeholder="请输入SPU名称"
+            className="h-8"
+            value={filters.spuName}
+            onChange={(e) => setFilters((f) => ({ ...f, spuName: e.target.value }))}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Label className="w-20 shrink-0 text-right text-slate-600">SPU分类</Label>
+          <Select
+            value={filters.category || "all"}
+            onValueChange={(v) => setFilters((f) => ({ ...f, category: v === "all" ? "" : v }))}
+          >
+            <SelectTrigger className="h-8">
+              <SelectValue placeholder="请选择" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部</SelectItem>
+              {Array.from(new Set(SPU_INFOS.map((s) => s.category))).map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Label className="w-20 shrink-0 text-right text-slate-600">词库状态</Label>
+          <MultiSelect
+            options={["未配置", "草稿", "已启用", "已停用"]}
+            value={filters.libStatus}
+            onChange={(v) => setFilters((f) => ({ ...f, libStatus: v as LibStatus[] }))}
+            placeholder="请选择"
+          />
+        </div>
+      </div>
+      <div className="mb-4 flex justify-end gap-2">
+        <Button size="sm" className="h-8 bg-rose-500 hover:bg-rose-600">
+          <Filter className="h-3.5 w-3.5" /> 筛选
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8"
+          onClick={() => setFilters({ spuId: "", spuName: "", category: "", libStatus: [] })}
+        >
+          <RotateCcw className="h-3.5 w-3.5" /> 重置
+        </Button>
+      </div>
       <div className="overflow-x-auto rounded border border-slate-200">
         <Table>
           <TableHeader>
@@ -1284,7 +1360,6 @@ function OverviewTable({
               <TableHead>SPU ID</TableHead>
               <TableHead>SPU名称</TableHead>
               <TableHead>SPU分类</TableHead>
-              <TableHead>商品状态</TableHead>
               <TableHead>是否参与搜索</TableHead>
               <TableHead>词条数量</TableHead>
               <TableHead>已启用词条数</TableHead>
@@ -1295,92 +1370,88 @@ function OverviewTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell className="whitespace-nowrap">{r.id}</TableCell>
-                <TableCell>{r.name}</TableCell>
-                <TableCell>{r.category}</TableCell>
-                <TableCell>
-                  <Badge
-                    className={cn(
-                      "border-0",
-                      r.productStatus === "在售"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-slate-200 text-slate-600",
-                    )}
-                  >
-                    {r.productStatus}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    className={cn(
-                      "border-0",
-                      r.inSearch
-                        ? "bg-sky-100 text-sky-700"
-                        : "bg-slate-100 text-slate-600",
-                    )}
-                  >
-                    {r.inSearch ? "是" : "否"}
-                  </Badge>
-                </TableCell>
-                <TableCell>{r.termCount}</TableCell>
-                <TableCell>{r.enabledCount}</TableCell>
-                <TableCell>
-                  <Badge
-                    className={cn(
-                      "border-0",
-                      r.libStatus === "已启用"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : r.libStatus === "草稿"
-                          ? "bg-amber-100 text-amber-700"
-                          : r.libStatus === "未配置"
-                            ? "bg-slate-100 text-slate-500"
-                            : "bg-slate-200 text-slate-600",
-                    )}
-                  >
-                    {r.libStatus}
-                  </Badge>
-                </TableCell>
-                <TableCell>{r.updater}</TableCell>
-                <TableCell className="whitespace-nowrap">{r.updatedAt}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-3 text-xs">
-                    <button
-                      className="text-blue-600 hover:underline inline-flex items-center gap-1"
-                      onClick={() => onEdit(r.name)}
-                    >
-                      <Pencil className="h-3 w-3" /> 编辑词库
-                    </button>
-                    {r.libStatus === "未配置" ? (
-                      <span
-                        className="text-slate-300 inline-flex items-center gap-1 cursor-not-allowed"
-                        title="请先编辑词库添加词条"
-                      >
-                        <Power className="h-3 w-3" /> 启用
-                      </span>
-                    ) : (
-                      <button
-                        className={cn(
-                          "hover:underline inline-flex items-center gap-1",
-                          r.libStatus === "已启用" ? "text-rose-500" : "text-blue-600",
-                        )}
-                        onClick={() => onToggleLib(r)}
-                      >
-                        <Power className="h-3 w-3" />
-                        {r.libStatus === "已启用" ? "停用" : "启用"}
-                      </button>
-                    )}
-                    <button
-                      className="text-slate-600 hover:underline inline-flex items-center gap-1"
-                      onClick={() => onViewLog(r.name)}
-                    >
-                      <FileText className="h-3 w-3" /> 查看日志
-                    </button>
-                  </div>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={10} className="py-10 text-center text-slate-400">
+                  暂无数据
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filtered.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="whitespace-nowrap">{r.id}</TableCell>
+                  <TableCell>{r.name}</TableCell>
+                  <TableCell>{r.category}</TableCell>
+                  <TableCell>
+                    <Badge
+                      className={cn(
+                        "border-0",
+                        r.inSearch
+                          ? "bg-sky-100 text-sky-700"
+                          : "bg-slate-100 text-slate-600",
+                      )}
+                    >
+                      {r.inSearch ? "是" : "否"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{r.termCount}</TableCell>
+                  <TableCell>{r.enabledCount}</TableCell>
+                  <TableCell>
+                    <Badge
+                      className={cn(
+                        "border-0",
+                        r.libStatus === "已启用"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : r.libStatus === "草稿"
+                            ? "bg-amber-100 text-amber-700"
+                            : r.libStatus === "未配置"
+                              ? "bg-slate-100 text-slate-500"
+                              : "bg-slate-200 text-slate-600",
+                      )}
+                    >
+                      {r.libStatus}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{r.updater}</TableCell>
+                  <TableCell className="whitespace-nowrap">{r.updatedAt}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-3 text-xs">
+                      <button
+                        className="text-blue-600 hover:underline inline-flex items-center gap-1"
+                        onClick={() => onEdit(r.name)}
+                      >
+                        <Pencil className="h-3 w-3" /> 编辑词库
+                      </button>
+                      {r.libStatus === "未配置" ? (
+                        <span
+                          className="text-slate-300 inline-flex items-center gap-1 cursor-not-allowed"
+                          title="请先编辑词库添加词条"
+                        >
+                          <Power className="h-3 w-3" /> 启用
+                        </span>
+                      ) : (
+                        <button
+                          className={cn(
+                            "hover:underline inline-flex items-center gap-1",
+                            r.libStatus === "已启用" ? "text-rose-500" : "text-blue-600",
+                          )}
+                          onClick={() => onToggleLib(r)}
+                        >
+                          <Power className="h-3 w-3" />
+                          {r.libStatus === "已启用" ? "停用" : "启用"}
+                        </button>
+                      )}
+                      <button
+                        className="text-slate-600 hover:underline inline-flex items-center gap-1"
+                        onClick={() => onViewLog(r.name)}
+                      >
+                        <FileText className="h-3 w-3" /> 查看日志
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
