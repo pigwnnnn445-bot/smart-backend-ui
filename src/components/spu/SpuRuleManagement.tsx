@@ -773,8 +773,31 @@ export function SpuRuleManagement() {
                 </div>
 
                 <div className="mt-4 flex items-center justify-between">
-                  <div className="text-slate-700">
-                    SPU：<span className="font-medium">{activeSpu}</span>
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <span>
+                      SPU：<span className="font-medium">{activeSpu}</span>
+                    </span>
+                    <span className="text-slate-400">·</span>
+                    <span className="text-slate-500 text-xs">词库状态</span>
+                    {(() => {
+                      const s = computeLibStatus(activeSpu);
+                      return (
+                        <Badge
+                          className={cn(
+                            "border-0",
+                            s === "已启用"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : s === "草稿"
+                                ? "bg-amber-100 text-amber-700"
+                                : s === "未配置"
+                                  ? "bg-slate-100 text-slate-500"
+                                  : "bg-slate-200 text-slate-600",
+                          )}
+                        >
+                          {s}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                   <Button
                     size="sm"
