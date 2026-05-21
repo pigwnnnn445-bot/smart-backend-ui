@@ -1120,7 +1120,6 @@ export function SpuRuleManagement() {
               <Button
                 variant="outline"
                 onClick={() => saveDraft("draft")}
-                disabled={!draft.content || !draft.standard}
               >
                 保存草稿
               </Button>
@@ -1128,7 +1127,6 @@ export function SpuRuleManagement() {
             <Button
               onClick={() => saveDraft("publish")}
               className="bg-blue-500 hover:bg-blue-600"
-              disabled={!draft.content || !draft.standard}
             >
               保存并发布
             </Button>
