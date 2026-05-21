@@ -1307,7 +1307,11 @@ function OverviewTable({
                       "border-0",
                       r.libStatus === "已启用"
                         ? "bg-emerald-100 text-emerald-700"
-                        : "bg-slate-200 text-slate-600",
+                        : r.libStatus === "草稿"
+                          ? "bg-amber-100 text-amber-700"
+                          : r.libStatus === "未配置"
+                            ? "bg-slate-100 text-slate-500"
+                            : "bg-slate-200 text-slate-600",
                     )}
                   >
                     {r.libStatus}
@@ -1323,13 +1327,25 @@ function OverviewTable({
                     >
                       <Pencil className="h-3 w-3" /> 编辑词库
                     </button>
-                    <button
-                      className="text-rose-500 hover:underline inline-flex items-center gap-1"
-                      onClick={() => onToggleLib(r)}
-                    >
-                      <Power className="h-3 w-3" />
-                      {r.libStatus === "已启用" ? "停用" : "启用"}
-                    </button>
+                    {r.libStatus === "未配置" ? (
+                      <span
+                        className="text-slate-300 inline-flex items-center gap-1 cursor-not-allowed"
+                        title="请先编辑词库添加词条"
+                      >
+                        <Power className="h-3 w-3" /> 启用
+                      </span>
+                    ) : (
+                      <button
+                        className={cn(
+                          "hover:underline inline-flex items-center gap-1",
+                          r.libStatus === "已启用" ? "text-rose-500" : "text-blue-600",
+                        )}
+                        onClick={() => onToggleLib(r)}
+                      >
+                        <Power className="h-3 w-3" />
+                        {r.libStatus === "已启用" ? "停用" : "启用"}
+                      </button>
+                    )}
                     <button
                       className="text-slate-600 hover:underline inline-flex items-center gap-1"
                       onClick={() => onViewLog(r.name)}
