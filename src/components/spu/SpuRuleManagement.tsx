@@ -58,6 +58,15 @@ type MatchType = "精准匹配" | "前缀匹配" | "模糊匹配";
 type DirectFlag = "是" | "否";
 type Status = "草稿" | "已启用" | "已停用";
 type Scope = "部分IP生效" | "部分IP不生效" | "全部IP生效" | "全部IP不生效";
+/**
+ * 词库展示状态：
+ * - 未配置：SPU 下没有任何词条（自动派生）
+ * - 草稿：已有词条但从未发布（libState === "未发布"）
+ * - 已启用：发布后参与搜索
+ * - 已停用：曾发布过，但被手动停用
+ */
+type LibStatus = "未配置" | "草稿" | "已启用" | "已停用";
+type LibState = "未发布" | "已启用" | "已停用";
 
 interface RuleRow {
   id: string;
@@ -194,6 +203,22 @@ const initialRows: RuleRow[] = [
     remark: "官方品牌词",
   },
 ];
+
+// 每个 SPU 独立的词条集合，按 SPU 名维护
+const initialRowsBySpu: Record<string, RuleRow[]> = {
+  ChatGPT: initialRows,
+  Netflix: [],
+  Spotify: [],
+  Tidal: [],
+};
+
+// 每个 SPU 的词库内部状态（仅 未发布/已启用/已停用 三种持久态，未配置由词条数派生）
+const initialLibState: Record<string, LibState> = {
+  ChatGPT: "已启用",
+  Netflix: "未发布",
+  Spotify: "未发布",
+  Tidal: "未发布",
+};
 
 function termBadge(t: TermType) {
   const map: Record<string, string> = {
