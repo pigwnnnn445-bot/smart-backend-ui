@@ -571,7 +571,7 @@ export function SpuRuleManagement() {
         <main className="flex-1 overflow-auto p-4">
           <div className="rounded-md bg-white shadow-sm">
             <div className="flex">
-              {/* Left col: SPU词库管理 */}
+              {/* Left col: Menu */}
               <div className="w-44 shrink-0 border-r border-slate-200 p-4">
                 <div className="space-y-2 text-slate-700">
                   <div
@@ -581,7 +581,7 @@ export function SpuRuleManagement() {
                       view === "overview" && "text-blue-600 font-medium",
                     )}
                   >
-                    SPU词库总览
+                    SPU词库管理
                   </div>
                   <div
                     onClick={() => setView("manage")}
@@ -590,7 +590,7 @@ export function SpuRuleManagement() {
                       view === "manage" && "text-blue-600 font-medium",
                     )}
                   >
-                    SPU词库管理
+                    SPU词条管理
                   </div>
                 </div>
               </div>
@@ -1274,7 +1274,7 @@ function OverviewTable({
 }) {
   return (
     <>
-      <div className="mb-3 text-slate-700">SPU词库总览</div>
+      <div className="mb-3 text-slate-700">SPU词库管理</div>
       <div className="overflow-x-auto rounded border border-slate-200">
         <Table>
           <TableHeader>
