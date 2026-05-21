@@ -1225,7 +1225,7 @@ export function SpuRuleManagement() {
 interface OverviewRow extends SpuInfo {
   termCount: number;
   enabledCount: number;
-  libStatus: "已启用" | "已停用";
+  libStatus: LibStatus;
   updater: string;
   updatedAt: string;
 }
