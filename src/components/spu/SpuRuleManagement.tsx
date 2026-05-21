@@ -1274,7 +1274,7 @@ function OverviewTable({
 }) {
   return (
     <>
-      <div className="mb-3 text-slate-700">SPU词库总览</div>
+      <div className="mb-3 text-slate-700">SPU词库管理</div>
       <div className="overflow-x-auto rounded border border-slate-200">
         <Table>
           <TableHeader>
