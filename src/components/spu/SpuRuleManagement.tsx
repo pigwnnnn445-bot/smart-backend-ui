@@ -377,7 +377,18 @@ export function SpuRuleManagement() {
   }
 
   function saveDraft(action: "draft" | "publish") {
-    if (draft.termType.length === 0) return;
+    if (!draft.content.trim()) {
+      toast.error("请输入词条内容");
+      return;
+    }
+    if (!draft.standard.trim()) {
+      toast.error("请输入标准化词");
+      return;
+    }
+    if (draft.termType.length === 0) {
+      toast.error("请选择词条类型");
+      return;
+    }
     const dup = rows.find(
       (r) => r.id !== draft.id && r.standard && r.standard === draft.standard,
     );
