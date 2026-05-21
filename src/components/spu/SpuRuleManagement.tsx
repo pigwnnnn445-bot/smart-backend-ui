@@ -1840,6 +1840,7 @@ function I18nSheet({
             >
               非人工部分翻译
             </Button>
+            <Button
               variant="outline"
               size="sm"
               onClick={() => {
