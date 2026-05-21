@@ -1104,13 +1104,15 @@ export function SpuRuleManagement() {
             <Button variant="outline" onClick={() => setEditOpen(false)}>
               取消
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => saveDraft("draft")}
-              disabled={!draft.content || !draft.standard}
-            >
-              保存草稿
-            </Button>
+            {(libState[activeSpu] ?? "未发布") === "未发布" && (
+              <Button
+                variant="outline"
+                onClick={() => saveDraft("draft")}
+                disabled={!draft.content || !draft.standard}
+              >
+                保存草稿
+              </Button>
+            )}
             <Button
               onClick={() => saveDraft("publish")}
               className="bg-blue-500 hover:bg-blue-600"
