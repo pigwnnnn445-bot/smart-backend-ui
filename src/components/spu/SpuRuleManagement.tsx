@@ -1104,7 +1104,7 @@ export function SpuRuleManagement() {
             <Button variant="outline" onClick={() => setEditOpen(false)}>
               取消
             </Button>
-            {(libState[activeSpu] ?? "未发布") === "未发布" && (
+            {(mode === "create" || draft.status !== "已启用") && (
               <Button
                 variant="outline"
                 onClick={() => saveDraft("draft")}
