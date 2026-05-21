@@ -58,6 +58,15 @@ type MatchType = "精准匹配" | "前缀匹配" | "模糊匹配";
 type DirectFlag = "是" | "否";
 type Status = "草稿" | "已启用" | "已停用";
 type Scope = "部分IP生效" | "部分IP不生效" | "全部IP生效" | "全部IP不生效";
+/**
+ * 词库展示状态：
+ * - 未配置：SPU 下没有任何词条（自动派生）
+ * - 草稿：已有词条但从未发布（libState === "未发布"）
+ * - 已启用：发布后参与搜索
+ * - 已停用：曾发布过，但被手动停用
+ */
+type LibStatus = "未配置" | "草稿" | "已启用" | "已停用";
+type LibState = "未发布" | "已启用" | "已停用";
 
 interface RuleRow {
   id: string;
@@ -195,6 +204,22 @@ const initialRows: RuleRow[] = [
   },
 ];
 
+// 每个 SPU 独立的词条集合，按 SPU 名维护
+const initialRowsBySpu: Record<string, RuleRow[]> = {
+  ChatGPT: initialRows,
+  Netflix: [],
+  Spotify: [],
+  Tidal: [],
+};
+
+// 每个 SPU 的词库内部状态（仅 未发布/已启用/已停用 三种持久态，未配置由词条数派生）
+const initialLibState: Record<string, LibState> = {
+  ChatGPT: "已启用",
+  Netflix: "未发布",
+  Spotify: "未发布",
+  Tidal: "未发布",
+};
+
 function termBadge(t: TermType) {
   const map: Record<string, string> = {
     商品词: "bg-sky-100 text-sky-700",
@@ -229,11 +254,10 @@ export function SpuRuleManagement() {
   const [enabledSpu, setEnabledSpu] = useState<Record<string, boolean>>(
     Object.fromEntries(SPU_LIST.map((s) => [s, true])),
   );
-  // SPU 词库状态（已启用 / 已停用），区别于 enabledSpu（左侧勾选）
-  const [libStatus, setLibStatus] = useState<Record<string, "已启用" | "已停用">>(
-    Object.fromEntries(SPU_LIST.map((s) => [s, "已启用" as const])),
-  );
+  // SPU 词库持久状态：未发布 / 已启用 / 已停用（"未配置" 由词条数派生）
+  const [libState, setLibState] = useState<Record<string, LibState>>(initialLibState);
   const [libConfirm, setLibConfirm] = useState<SpuInfo | null>(null);
+  const [libError, setLibError] = useState<string>("");
   const [logSpu, setLogSpu] = useState<string | null>(null);
   const [logs, setLogs] = useState<OpLog[]>([
     {
@@ -282,7 +306,15 @@ export function SpuRuleManagement() {
     statuses: [],
   });
 
-  const [rows, setRows] = useState<RuleRow[]>(initialRows);
+  const [rowsBySpu, setRowsBySpu] = useState<Record<string, RuleRow[]>>(initialRowsBySpu);
+  const rows = rowsBySpu[activeSpu] ?? [];
+  const setRows = (updater: RuleRow[] | ((prev: RuleRow[]) => RuleRow[])) => {
+    setRowsBySpu((prev) => {
+      const cur = prev[activeSpu] ?? [];
+      const next = typeof updater === "function" ? (updater as (p: RuleRow[]) => RuleRow[])(cur) : updater;
+      return { ...prev, [activeSpu]: next };
+    });
+  };
   const [editOpen, setEditOpen] = useState(false);
   const [draft, setDraft] = useState<RuleRow>(blank);
   const [mode, setMode] = useState<"create" | "edit">("create");
@@ -412,34 +444,54 @@ export function SpuRuleManagement() {
     });
   }
 
+  // 词库展示状态派生：未配置 / 草稿 / 已启用 / 已停用
+  function computeLibStatus(spu: string): LibStatus {
+    const rs = rowsBySpu[spu] ?? [];
+    if (rs.length === 0) return "未配置";
+    const state = libState[spu] ?? "未发布";
+    if (state === "未发布") return "草稿";
+    return state; // 已启用 / 已停用
+  }
+
   // 总览表数据
   const overviewRows = useMemo(() => {
     return SPU_INFOS.map((s) => {
-      const spuRows = s.name === activeSpu ? rows : [];
+      const spuRows = rowsBySpu[s.name] ?? [];
       const termCount = spuRows.length;
       const enabledCount = spuRows.filter((r) => r.status === "已启用").length;
-      const last = spuRows[0];
+      const sorted = [...spuRows].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+      const last = sorted[0];
       return {
         ...s,
         termCount,
         enabledCount,
-        libStatus: libStatus[s.name] ?? "已启用",
+        libStatus: computeLibStatus(s.name),
         updater: last?.updater ?? "—",
         updatedAt: last?.updatedAt ?? "—",
       };
     });
-  }, [rows, libStatus, activeSpu]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowsBySpu, libState]);
 
   function confirmToggleLib() {
     if (!libConfirm) return;
-    const next = libStatus[libConfirm.name] === "已启用" ? "已停用" : "已启用";
-    setLibStatus((p) => ({ ...p, [libConfirm.name]: next }));
-    pushLog({
-      spu: libConfirm.name,
-      action: next === "已启用" ? "启用词库" : "停用词库",
-      target: libConfirm.name,
-    });
+    const cur = computeLibStatus(libConfirm.name);
+    // 启用词库：需要至少 1 条已启用词条
+    if (cur !== "已启用") {
+      const rs = rowsBySpu[libConfirm.name] ?? [];
+      const enabledCount = rs.filter((r) => r.status === "已启用").length;
+      if (enabledCount === 0) {
+        setLibError("请至少启用 1 条词条后再启用词库");
+        return;
+      }
+      setLibState((p) => ({ ...p, [libConfirm.name]: "已启用" }));
+      pushLog({ spu: libConfirm.name, action: "启用词库", target: libConfirm.name });
+    } else {
+      setLibState((p) => ({ ...p, [libConfirm.name]: "已停用" }));
+      pushLog({ spu: libConfirm.name, action: "停用词库", target: libConfirm.name });
+    }
     setLibConfirm(null);
+    setLibError("");
   }
 
   return (
@@ -721,8 +773,31 @@ export function SpuRuleManagement() {
                 </div>
 
                 <div className="mt-4 flex items-center justify-between">
-                  <div className="text-slate-700">
-                    SPU：<span className="font-medium">{activeSpu}</span>
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <span>
+                      SPU：<span className="font-medium">{activeSpu}</span>
+                    </span>
+                    <span className="text-slate-400">·</span>
+                    <span className="text-slate-500 text-xs">词库状态</span>
+                    {(() => {
+                      const s = computeLibStatus(activeSpu);
+                      return (
+                        <Badge
+                          className={cn(
+                            "border-0",
+                            s === "已启用"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : s === "草稿"
+                                ? "bg-amber-100 text-amber-700"
+                                : s === "未配置"
+                                  ? "bg-slate-100 text-slate-500"
+                                  : "bg-slate-200 text-slate-600",
+                          )}
+                        >
+                          {s}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                   <Button
                     size="sm"
@@ -1094,21 +1169,29 @@ export function SpuRuleManagement() {
       {/* 词库停用/启用 二次确认 */}
       <Dialog
         open={!!libConfirm}
-        onOpenChange={(o) => !o && setLibConfirm(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setLibConfirm(null);
+            setLibError("");
+          }
+        }}
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              {libConfirm && libStatus[libConfirm.name] === "已启用"
+              {libConfirm && computeLibStatus(libConfirm.name) === "已启用"
                 ? "确认停用词库"
                 : "确认启用词库"}
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-slate-600">
-            {libConfirm && libStatus[libConfirm.name] === "已启用"
-              ? `停用后，SPU「${libConfirm.name}」下的全部词条将不再参与前台搜索召回。是否确认停用？`
-              : `启用后，SPU「${libConfirm?.name}」下已启用的词条将重新参与前台搜索召回。是否确认启用？`}
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm text-slate-600">
+              {libConfirm && computeLibStatus(libConfirm.name) === "已启用"
+                ? `停用后，SPU「${libConfirm.name}」词库下的全部词条将不再参与前台搜索召回。是否确认停用？`
+                : `启用后，SPU「${libConfirm?.name}」词库下已启用的词条将参与前台搜索召回。是否确认启用？`}
+            </p>
+            {libError && <p className="text-xs text-rose-500">{libError}</p>}
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setLibConfirm(null)}>
               取消
@@ -1173,7 +1256,7 @@ export function SpuRuleManagement() {
 interface OverviewRow extends SpuInfo {
   termCount: number;
   enabledCount: number;
-  libStatus: "已启用" | "已停用";
+  libStatus: LibStatus;
   updater: string;
   updatedAt: string;
 }
@@ -1247,7 +1330,11 @@ function OverviewTable({
                       "border-0",
                       r.libStatus === "已启用"
                         ? "bg-emerald-100 text-emerald-700"
-                        : "bg-slate-200 text-slate-600",
+                        : r.libStatus === "草稿"
+                          ? "bg-amber-100 text-amber-700"
+                          : r.libStatus === "未配置"
+                            ? "bg-slate-100 text-slate-500"
+                            : "bg-slate-200 text-slate-600",
                     )}
                   >
                     {r.libStatus}
@@ -1263,13 +1350,25 @@ function OverviewTable({
                     >
                       <Pencil className="h-3 w-3" /> 编辑词库
                     </button>
-                    <button
-                      className="text-rose-500 hover:underline inline-flex items-center gap-1"
-                      onClick={() => onToggleLib(r)}
-                    >
-                      <Power className="h-3 w-3" />
-                      {r.libStatus === "已启用" ? "停用" : "启用"}
-                    </button>
+                    {r.libStatus === "未配置" ? (
+                      <span
+                        className="text-slate-300 inline-flex items-center gap-1 cursor-not-allowed"
+                        title="请先编辑词库添加词条"
+                      >
+                        <Power className="h-3 w-3" /> 启用
+                      </span>
+                    ) : (
+                      <button
+                        className={cn(
+                          "hover:underline inline-flex items-center gap-1",
+                          r.libStatus === "已启用" ? "text-rose-500" : "text-blue-600",
+                        )}
+                        onClick={() => onToggleLib(r)}
+                      >
+                        <Power className="h-3 w-3" />
+                        {r.libStatus === "已启用" ? "停用" : "启用"}
+                      </button>
+                    )}
                     <button
                       className="text-slate-600 hover:underline inline-flex items-center gap-1"
                       onClick={() => onViewLog(r.name)}
