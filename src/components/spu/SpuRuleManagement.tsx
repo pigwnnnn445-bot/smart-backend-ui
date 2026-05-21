@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type TermType = string;
 type MatchType = "精准匹配" | "前缀匹配" | "模糊匹配";
@@ -237,7 +238,7 @@ const blank: RuleRow = {
   id: "",
   content: "",
   standard: "",
-  termType: ["品牌词"],
+  termType: [],
   matchType: "精准匹配",
   direct: "是",
   status: "已启用",
@@ -376,7 +377,18 @@ export function SpuRuleManagement() {
   }
 
   function saveDraft(action: "draft" | "publish") {
-    if (draft.termType.length === 0) return;
+    if (!draft.content.trim()) {
+      toast.error("请输入词条内容");
+      return;
+    }
+    if (!draft.standard.trim()) {
+      toast.error("请输入标准化词");
+      return;
+    }
+    if (draft.termType.length === 0) {
+      toast.error("请选择词条类型");
+      return;
+    }
     const dup = rows.find(
       (r) => r.id !== draft.id && r.standard && r.standard === draft.standard,
     );
@@ -1108,7 +1120,6 @@ export function SpuRuleManagement() {
               <Button
                 variant="outline"
                 onClick={() => saveDraft("draft")}
-                disabled={!draft.content || !draft.standard}
               >
                 保存草稿
               </Button>
@@ -1116,7 +1127,6 @@ export function SpuRuleManagement() {
             <Button
               onClick={() => saveDraft("publish")}
               className="bg-blue-500 hover:bg-blue-600"
-              disabled={!draft.content || !draft.standard}
             >
               保存并发布
             </Button>
