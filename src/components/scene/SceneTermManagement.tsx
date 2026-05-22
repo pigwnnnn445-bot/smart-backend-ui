@@ -1032,20 +1032,16 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className="text-xs text-slate-600">场景名称 <span className="text-rose-500">*</span></Label>
-            <Input value={draft.name} onChange={(e) => update("name", e.target.value)} placeholder="例如：AI 工具 / 写论文 / 看剧" className="mt-1 h-8" />
-            <p className="mt-1 text-[11px] text-slate-400">仅用于后台识别一个搜索意图。</p>
-          </div>
-          <div>
-            <Label className="text-xs text-slate-600">主场景词 <span className="text-rose-500">*</span></Label>
-            <Input value={draft.mainTerm} onChange={(e) => update("mainTerm", e.target.value)} placeholder="例如：AI工具" className="mt-1 h-8" />
-            <p className="mt-1 text-[11px] text-slate-400">系统将根据主场景词自动翻译生成多语言搜索词。</p>
-          </div>
-          <div>
-            <Label className="text-xs text-slate-600">主语言 <span className="text-rose-500">*</span></Label>
-            <Select value={draft.mainLang} onValueChange={(v) => update("mainLang", v as SceneLang)}>
-              <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
-              <SelectContent>{ALL_LANGS.map((l) => <SelectItem key={l} value={l}>{l} · {LANG_NAMES[l]}</SelectItem>)}</SelectContent>
-            </Select>
+            <div className="mt-1 flex items-center gap-2">
+              <Input value={draft.name} onChange={(e) => updateName(e.target.value)} placeholder="例如：AI工具 / 写论文 / 看剧" className="h-8 flex-1" />
+              <Button size="sm" variant="outline" className="h-8" onClick={() => {
+                if (!draft.name.trim()) { toast.error("请先填写场景名称"); return; }
+                setLangCfgOpen(true);
+              }}>
+                <Languages className="h-3.5 w-3.5 mr-1" />配置
+              </Button>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-400">点击"配置"打开多语言搜索词弹窗，可自动翻译填充各语言文案。</p>
           </div>
           <div>
             <Label className="text-xs text-slate-600">场景类型 <span className="text-rose-500">*</span></Label>
@@ -1066,84 +1062,6 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
         </div>
       </section>
 
-      {/* 区域二：自动多语言生成配置 */}
-      <section className="rounded-md border border-slate-200 bg-white p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-blue-500" />自动多语言生成配置
-            </h2>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              系统根据主场景词自动翻译生成下列目标语言的搜索表达，所有语言共用同一组关联 SPU。
-            </p>
-          </div>
-          <Button size="sm" className="h-8 bg-blue-500 hover:bg-blue-600" onClick={doGenerate}>
-            <Sparkles className="h-3.5 w-3.5 mr-1" />生成多语言搜索词
-          </Button>
-        </div>
-        <div className="space-y-3">
-          <div>
-            <div className="flex items-center justify-between">
-              <Label className="text-xs text-slate-600">目标语言（{draft.targetLangs.length} / {ALL_LANGS.length}）</Label>
-              <div className="flex items-center gap-2 text-xs">
-                <button className="text-blue-600 hover:underline" onClick={selectAllTargets}>全选</button>
-                <span className="text-slate-300">|</span>
-                <button className="text-slate-500 hover:underline" onClick={clearAllTargets}>仅主语言</button>
-              </div>
-            </div>
-            <div className="mt-2 grid grid-cols-6 gap-2 rounded border border-slate-200 bg-slate-50 p-3">
-              {ALL_LANGS.map((l) => {
-                const on = draft.targetLangs.includes(l);
-                const isMain = l === draft.mainLang;
-                return (
-                  <label key={l} className={cn("flex items-center gap-1.5 cursor-pointer text-xs", isMain && "opacity-60")}>
-                    <Checkbox checked={on} disabled={isMain} onCheckedChange={(v) => toggleTarget(l, !!v)} />
-                    <span className="text-slate-700">{l}</span>
-                    <span className="text-slate-400 truncate">{LANG_NAMES[l]}</span>
-                  </label>
-                );
-              })}
-            </div>
-            <p className="mt-1 text-[11px] text-slate-400">主语言会自动包含在内，不可取消。</p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-xs text-slate-600">生成方式</Label>
-              <Select value="自动翻译生成" onValueChange={() => {}}>
-                <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="自动翻译生成">自动翻译生成</SelectItem>
-                  <SelectItem value="手动补充" disabled>手动补充（本期不支持）</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs text-slate-600">生成后状态</Label>
-              <Select value={draft.postGenStatus} onValueChange={(v) => update("postGenStatus", v as PostGenStatus)}>
-                <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="自动启用">自动启用</SelectItem>
-                  <SelectItem value="生成后待确认">生成后待确认</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center justify-between rounded border border-slate-200 px-3 py-2">
-              <div>
-                <div className="text-xs text-slate-700">覆盖已有翻译</div>
-                <div className="text-[11px] text-slate-400">重新生成时是否覆盖已生成的搜索词</div>
-              </div>
-              <Switch checked={draft.overrideExisting} onCheckedChange={(v) => update("overrideExisting", v)} />
-            </div>
-            <div className="flex items-center justify-between rounded border border-slate-200 px-3 py-2">
-              <div>
-                <div className="text-xs text-slate-700">保留人工修改</div>
-                <div className="text-[11px] text-slate-400">不覆盖运营人工编辑过的语言</div>
-              </div>
-              <Switch checked={draft.keepManual} onCheckedChange={(v) => update("keepManual", v)} />
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* 区域三：多语言搜索词结果 */}
       <section className="rounded-md border border-slate-200 bg-white p-4">
