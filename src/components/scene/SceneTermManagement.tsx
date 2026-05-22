@@ -360,17 +360,17 @@ export function SceneTermManagement() {
             <div className="flex items-center justify-between px-4 py-2.5 cursor-pointer hover:bg-slate-50">
               <span className="flex items-center gap-2 text-slate-700">
                 <Menu className="h-4 w-4 text-slate-400" />
-                搜索管理
+                SPU配置
               </span>
               <ChevronDown className="h-3.5 w-3.5 text-slate-400 rotate-180" />
             </div>
             <div className="bg-slate-50 pb-2">
-              <Link to="/" className="block pl-12 py-2 cursor-pointer hover:bg-blue-50 text-slate-700">
-                SPU词条管理
-              </Link>
-              <div className="pl-12 py-2 cursor-pointer bg-blue-500 text-white">
-                场景词库管理
+              <div className="pl-12 py-2 cursor-pointer hover:bg-blue-50 text-slate-700">SPU基础配置</div>
+              <div className="pl-12 py-2 cursor-pointer hover:bg-blue-50 text-slate-700">SPU管理</div>
+              <div className="pl-12 py-2 cursor-pointer bg-blue-500 text-white hover:bg-blue-500">
+                SPU搜索配置
               </div>
+              <div className="pl-12 py-2 cursor-pointer hover:bg-blue-50 text-slate-700">SPU内容配置</div>
             </div>
           </div>
         </nav>
@@ -383,9 +383,8 @@ export function SceneTermManagement() {
           <Menu className="h-4 w-4 text-slate-500" />
           <RefreshCw className="h-4 w-4 text-slate-500" />
           <div className="text-slate-500">
-            首页 <span className="px-1">/</span>
-            搜索管理 <span className="px-1">/</span>
-            <span className="text-slate-700">场景词库管理</span>
+            SPU配置 <span className="px-1">/</span>
+            <span className="text-slate-700">SPU搜索配置</span>
             {view === "detail" && (
               <>
                 <span className="px-1">/</span>
@@ -406,7 +405,26 @@ export function SceneTermManagement() {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4">
-          {view === "list" ? (
+          <div className="rounded-md bg-white shadow-sm">
+            <div className="flex">
+              {/* Sub menu column */}
+              <div className="w-44 shrink-0 border-r border-slate-200 p-4">
+                <div className="space-y-2 text-slate-700">
+                  <Link to="/" search={{}} className="block py-1.5 cursor-pointer hover:text-blue-600">
+                    SPU词库管理
+                  </Link>
+                  <Link to="/" className="block py-1.5 cursor-pointer hover:text-blue-600">
+                    SPU词条管理
+                  </Link>
+                  <div className="py-1.5 cursor-pointer text-blue-600 font-medium">
+                    场景词库管理
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0 p-4">
+                {view === "list" ? (
             <SceneListView
               rows={filteredRows}
               fContent={fContent} setFContent={setFContent}
@@ -422,7 +440,7 @@ export function SceneTermManagement() {
               onToggle={toggleStatus}
               onTest={(sc) => { setTestScene(sc); setTestOpen(true); }}
             />
-          ) : (
+                ) : (
             <SceneDetailView
               key={editingId ?? "new"}
               existing={editingId ? scenes.find((s) => s.id === editingId) ?? null : null}
@@ -431,7 +449,10 @@ export function SceneTermManagement() {
               onSave={saveScene}
               onTest={(sc) => { setTestScene(sc); setTestOpen(true); }}
             />
-          )}
+                )}
+              </div>
+            </div>
+          </div>
         </main>
       </div>
 
