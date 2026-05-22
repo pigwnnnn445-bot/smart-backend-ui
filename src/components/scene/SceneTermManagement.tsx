@@ -531,7 +531,6 @@ export function SceneTermManagement() {
                     fType={fType} setFType={setFType}
                     fLang={fLang} setFLang={setFLang}
                     fGen={fGen} setFGen={setFGen}
-                    fStatus={fStatus} setFStatus={setFStatus}
                     fSpu={fSpu} setFSpu={setFSpu}
                     fSource={fSource} setFSource={setFSource}
                     fRecall={fRecall} setFRecall={setFRecall}
