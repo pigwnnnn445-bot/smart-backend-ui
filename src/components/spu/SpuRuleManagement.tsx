@@ -536,12 +536,6 @@ export function SpuRuleManagement() {
                         {sub}
                       </div>
                     ))}
-                    <Link
-                      to="/scene"
-                      className="block pl-12 py-2 cursor-pointer hover:bg-blue-50 text-slate-700"
-                    >
-                      场景词库管理
-                    </Link>
                   </div>
                 )}
               </div>
