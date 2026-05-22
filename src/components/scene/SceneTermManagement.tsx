@@ -1157,11 +1157,8 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
               <TableRow>
                 <TableHead className="w-[90px]">SPU ID</TableHead>
                 <TableHead>SPU 名称</TableHead>
-                <TableHead className="w-[80px]">商品来源</TableHead>
                 <TableHead className="w-[90px]">SPU 分类</TableHead>
-                <TableHead className="w-[80px]">商品状态</TableHead>
                 <TableHead className="w-[110px]">商品搜索状态</TableHead>
-                <TableHead className="w-[110px]">当前站点可售</TableHead>
                 <TableHead className="w-[100px]">推荐级别</TableHead>
                 <TableHead className="w-[110px]">场景内排序</TableHead>
                 <TableHead className="w-[80px]">关联状态</TableHead>
@@ -1171,7 +1168,7 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
             </TableHeader>
             <TableBody>
               {sortedSpus.length === 0 ? (
-                <TableRow><TableCell colSpan={12} className="h-24 text-center text-slate-400">暂无关联 SPU，点击"添加 SPU"开始配置</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="h-24 text-center text-slate-400">暂无关联 SPU，点击"添加 SPU"开始配置</TableCell></TableRow>
               ) : (
                 sortedSpus.map((s) => {
                   const r = computeRecall(draft, s);
@@ -1179,11 +1176,8 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
                     <TableRow key={s.spuId}>
                       <TableCell className="text-slate-500">{s.spuId}</TableCell>
                       <TableCell className="font-medium text-slate-800">{s.spuName}</TableCell>
-                      <TableCell><span className={cn("rounded px-1.5 py-0.5 text-xs", sourceBadge(s.source))}>{s.source}</span></TableCell>
                       <TableCell className="text-slate-600 text-xs">{s.category}</TableCell>
-                      <TableCell className="text-xs">{s.productStatus}</TableCell>
                       <TableCell className="text-xs">{s.spuLibStatus}</TableCell>
-                      <TableCell className="text-xs">{s.siteSellable}</TableCell>
                       <TableCell>
                         <Select value={s.recLevel} onValueChange={(v) => updateSpu(s.spuId, { recLevel: v as RecLevel })}>
                           <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
