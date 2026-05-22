@@ -931,45 +931,25 @@ export function SpuRuleManagement() {
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <Field label="词条内容" required>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={draft.i18n?.en || ""}
-                  readOnly
-                  placeholder="请点击右侧配置输入"
-                  className="flex-1 bg-slate-50 cursor-not-allowed"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setI18nSheetOpen(true)}
-                >
-                  配置
-                </Button>
-              </div>
+              <Input
+                value={draft.content}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setDraft({ ...draft, content: v, standard: normalizeTerm(v) });
+                  if (duplicateError) setDuplicateError("");
+                }}
+                placeholder="请输入词条内容"
+              />
               {duplicateError && (
                 <p className="text-xs text-rose-500 mt-1">{duplicateError}</p>
               )}
             </Field>
             <Field label="标准化词" required>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={draft.standard}
-                  readOnly
-                  disabled
-                  placeholder="根据词条内容自动生成"
-                  className="flex-1 bg-slate-50"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setStandardSheetOpen(true)}
-                  disabled={!draft.i18n || Object.keys(draft.i18n).length === 0}
-                >
-                  查看详情
-                </Button>
-              </div>
+              <Input
+                value={draft.standard}
+                onChange={(e) => setDraft({ ...draft, standard: e.target.value })}
+                placeholder="请输入标准化词"
+              />
             </Field>
             <Field label="词条类型" required>
               <MultiSelect
