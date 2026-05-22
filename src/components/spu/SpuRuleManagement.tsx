@@ -1234,7 +1234,6 @@ function OverviewTable({
 
   return (
     <>
-      <div className="mb-3 text-slate-700">SPU词库管理</div>
       <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div className="flex items-center gap-2">
           <Label className="w-20 shrink-0 text-right text-slate-600">SPU ID</Label>
