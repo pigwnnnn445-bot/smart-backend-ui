@@ -857,9 +857,15 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
     setDraft((d) => ({ ...d, [key]: value }));
   }
 
+  // 场景名称即主场景词来源；同步写回 mainTerm
+  function updateName(v: string) {
+    setDraft((d) => ({ ...d, name: v, mainTerm: v }));
+  }
+
+  const [langCfgOpen, setLangCfgOpen] = useState(false);
+
   function validate(forStatus: SceneStatus): string | null {
     if (!draft.name.trim()) return "请输入场景名称";
-    if (!draft.mainTerm.trim()) return "请输入主场景词";
     if (forStatus === "已启用") {
       if (!draft.expressions.some((e) => e.status === "已启用"))
         return "请至少存在 1 个已启用多语言搜索词";
@@ -879,44 +885,48 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
         toast.warning("当前场景暂无可召回 SPU，启用后前台可能无结果，请检查关联 SPU 的商品搜索状态、商品状态或站点售卖配置。");
       }
     }
-    onSave({ ...draft, status: target }, isCreate);
+    onSave({ ...draft, mainTerm: draft.name, status: target }, isCreate);
     toast.success(`已保存：${draft.name}（${target}）`);
     onBack();
   }
 
-  // 自动生成多语言搜索词
-  function doGenerate() {
-    if (!draft.mainTerm.trim()) { toast.error("请先填写主场景词"); return; }
-    if (draft.targetLangs.length === 0) { toast.error("请至少选择 1 种目标语言"); return; }
-    const next = buildExpressionsFromMain(
-      draft.mainTerm.trim(), draft.mainLang, draft.targetLangs,
-      draft.postGenStatus, draft.expressions,
-      { overrideExisting: draft.overrideExisting, keepManual: draft.keepManual },
-    );
-    // 跨场景冲突提示（仅检查主语言）
-    const mainStd = normalizeTerm(draft.mainTerm);
+  // 跨场景 / 直连词条 / 属性词 校验
+  function runConflictChecks(name: string) {
+    const std = normalizeTerm(name);
+    if (!std) return;
     const cross = allScenes.find(
-      (sc) => sc.id !== draft.id && sc.expressions.some((e) => e.lang === draft.mainLang && e.standard === mainStd),
+      (sc) => sc.id !== draft.id && sc.expressions.some((e) => e.standard === std),
     );
-    if (cross) toast.warning(`主场景词已被场景"${cross.name}"使用，可能导致同一搜索词命中多个场景。`);
-    if (SPU_DIRECT_STANDARDS.has(mainStd)) toast.warning("主场景词已被配置为商品直连词条，搜索时明确商品结果将优先于场景结果。");
-    if (ATTR_WORDS.includes(mainStd)) toast.warning("该词更适合通过商品属性搜索数据自动参与搜索，不建议作为场景搜索词启用。");
-
-    setDraft((d) => ({ ...d, expressions: next }));
-    toast.success(`已生成 ${next.length} 个多语言搜索词`);
+    if (cross) toast.warning(`该词已被场景"${cross.name}"使用，可能命中多个场景。`);
+    if (SPU_DIRECT_STANDARDS.has(std)) toast.warning("该词已被配置为商品直连词条，明确商品结果将优先于场景结果。");
+    if (ATTR_WORDS.includes(std)) toast.warning("该词更适合通过商品属性搜索数据自动参与搜索，不建议作为场景搜索词启用。");
   }
 
-  function toggleTarget(lang: SceneLang, on: boolean) {
-    setDraft((d) => ({
-      ...d,
-      targetLangs: on
-        ? Array.from(new Set([...d.targetLangs, lang]))
-        : d.targetLangs.filter((l) => l !== lang),
-    }));
+  // 保存多语言配置弹窗
+  function saveLangConfig(rows: Array<{ lang: SceneLang; content: string; manual: boolean }>) {
+    const prevByLang = new Map(draft.expressions.map((e) => [e.lang, e]));
+    const next: SceneExpression[] = rows
+      .filter((r) => r.content.trim() !== "")
+      .map((r) => {
+        const existing = prevByLang.get(r.lang);
+        const isMain = r.lang === "zh-CN";
+        return {
+          id: existing?.id ?? uid("E"),
+          lang: r.lang,
+          content: r.content.trim(),
+          standard: normalizeTerm(r.content),
+          genSource: r.manual ? "人工编辑" : (isMain ? "主场景词" : "自动翻译"),
+          translationStatus: "已生成",
+          status: existing?.status ?? "已启用",
+          updater: "Alex",
+          updatedAt: nowStr(),
+        };
+      });
+    setDraft((d) => ({ ...d, expressions: next, targetLangs: next.map((e) => e.lang) }));
+    runConflictChecks(draft.name);
+    toast.success(`已保存 ${next.length} 个多语言搜索词`);
+    setLangCfgOpen(false);
   }
-
-  function selectAllTargets() { setDraft((d) => ({ ...d, targetLangs: ALL_LANGS })); }
-  function clearAllTargets() { setDraft((d) => ({ ...d, targetLangs: [d.mainLang] })); }
 
   // 单语言搜索词操作
   function regenOne(lang: SceneLang) {
@@ -1001,11 +1011,11 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
 
   const sortedExprs = useMemo(() => {
     return [...draft.expressions].sort((a, b) => {
-      if (a.lang === draft.mainLang) return -1;
-      if (b.lang === draft.mainLang) return 1;
+      if (a.lang === "zh-CN") return -1;
+      if (b.lang === "zh-CN") return 1;
       return a.lang.localeCompare(b.lang);
     });
-  }, [draft.expressions, draft.mainLang]);
+  }, [draft.expressions]);
 
   return (
     <div className="space-y-4">
