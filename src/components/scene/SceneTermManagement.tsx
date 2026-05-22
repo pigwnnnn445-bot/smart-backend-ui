@@ -435,11 +435,11 @@ export function SceneTermManagement() {
       if (fUpdater && !r.updater.toLowerCase().includes(fUpdater.toLowerCase())) return false;
       return true;
     });
-  }, [decoratedRows, fName, fMain, fExpr, fType, fLang, fGen, fStatus, fSpu, fSource, fRecall, fUpdater]);
+  }, [decoratedRows, fName, fMain, fExpr, fType, fLang, fGen, fSpu, fSource, fRecall, fUpdater]);
 
   function resetFilters() {
     setFName(""); setFMain(""); setFExpr(""); setFType("全部"); setFLang("全部"); setFGen("全部");
-    setFStatus("全部"); setFSpu(""); setFSource("全部"); setFRecall("全部"); setFUpdater("");
+    setFSpu(""); setFSource("全部"); setFRecall("全部"); setFUpdater("");
   }
 
   function openCreate() { setEditingId(null); setView("detail"); }
