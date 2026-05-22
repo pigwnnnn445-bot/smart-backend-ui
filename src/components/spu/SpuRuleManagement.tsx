@@ -323,8 +323,6 @@ export function SpuRuleManagement() {
   const [scopeError, setScopeError] = useState("");
   const [duplicateError, setDuplicateError] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
-  const [i18nSheetOpen, setI18nSheetOpen] = useState(false);
-  const [standardSheetOpen, setStandardSheetOpen] = useState(false);
   const [statusConfirm, setStatusConfirm] = useState<RuleRow | null>(null);
 
   const filtered = useMemo(() => {
