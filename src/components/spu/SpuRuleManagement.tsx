@@ -571,7 +571,7 @@ export function SpuRuleManagement() {
           <div className="rounded-md bg-white shadow-sm">
             <div className="flex">
               {/* Left col: Menu */}
-              <div className="w-44 shrink-0 border-r border-slate-200 p-4">
+              <div className="w-40 shrink-0 border-r border-slate-200 px-3 py-4">
                 <div className="space-y-2 text-slate-700">
                   <div
                     onClick={() => setView("overview")}
