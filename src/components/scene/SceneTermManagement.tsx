@@ -373,7 +373,6 @@ export function SceneTermManagement() {
   const [fType, setFType] = useState("全部");
   const [fLang, setFLang] = useState("全部");
   const [fGen, setFGen] = useState("全部");
-  const [fStatus, setFStatus] = useState("全部");
   const [fSpu, setFSpu] = useState("");
   const [fSource, setFSource] = useState("全部");
   const [fRecall, setFRecall] = useState("全部");
