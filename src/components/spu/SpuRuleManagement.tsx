@@ -947,8 +947,9 @@ export function SpuRuleManagement() {
             <Field label="标准化词" required>
               <Input
                 value={draft.standard}
-                onChange={(e) => setDraft({ ...draft, standard: e.target.value })}
-                placeholder="请输入标准化词"
+                readOnly
+                placeholder="根据词条内容自动生成"
+                className="bg-slate-50 cursor-not-allowed"
               />
             </Field>
             <Field label="词条类型" required>
