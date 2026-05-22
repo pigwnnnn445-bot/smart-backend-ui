@@ -351,9 +351,6 @@ export function SpuRuleManagement() {
   function openCreate() {
     setMode("create");
     setDraft({ ...blank, id: crypto.randomUUID() });
-    setIsCustomTerm(false);
-    setCustomTermInput("");
-    setCustomTermError("");
     setDuplicateError("");
     setScopeError("");
     setEditOpen(true);
@@ -362,9 +359,6 @@ export function SpuRuleManagement() {
   function openEdit(row: RuleRow) {
     setMode("edit");
     setDraft({ ...row });
-    setIsCustomTerm(false);
-    setCustomTermInput("");
-    setCustomTermError("");
     setDuplicateError("");
     setScopeError("");
     setEditOpen(true);
@@ -688,7 +682,7 @@ export function SpuRuleManagement() {
                   <div className="flex items-center gap-2">
                     <Label className="w-24 shrink-0 text-right text-slate-600">词条类型</Label>
                     <MultiSelect
-                      options={allTermTypes}
+                      options={TERM_TYPES}
                       value={filters.termTypes}
                       onChange={(v) =>
                         setFilters((f) => ({ ...f, termTypes: v as TermType[] }))
@@ -980,67 +974,11 @@ export function SpuRuleManagement() {
               </div>
             </Field>
             <Field label="词条类型" required>
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="min-w-0 flex-1">
-                  <MultiSelect
-                    options={allTermTypes}
-                    value={draft.termType}
-                    onChange={(v) => setDraft({ ...draft, termType: v as TermType[] })}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={isCustomTerm ? "secondary" : "outline"}
-                  className="h-9 shrink-0"
-                  onClick={() => {
-                    setIsCustomTerm((v) => !v);
-                    setCustomTermInput("");
-                    setCustomTermError("");
-                  }}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  自定义
-                </Button>
-              </div>
-              {isCustomTerm && (
-                <div className="mt-1.5 flex items-center gap-2">
-                  <Input
-                    value={customTermInput}
-                    onChange={(e) => {
-                      setCustomTermInput(e.target.value);
-                      if (customTermError) setCustomTermError("");
-                    }}
-                    placeholder="请输入自定义类型名称"
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="h-9 shrink-0 bg-blue-500 hover:bg-blue-600 text-white"
-                    onClick={() => {
-                      const name = customTermInput.trim();
-                      if (!name) {
-                        setCustomTermError("请输入自定义类型名称");
-                        return;
-                      }
-                      if (allTermTypes.includes(name)) {
-                        setCustomTermError("该类型名称已存在");
-                        return;
-                      }
-                      setCustomTermTypes((prev) => [...prev, name]);
-                      setDraft({ ...draft, termType: [...draft.termType, name] });
-                      setIsCustomTerm(false);
-                      setCustomTermInput("");
-                      setCustomTermError("");
-                    }}
-                  >
-                    确定
-                  </Button>
-                </div>
-              )}
-              {isCustomTerm && customTermError && (
-                <p className="text-xs text-rose-500 mt-1">{customTermError}</p>
-              )}
+              <MultiSelect
+                options={TERM_TYPES}
+                value={draft.termType}
+                onChange={(v) => setDraft({ ...draft, termType: v as TermType[] })}
+              />
             </Field>
             <Field label="匹配方式" required>
               <Select
