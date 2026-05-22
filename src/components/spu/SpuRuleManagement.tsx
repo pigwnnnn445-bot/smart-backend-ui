@@ -647,7 +647,7 @@ export function SpuRuleManagement() {
               )}
 
               {/* Right: filters + table */}
-              <div className="min-w-0 flex-1 p-4">
+              <div className="min-w-0 flex-1 py-4 pr-4 pl-2">
                 {view === "overview" ? (
                   <OverviewTable
                     rows={overviewRows}
