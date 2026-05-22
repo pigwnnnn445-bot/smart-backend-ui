@@ -373,7 +373,6 @@ export function SceneTermManagement() {
   const [fType, setFType] = useState("全部");
   const [fLang, setFLang] = useState("全部");
   const [fGen, setFGen] = useState("全部");
-  const [fStatus, setFStatus] = useState("全部");
   const [fSpu, setFSpu] = useState("");
   const [fSource, setFSource] = useState("全部");
   const [fRecall, setFRecall] = useState("全部");
@@ -423,7 +422,6 @@ export function SceneTermManagement() {
         const allFlag = fGen === "未生成" ? r.expressions.length < r.target : has;
         if (!allFlag) return false;
       }
-      if (fStatus !== "全部" && r.status !== fStatus) return false;
       if (fSpu) {
         const k = fSpu.toLowerCase();
         const hit = r.spus.some(
@@ -437,11 +435,11 @@ export function SceneTermManagement() {
       if (fUpdater && !r.updater.toLowerCase().includes(fUpdater.toLowerCase())) return false;
       return true;
     });
-  }, [decoratedRows, fName, fMain, fExpr, fType, fLang, fGen, fStatus, fSpu, fSource, fRecall, fUpdater]);
+  }, [decoratedRows, fName, fMain, fExpr, fType, fLang, fGen, fSpu, fSource, fRecall, fUpdater]);
 
   function resetFilters() {
     setFName(""); setFMain(""); setFExpr(""); setFType("全部"); setFLang("全部"); setFGen("全部");
-    setFStatus("全部"); setFSpu(""); setFSource("全部"); setFRecall("全部"); setFUpdater("");
+    setFSpu(""); setFSource("全部"); setFRecall("全部"); setFUpdater("");
   }
 
   function openCreate() { setEditingId(null); setView("detail"); }
@@ -533,7 +531,6 @@ export function SceneTermManagement() {
                     fType={fType} setFType={setFType}
                     fLang={fLang} setFLang={setFLang}
                     fGen={fGen} setFGen={setFGen}
-                    fStatus={fStatus} setFStatus={setFStatus}
                     fSpu={fSpu} setFSpu={setFSpu}
                     fSource={fSource} setFSource={setFSource}
                     fRecall={fRecall} setFRecall={setFRecall}
@@ -579,7 +576,6 @@ interface ListProps {
   fType: string; setFType: (v: string) => void;
   fLang: string; setFLang: (v: string) => void;
   fGen: string; setFGen: (v: string) => void;
-  fStatus: string; setFStatus: (v: string) => void;
   fSpu: string; setFSpu: (v: string) => void;
   fSource: string; setFSource: (v: string) => void;
   fRecall: string; setFRecall: (v: string) => void;
@@ -648,18 +644,6 @@ function SceneListView(p: ListProps) {
                 <SelectItem value="生成中">生成中</SelectItem>
                 <SelectItem value="已生成">已生成</SelectItem>
                 <SelectItem value="生成失败">生成失败</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-slate-500">场景状态</Label>
-            <Select value={p.fStatus} onValueChange={p.setFStatus}>
-              <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="全部">全部</SelectItem>
-                <SelectItem value="草稿">草稿</SelectItem>
-                <SelectItem value="已启用">已启用</SelectItem>
-                <SelectItem value="已停用">已停用</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1049,11 +1033,6 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
               <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
               <SelectContent>{SCENE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
             </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-slate-600">场景状态</Label>
-            <Input value={draft.status} readOnly className="mt-1 h-8 bg-slate-50 cursor-not-allowed" />
-            <p className="mt-1 text-[11px] text-slate-400">通过底部"保存并启用 / 保存并停用"修改</p>
           </div>
           <div>
             <Label className="text-xs text-slate-600">备注</Label>
