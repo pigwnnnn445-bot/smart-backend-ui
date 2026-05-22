@@ -326,15 +326,6 @@ export function SpuRuleManagement() {
   const [i18nSheetOpen, setI18nSheetOpen] = useState(false);
   const [standardSheetOpen, setStandardSheetOpen] = useState(false);
   const [statusConfirm, setStatusConfirm] = useState<RuleRow | null>(null);
-  const [customTermTypes, setCustomTermTypes] = useState<string[]>([]);
-  const [customTermInput, setCustomTermInput] = useState("");
-  const [isCustomTerm, setIsCustomTerm] = useState(false);
-  const [customTermError, setCustomTermError] = useState("");
-
-  const allTermTypes = useMemo(
-    () => [...TERM_TYPES, ...customTermTypes],
-    [customTermTypes],
-  );
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
