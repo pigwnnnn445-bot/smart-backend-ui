@@ -410,7 +410,7 @@ export function SceneTermManagement() {
               {/* Sub menu column */}
               <div className="w-44 shrink-0 border-r border-slate-200 p-4">
                 <div className="space-y-2 text-slate-700">
-                  <Link to="/" search={{}} className="block py-1.5 cursor-pointer hover:text-blue-600">
+                  <Link to="/" className="block py-1.5 cursor-pointer hover:text-blue-600">
                     SPU词库管理
                   </Link>
                   <Link to="/" className="block py-1.5 cursor-pointer hover:text-blue-600">
