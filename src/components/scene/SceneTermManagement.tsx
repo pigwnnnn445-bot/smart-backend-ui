@@ -422,7 +422,6 @@ export function SceneTermManagement() {
         const allFlag = fGen === "未生成" ? r.expressions.length < r.target : has;
         if (!allFlag) return false;
       }
-      if (fStatus !== "全部" && r.status !== fStatus) return false;
       if (fSpu) {
         const k = fSpu.toLowerCase();
         const hit = r.spus.some(
