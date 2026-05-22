@@ -1567,3 +1567,130 @@ function SearchTestSheet({
     </Sheet>
   );
 }
+// ============================================================
+//                       多语言配置弹窗
+// ============================================================
+function LangConfigDialog({
+  open, onOpenChange, sceneName, expressions, onSave,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  sceneName: string;
+  expressions: SceneExpression[];
+  onSave: (rows: Array<{ lang: SceneLang; content: string; manual: boolean }>) => void;
+}) {
+  type Row = { lang: SceneLang; content: string; manual: boolean };
+  const [rows, setRows] = useState<Row[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    const byLang = new Map(expressions.map((e) => [e.lang, e]));
+    const ordered: SceneLang[] = ["zh-CN", "en", ...ALL_LANGS.filter((l) => l !== "zh-CN" && l !== "en")];
+    setRows(
+      ordered.map((l) => {
+        const e = byLang.get(l);
+        return {
+          lang: l,
+          content: e?.content ?? "",
+          manual: e?.genSource === "人工编辑",
+        };
+      }),
+    );
+  }, [open, expressions]);
+
+  function setContent(lang: SceneLang, val: string) {
+    setRows((rs) => rs.map((r) => (r.lang === lang ? { ...r, content: val, manual: true } : r)));
+  }
+
+  function fillMain() {
+    if (!sceneName.trim()) { toast.error("场景名称为空"); return; }
+    setRows((rs) => rs.map((r) => (r.lang === "zh-CN" ? { ...r, content: sceneName, manual: false } : r)));
+    toast.success("已填充简体中文");
+  }
+
+  function translateAll() {
+    const zh = rows.find((r) => r.lang === "zh-CN")?.content.trim() || sceneName.trim();
+    if (!zh) { toast.error("请先填写简体中文文案"); return; }
+    setRows((rs) =>
+      rs.map((r) => {
+        if (r.lang === "zh-CN") return { ...r, content: zh, manual: false };
+        return { ...r, content: translate(zh, r.lang), manual: false };
+      }),
+    );
+    toast.success("已全部翻译");
+  }
+
+  function translateNonManual() {
+    const zh = rows.find((r) => r.lang === "zh-CN")?.content.trim() || sceneName.trim();
+    if (!zh) { toast.error("请先填写简体中文文案"); return; }
+    setRows((rs) =>
+      rs.map((r) => {
+        if (r.manual) return r;
+        if (r.lang === "zh-CN") return { ...r, content: zh, manual: false };
+        return { ...r, content: translate(zh, r.lang), manual: false };
+      }),
+    );
+    toast.success("已翻译非人工部分");
+  }
+
+  function handleSave() {
+    const zh = rows.find((r) => r.lang === "zh-CN");
+    const en = rows.find((r) => r.lang === "en");
+    if (!zh?.content.trim()) { toast.error("简体中文文案为必填"); return; }
+    if (!en?.content.trim()) { toast.error("英语文案为必填"); return; }
+    onSave(rows);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>配置内容</DialogTitle>
+        </DialogHeader>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-slate-700">文案</span>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" className="h-7" onClick={fillMain}>填充</Button>
+            <Button size="sm" variant="outline" className="h-7" onClick={translateAll}>全部翻译</Button>
+            <Button size="sm" variant="outline" className="h-7" onClick={translateNonManual}>非人工部分翻译</Button>
+          </div>
+        </div>
+        <div className="max-h-[60vh] overflow-auto rounded border border-slate-200">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[180px]">语言</TableHead>
+                <TableHead>文案</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((r) => {
+                const required = r.lang === "zh-CN" || r.lang === "en";
+                return (
+                  <TableRow key={r.lang}>
+                    <TableCell className="text-slate-700 text-xs">
+                      {LANG_NAMES[r.lang]}[{r.lang}]
+                      {required && <span className="ml-1 text-rose-500">*</span>}
+                      {r.manual && <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] text-amber-700">人工</span>}
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={r.content}
+                        onChange={(e) => setContent(r.lang, e.target.value)}
+                        className="h-8"
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button size="sm" className="bg-blue-500 hover:bg-blue-600" onClick={handleSave}>保存</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
