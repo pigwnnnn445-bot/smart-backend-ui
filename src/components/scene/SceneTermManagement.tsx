@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Search,
   RotateCcw,
@@ -21,6 +21,7 @@ import {
   ArrowUp,
   ArrowDown,
   Languages,
+  Sparkles,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,8 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Sheet,
   SheetContent,
@@ -62,34 +65,29 @@ import { toast } from "sonner";
 // -------------------- 类型 --------------------
 type SceneType = "场景词" | "品类词";
 type SceneLang =
-  | "全语言通用"
-  | "en"
-  | "zh-CN"
-  | "zh-TW"
-  | "it"
-  | "ko"
-  | "ja"
-  | "de"
-  | "fr"
-  | "es";
-type MatchType = "精准匹配";
+  | "en" | "zh-CN" | "zh-TW" | "it" | "es" | "fr" | "de" | "ja" | "ko"
+  | "pt" | "nl" | "pl" | "tr" | "ar" | "th" | "vi" | "id" | "ms"
+  | "ru" | "uk" | "hi" | "bn" | "fil" | "sv" | "da" | "no";
 type SceneStatus = "草稿" | "已启用" | "已停用";
 type ExprStatus = "草稿" | "已启用" | "已停用";
+type TranslationStatus = "未生成" | "生成中" | "已生成" | "生成失败";
+type GenSource = "主场景词" | "自动翻译" | "人工编辑";
 type RecLevel = "主推" | "推荐" | "备选";
 type RelStatus = "已启用" | "已停用";
 type ProductStatus = "待上架" | "在售" | "售罄" | "已下架";
 type SpuLibStatus = "未配置" | "草稿" | "启用" | "停用";
 type SiteSellable = "是" | "否" | "部分站点可售";
 type ProductSource = "GamsGo" | "C2C";
+type PostGenStatus = "自动启用" | "生成后待确认";
 
 interface SceneExpression {
   id: string;
+  lang: SceneLang;
   content: string;
   standard: string;
-  lang: SceneLang;
-  matchType: MatchType;
+  genSource: GenSource;
+  translationStatus: TranslationStatus;
   status: ExprStatus;
-  remark?: string;
   updater: string;
   updatedAt: string;
 }
@@ -110,9 +108,15 @@ interface SceneSpu {
 interface Scene {
   id: string;
   name: string;
+  mainTerm: string;
+  mainLang: SceneLang;
   sceneType: SceneType;
   status: SceneStatus;
   remark: string;
+  targetLangs: SceneLang[];
+  postGenStatus: PostGenStatus;
+  overrideExisting: boolean;
+  keepManual: boolean;
   expressions: SceneExpression[];
   spus: SceneSpu[];
   updater: string;
@@ -121,23 +125,61 @@ interface Scene {
 
 // -------------------- 常量 --------------------
 const SCENE_TYPES: SceneType[] = ["场景词", "品类词"];
-const LANGS: SceneLang[] = [
-  "全语言通用",
-  "en",
-  "zh-CN",
-  "zh-TW",
-  "it",
-  "ko",
-  "ja",
-  "de",
-  "fr",
-  "es",
+const ALL_LANGS: SceneLang[] = [
+  "en","zh-CN","zh-TW","it","es","fr","de","ja","ko","pt","nl","pl","tr",
+  "ar","th","vi","id","ms","ru","uk","hi","bn","fil","sv","da","no",
 ];
+const LANG_NAMES: Record<SceneLang, string> = {
+  en: "English", "zh-CN": "简体中文", "zh-TW": "繁體中文", it: "Italiano",
+  es: "Español", fr: "Français", de: "Deutsch", ja: "日本語", ko: "한국어",
+  pt: "Português", nl: "Nederlands", pl: "Polski", tr: "Türkçe", ar: "العربية",
+  th: "ไทย", vi: "Tiếng Việt", id: "Bahasa Indonesia", ms: "Bahasa Melayu",
+  ru: "Русский", uk: "Українська", hi: "हिन्दी", bn: "বাংলা", fil: "Filipino",
+  sv: "Svenska", da: "Dansk", no: "Norsk",
+};
 const REC_LEVELS: RecLevel[] = ["主推", "推荐", "备选"];
 const REC_RANK: Record<RecLevel, number> = { 主推: 0, 推荐: 1, 备选: 2 };
 
 const ATTR_WORDS = ["4k", "family", "礼品码", "tv", "mac", "账号密码", "邀请链接"];
 const SPU_DIRECT_STANDARDS = new Set(["openai", "chatgpt", "netflix", "spotify"]);
+
+// -------------------- Mock 翻译词典 --------------------
+const TRANSLATION_DICT: Record<string, Partial<Record<SceneLang, string>>> = {
+  "AI工具": {
+    "zh-CN": "AI工具", "zh-TW": "AI工具", en: "AI tools", it: "strumenti AI",
+    es: "herramientas de IA", fr: "outils IA", de: "KI-Werkzeuge", ja: "AIツール",
+    ko: "AI 도구", pt: "ferramentas de IA", nl: "AI-tools", pl: "narzędzia AI",
+    tr: "AI araçları", ar: "أدوات الذكاء الاصطناعي", th: "เครื่องมือ AI",
+    vi: "công cụ AI", id: "alat AI", ms: "alat AI", ru: "ИИ-инструменты",
+    uk: "інструменти ШІ", hi: "AI टूल", bn: "AI টুলস", fil: "AI tools",
+    sv: "AI-verktyg", da: "AI-værktøjer", no: "AI-verktøy",
+  },
+  "写论文": {
+    "zh-CN": "写论文", "zh-TW": "寫論文", en: "essay writer", it: "scrivere tesi",
+    es: "escribir tesis", fr: "rédaction de thèse", de: "Aufsatz schreiben",
+    ja: "論文作成", ko: "논문 작성", pt: "escrever tese", nl: "scriptie schrijven",
+    pl: "pisanie pracy", tr: "tez yazma", ar: "كتابة الأطروحة",
+    th: "เขียนวิทยานิพนธ์", vi: "viết luận văn", id: "menulis tesis",
+    ms: "menulis tesis", ru: "написание диссертации", uk: "написання дисертації",
+    hi: "निबंध लेखन", bn: "প্রবন্ধ লেখা", fil: "pagsulat ng tesis",
+    sv: "skriva uppsats", da: "skrive afhandling", no: "skrive oppgave",
+  },
+  "看剧": {
+    "zh-CN": "看剧", "zh-TW": "看劇", en: "watch series", it: "guardare serie",
+    es: "ver series", fr: "regarder séries", de: "Serien anschauen",
+    ja: "ドラマ視聴", ko: "드라마 시청",
+  },
+  "AI绘图": {
+    "zh-CN": "AI绘图", "zh-TW": "AI繪圖", en: "AI art", it: "immagine AI",
+    es: "imagen IA", fr: "image IA", ja: "AIお絵描き", ko: "AI 그림",
+  },
+};
+
+function translate(mainTerm: string, lang: SceneLang): string {
+  const dict = TRANSLATION_DICT[mainTerm];
+  if (dict && dict[lang]) return dict[lang] as string;
+  return `${mainTerm} (${lang})`;
+}
 
 // -------------------- 工具 --------------------
 function normalizeTerm(input: string): string {
@@ -150,7 +192,7 @@ function normalizeTerm(input: string): string {
   s = s.toLowerCase().trim();
   if (!s) return "";
   s = s.replace(/([a-z0-9])\s+([a-z0-9])/g, "$1$2");
-  s = s.replace(/[\s\-_.·]/g, "");
+  s = s.replace(/[\s\-_.·()]/g, "");
   return s;
 }
 
@@ -178,106 +220,88 @@ const CANDIDATE_SPUS: Omit<SceneSpu, "recLevel" | "order" | "relStatus">[] = [
   { spuId: "SPU10012", spuName: "Apple Music", source: "GamsGo", category: "音乐会员", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是" },
 ];
 
+// -------------------- 自动生成表达 --------------------
+function buildExpressionsFromMain(
+  mainTerm: string,
+  mainLang: SceneLang,
+  targetLangs: SceneLang[],
+  postGenStatus: PostGenStatus,
+  prev: SceneExpression[],
+  opts: { overrideExisting: boolean; keepManual: boolean },
+): SceneExpression[] {
+  const out: SceneExpression[] = [];
+  const prevByLang = new Map(prev.map((e) => [e.lang, e]));
+  const langs = Array.from(new Set<SceneLang>([mainLang, ...targetLangs]));
+  const initStatus: ExprStatus = postGenStatus === "自动启用" ? "已启用" : "草稿";
+
+  for (const lang of langs) {
+    const existing = prevByLang.get(lang);
+    const isMain = lang === mainLang;
+    // 保留人工修改
+    if (existing && existing.genSource === "人工编辑" && opts.keepManual && !opts.overrideExisting) {
+      out.push(existing);
+      continue;
+    }
+    const content = isMain ? mainTerm : translate(mainTerm, lang);
+    out.push({
+      id: existing?.id ?? uid("E"),
+      lang,
+      content,
+      standard: normalizeTerm(content),
+      genSource: isMain ? "主场景词" : "自动翻译",
+      translationStatus: "已生成",
+      status: existing?.status ?? initStatus,
+      updater: "Alex",
+      updatedAt: nowStr(),
+    });
+  }
+  // 保留 targetLangs 之外、用户保留的语言（不删除已存在但不在目标列表中的）
+  for (const e of prev) {
+    if (!langs.includes(e.lang)) out.push(e);
+  }
+  return out;
+}
+
 // -------------------- 初始数据 --------------------
+function seed(name: string, id: string, mainTerm: string, type: SceneType, status: SceneStatus, targets: SceneLang[], updater: string, updatedAt: string, spus: SceneSpu[], remark = ""): Scene {
+  const exprs = buildExpressionsFromMain(mainTerm, "zh-CN", targets, "自动启用", [], { overrideExisting: false, keepManual: true });
+  return {
+    id, name, mainTerm, mainLang: "zh-CN", sceneType: type, status, remark,
+    targetLangs: targets, postGenStatus: "自动启用", overrideExisting: false, keepManual: true,
+    expressions: exprs, spus, updater, updatedAt,
+  };
+}
+
+const FULL_TARGETS: SceneLang[] = ALL_LANGS;
+const PARTIAL_TARGETS: SceneLang[] = ["en","zh-CN","zh-TW","it","es","fr","de","ja","ko"];
+
 const initialScenes: Scene[] = [
+  seed("AI 工具", "SC0001", "AI工具", "品类词", "已启用", FULL_TARGETS, "Alex", "2026-05-20 16:00:24", [
+    { spuId: "SPU10001", spuName: "ChatGPT Plus", source: "GamsGo", category: "AI工具", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "主推", order: 1, relStatus: "已启用" },
+    { spuId: "SPU10002", spuName: "Claude", source: "GamsGo", category: "AI工具", productStatus: "在售", spuLibStatus: "停用", siteSellable: "是", recLevel: "推荐", order: 2, relStatus: "已启用" },
+    { spuId: "SPU10003", spuName: "Perplexity", source: "C2C", category: "AI工具", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "推荐", order: 3, relStatus: "已启用" },
+    { spuId: "SPU10004", spuName: "Gemini", source: "GamsGo", category: "AI工具", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "备选", order: 4, relStatus: "已停用" },
+  ], "AI 工具品类入口"),
+  seed("写论文", "SC0002", "写论文", "场景词", "已启用", FULL_TARGETS, "Linda", "2026-05-18 10:22:10", [
+    { spuId: "SPU10001", spuName: "ChatGPT Plus", source: "GamsGo", category: "AI工具", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "主推", order: 1, relStatus: "已启用" },
+    { spuId: "SPU10002", spuName: "Claude", source: "GamsGo", category: "AI工具", productStatus: "在售", spuLibStatus: "停用", siteSellable: "是", recLevel: "推荐", order: 2, relStatus: "已启用" },
+    { spuId: "SPU10003", spuName: "Perplexity", source: "C2C", category: "AI工具", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "推荐", order: 3, relStatus: "已启用" },
+  ]),
+  seed("看剧", "SC0003", "看剧", "场景词", "已启用", PARTIAL_TARGETS, "Alex", "2026-05-15 09:11:00", [
+    { spuId: "SPU10008", spuName: "Netflix", source: "GamsGo", category: "影视会员", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "主推", order: 1, relStatus: "已启用" },
+    { spuId: "SPU10009", spuName: "Disney+", source: "C2C", category: "影视会员", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "推荐", order: 2, relStatus: "已启用" },
+    { spuId: "SPU10010", spuName: "HBO Max", source: "GamsGo", category: "影视会员", productStatus: "在售", spuLibStatus: "启用", siteSellable: "否", recLevel: "推荐", order: 3, relStatus: "已启用" },
+  ]),
+  seed("AI 绘图", "SC0004", "AI绘图", "场景词", "已启用", FULL_TARGETS, "Mark", "2026-05-10 14:30:00", [
+    { spuId: "SPU10005", spuName: "Midjourney", source: "GamsGo", category: "AI绘图", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "主推", order: 1, relStatus: "已启用" },
+    { spuId: "SPU10006", spuName: "Stable Diffusion", source: "C2C", category: "AI绘图", productStatus: "在售", spuLibStatus: "启用", siteSellable: "部分站点可售", recLevel: "推荐", order: 2, relStatus: "已启用" },
+    { spuId: "SPU10007", spuName: "DALL·E", source: "GamsGo", category: "AI绘图", productStatus: "已下架", spuLibStatus: "启用", siteSellable: "是", recLevel: "备选", order: 3, relStatus: "已启用" },
+  ]),
   {
-    id: "SC0001",
-    name: "AI 工具",
-    sceneType: "品类词",
-    status: "已启用",
-    remark: "AI 工具品类入口",
-    updater: "Alex",
-    updatedAt: "2026-05-20 16:00:24",
-    expressions: [
-      { id: uid("E"), content: "AI tools", standard: "aitools", lang: "全语言通用", matchType: "精准匹配", status: "已启用", updater: "Alex", updatedAt: "2026-05-20 16:00:24" },
-      { id: uid("E"), content: "AI tool", standard: "aitool", lang: "全语言通用", matchType: "精准匹配", status: "已启用", updater: "Alex", updatedAt: "2026-05-20 16:00:24" },
-      { id: uid("E"), content: "AI工具", standard: "ai工具", lang: "zh-CN", matchType: "精准匹配", status: "已启用", updater: "Alex", updatedAt: "2026-05-20 16:00:24" },
-      { id: uid("E"), content: "人工智能工具", standard: "人工智能工具", lang: "zh-CN", matchType: "精准匹配", status: "已启用", updater: "Alex", updatedAt: "2026-05-20 16:00:24" },
-      { id: uid("E"), content: "strumenti AI", standard: "strumentiai", lang: "it", matchType: "精准匹配", status: "已启用", updater: "Alex", updatedAt: "2026-05-20 16:00:24" },
-      { id: uid("E"), content: "herramientas de IA", standard: "herramientasdeia", lang: "es", matchType: "精准匹配", status: "已启用", updater: "Alex", updatedAt: "2026-05-20 16:00:24" },
-    ],
-    spus: [
-      { spuId: "SPU10001", spuName: "ChatGPT Plus", source: "GamsGo", category: "AI工具", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "主推", order: 1, relStatus: "已启用" },
-      { spuId: "SPU10002", spuName: "Claude", source: "GamsGo", category: "AI工具", productStatus: "在售", spuLibStatus: "停用", siteSellable: "是", recLevel: "推荐", order: 2, relStatus: "已启用" },
-      { spuId: "SPU10003", spuName: "Perplexity", source: "C2C", category: "AI工具", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "推荐", order: 3, relStatus: "已启用" },
-      { spuId: "SPU10004", spuName: "Gemini", source: "GamsGo", category: "AI工具", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "备选", order: 4, relStatus: "已停用" },
-    ],
-  },
-  {
-    id: "SC0002",
-    name: "写论文",
-    sceneType: "场景词",
-    status: "已启用",
-    remark: "AI 写作类需求",
-    updater: "Linda",
-    updatedAt: "2026-05-18 10:22:10",
-    expressions: [
-      { id: uid("E"), content: "写论文", standard: "写论文", lang: "zh-CN", matchType: "精准匹配", status: "已启用", updater: "Linda", updatedAt: "2026-05-18 10:22:10" },
-      { id: uid("E"), content: "AI写论文", standard: "ai写论文", lang: "zh-CN", matchType: "精准匹配", status: "已启用", updater: "Linda", updatedAt: "2026-05-18 10:22:10" },
-      { id: uid("E"), content: "essay writer", standard: "essaywriter", lang: "en", matchType: "精准匹配", status: "已启用", updater: "Linda", updatedAt: "2026-05-18 10:22:10" },
-      { id: uid("E"), content: "write essay", standard: "writeessay", lang: "en", matchType: "精准匹配", status: "已启用", updater: "Linda", updatedAt: "2026-05-18 10:22:10" },
-      { id: uid("E"), content: "scrivere tesi", standard: "scriveretesi", lang: "it", matchType: "精准匹配", status: "已启用", updater: "Linda", updatedAt: "2026-05-18 10:22:10" },
-    ],
-    spus: [
-      { spuId: "SPU10001", spuName: "ChatGPT Plus", source: "GamsGo", category: "AI工具", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "主推", order: 1, relStatus: "已启用" },
-      { spuId: "SPU10002", spuName: "Claude", source: "GamsGo", category: "AI工具", productStatus: "在售", spuLibStatus: "停用", siteSellable: "是", recLevel: "推荐", order: 2, relStatus: "已启用" },
-      { spuId: "SPU10003", spuName: "Perplexity", source: "C2C", category: "AI工具", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "推荐", order: 3, relStatus: "已启用" },
-    ],
-  },
-  {
-    id: "SC0003",
-    name: "看剧",
-    sceneType: "场景词",
-    status: "已启用",
-    remark: "",
-    updater: "Alex",
-    updatedAt: "2026-05-15 09:11:00",
-    expressions: [
-      { id: uid("E"), content: "看剧", standard: "看剧", lang: "zh-CN", matchType: "精准匹配", status: "已启用", updater: "Alex", updatedAt: "2026-05-15 09:11:00" },
-      { id: uid("E"), content: "watch series", standard: "watchseries", lang: "en", matchType: "精准匹配", status: "已启用", updater: "Alex", updatedAt: "2026-05-15 09:11:00" },
-      { id: uid("E"), content: "guardare serie", standard: "guardareserie", lang: "it", matchType: "精准匹配", status: "已启用", updater: "Alex", updatedAt: "2026-05-15 09:11:00" },
-      { id: uid("E"), content: "影视会员", standard: "影视会员", lang: "zh-CN", matchType: "精准匹配", status: "草稿", updater: "Alex", updatedAt: "2026-05-15 09:11:00" },
-    ],
-    spus: [
-      { spuId: "SPU10008", spuName: "Netflix", source: "GamsGo", category: "影视会员", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "主推", order: 1, relStatus: "已启用" },
-      { spuId: "SPU10009", spuName: "Disney+", source: "C2C", category: "影视会员", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "推荐", order: 2, relStatus: "已启用" },
-      { spuId: "SPU10010", spuName: "HBO Max", source: "GamsGo", category: "影视会员", productStatus: "在售", spuLibStatus: "启用", siteSellable: "否", recLevel: "推荐", order: 3, relStatus: "已启用" },
-    ],
-  },
-  {
-    id: "SC0004",
-    name: "AI 绘图",
-    sceneType: "场景词",
-    status: "已启用",
-    remark: "",
-    updater: "Mark",
-    updatedAt: "2026-05-10 14:30:00",
-    expressions: [
-      { id: uid("E"), content: "AI art", standard: "aiart", lang: "全语言通用", matchType: "精准匹配", status: "已启用", updater: "Mark", updatedAt: "2026-05-10 14:30:00" },
-      { id: uid("E"), content: "AI绘图", standard: "ai绘图", lang: "zh-CN", matchType: "精准匹配", status: "已启用", updater: "Mark", updatedAt: "2026-05-10 14:30:00" },
-      { id: uid("E"), content: "AI image", standard: "aiimage", lang: "en", matchType: "精准匹配", status: "已启用", updater: "Mark", updatedAt: "2026-05-10 14:30:00" },
-      { id: uid("E"), content: "imagen IA", standard: "imagenia", lang: "es", matchType: "精准匹配", status: "已启用", updater: "Mark", updatedAt: "2026-05-10 14:30:00" },
-      { id: uid("E"), content: "immagine AI", standard: "immagineai", lang: "it", matchType: "精准匹配", status: "已启用", updater: "Mark", updatedAt: "2026-05-10 14:30:00" },
-    ],
-    spus: [
-      { spuId: "SPU10005", spuName: "Midjourney", source: "GamsGo", category: "AI绘图", productStatus: "在售", spuLibStatus: "启用", siteSellable: "是", recLevel: "主推", order: 1, relStatus: "已启用" },
-      { spuId: "SPU10006", spuName: "Stable Diffusion", source: "C2C", category: "AI绘图", productStatus: "在售", spuLibStatus: "启用", siteSellable: "部分站点可售", recLevel: "推荐", order: 2, relStatus: "已启用" },
-      { spuId: "SPU10007", spuName: "DALL·E", source: "GamsGo", category: "AI绘图", productStatus: "已下架", spuLibStatus: "启用", siteSellable: "是", recLevel: "备选", order: 3, relStatus: "已启用" },
-    ],
-  },
-  {
-    id: "SC0005",
-    name: "学习工具",
-    sceneType: "场景词",
-    status: "草稿",
-    remark: "",
-    updater: "Linda",
-    updatedAt: "2026-05-08 19:00:00",
-    expressions: [
-      { id: uid("E"), content: "学习工具", standard: "学习工具", lang: "zh-CN", matchType: "精准匹配", status: "草稿", updater: "Linda", updatedAt: "2026-05-08 19:00:00" },
-      { id: uid("E"), content: "study tools", standard: "studytools", lang: "en", matchType: "精准匹配", status: "草稿", updater: "Linda", updatedAt: "2026-05-08 19:00:00" },
-    ],
-    spus: [],
+    id: "SC0005", name: "学习工具", mainTerm: "学习工具", mainLang: "zh-CN", sceneType: "场景词",
+    status: "草稿", remark: "", targetLangs: FULL_TARGETS, postGenStatus: "自动启用",
+    overrideExisting: false, keepManual: true,
+    expressions: [], spus: [], updater: "Linda", updatedAt: "2026-05-08 19:00:00",
   },
 ];
 
@@ -300,10 +324,23 @@ function statusBadge(status: SceneStatus | ExprStatus) {
   return map[status];
 }
 
-function langBadge(lang: SceneLang) {
-  return lang === "全语言通用"
-    ? "bg-violet-100 text-violet-700"
-    : "bg-sky-100 text-sky-700";
+function transStatusBadge(s: TranslationStatus) {
+  const map: Record<TranslationStatus, string> = {
+    未生成: "bg-slate-100 text-slate-600",
+    生成中: "bg-amber-100 text-amber-700",
+    已生成: "bg-emerald-100 text-emerald-700",
+    生成失败: "bg-rose-100 text-rose-700",
+  };
+  return map[s];
+}
+
+function genSourceBadge(s: GenSource) {
+  const map: Record<GenSource, string> = {
+    主场景词: "bg-violet-100 text-violet-700",
+    自动翻译: "bg-sky-100 text-sky-700",
+    人工编辑: "bg-amber-100 text-amber-700",
+  };
+  return map[s];
 }
 
 function recLevelBadge(level: RecLevel) {
@@ -331,9 +368,11 @@ export function SceneTermManagement() {
 
   // 筛选
   const [fName, setFName] = useState("");
+  const [fMain, setFMain] = useState("");
   const [fExpr, setFExpr] = useState("");
   const [fType, setFType] = useState("全部");
   const [fLang, setFLang] = useState("全部");
+  const [fGen, setFGen] = useState("全部");
   const [fStatus, setFStatus] = useState("全部");
   const [fSpu, setFSpu] = useState("");
   const [fSource, setFSource] = useState("全部");
@@ -346,30 +385,19 @@ export function SceneTermManagement() {
   const decoratedRows = useMemo(() => {
     return scenes
       .map((sc) => {
-        const exprCount = sc.expressions.length;
-        const langSet = new Set(sc.expressions.map((e) => e.lang));
-        const hasUniversal = langSet.has("全语言通用");
-        const langCount = langSet.size;
-        let recallable = 0;
-        let gamsRec = 0;
-        let c2cRec = 0;
+        const target = sc.targetLangs.length;
+        const generated = sc.expressions.filter((e) => e.translationStatus === "已生成").length;
+        const enabled = sc.expressions.filter((e) => e.status === "已启用").length;
+        const pending = sc.expressions.filter((e) => e.translationStatus !== "已生成" || e.status !== "已启用").length
+          + Math.max(0, target - sc.expressions.length);
+        let recallable = 0; let gamsRec = 0; let c2cRec = 0;
         sc.spus.forEach((s) => {
           if (computeRecall(sc, s).ok) {
             recallable++;
-            if (s.source === "GamsGo") gamsRec++;
-            else c2cRec++;
+            if (s.source === "GamsGo") gamsRec++; else c2cRec++;
           }
         });
-        return {
-          ...sc,
-          exprCount,
-          langCount,
-          hasUniversal,
-          total: sc.spus.length,
-          recallable,
-          gamsRec,
-          c2cRec,
-        };
+        return { ...sc, target, generated, enabled, pending, total: sc.spus.length, recallable, gamsRec, c2cRec };
       })
       .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
   }, [scenes]);
@@ -380,6 +408,7 @@ export function SceneTermManagement() {
         const k = fName.toLowerCase();
         if (!r.name.toLowerCase().includes(k) && !r.id.toLowerCase().includes(k)) return false;
       }
+      if (fMain && !r.mainTerm.toLowerCase().includes(fMain.toLowerCase())) return false;
       if (fExpr) {
         const k = fExpr.toLowerCase();
         const hit = r.expressions.some(
@@ -389,6 +418,11 @@ export function SceneTermManagement() {
       }
       if (fType !== "全部" && r.sceneType !== fType) return false;
       if (fLang !== "全部" && !r.expressions.some((e) => e.lang === fLang)) return false;
+      if (fGen !== "全部") {
+        const has = r.expressions.some((e) => e.translationStatus === fGen);
+        const allFlag = fGen === "未生成" ? r.expressions.length < r.target : has;
+        if (!allFlag) return false;
+      }
       if (fStatus !== "全部" && r.status !== fStatus) return false;
       if (fSpu) {
         const k = fSpu.toLowerCase();
@@ -403,11 +437,11 @@ export function SceneTermManagement() {
       if (fUpdater && !r.updater.toLowerCase().includes(fUpdater.toLowerCase())) return false;
       return true;
     });
-  }, [decoratedRows, fName, fExpr, fType, fLang, fStatus, fSpu, fSource, fRecall, fUpdater]);
+  }, [decoratedRows, fName, fMain, fExpr, fType, fLang, fGen, fStatus, fSpu, fSource, fRecall, fUpdater]);
 
   function resetFilters() {
-    setFName(""); setFExpr(""); setFType("全部"); setFLang("全部"); setFStatus("全部");
-    setFSpu(""); setFSource("全部"); setFRecall("全部"); setFUpdater("");
+    setFName(""); setFMain(""); setFExpr(""); setFType("全部"); setFLang("全部"); setFGen("全部");
+    setFStatus("全部"); setFSpu(""); setFSource("全部"); setFRecall("全部"); setFUpdater("");
   }
 
   function openCreate() { setEditingId(null); setView("detail"); }
@@ -494,9 +528,11 @@ export function SceneTermManagement() {
                   <SceneListView
                     rows={filteredRows}
                     fName={fName} setFName={setFName}
+                    fMain={fMain} setFMain={setFMain}
                     fExpr={fExpr} setFExpr={setFExpr}
                     fType={fType} setFType={setFType}
                     fLang={fLang} setFLang={setFLang}
+                    fGen={fGen} setFGen={setFGen}
                     fStatus={fStatus} setFStatus={setFStatus}
                     fSpu={fSpu} setFSpu={setFSpu}
                     fSource={fSource} setFSource={setFSource}
@@ -534,13 +570,15 @@ export function SceneTermManagement() {
 // ============================================================
 interface ListProps {
   rows: (Scene & {
-    exprCount: number; langCount: number; hasUniversal: boolean;
+    target: number; generated: number; enabled: number; pending: number;
     total: number; recallable: number; gamsRec: number; c2cRec: number;
   })[];
   fName: string; setFName: (v: string) => void;
+  fMain: string; setFMain: (v: string) => void;
   fExpr: string; setFExpr: (v: string) => void;
   fType: string; setFType: (v: string) => void;
   fLang: string; setFLang: (v: string) => void;
+  fGen: string; setFGen: (v: string) => void;
   fStatus: string; setFStatus: (v: string) => void;
   fSpu: string; setFSpu: (v: string) => void;
   fSource: string; setFSource: (v: string) => void;
@@ -559,7 +597,7 @@ function SceneListView(p: ListProps) {
       <div>
         <h1 className="text-lg font-semibold text-slate-800">场景搜索配置</h1>
         <p className="mt-1 text-xs text-slate-500">
-          维护用户在搜索中表达的需求场景。每个场景可以配置多个不同语言的搜索词表达，并统一关联一组可召回的 SPU。用户搜索命中任一表达后，系统会进入对应场景，并根据关联 SPU、商品搜索状态、商品状态、站点可售状态返回符合条件的商品。
+          维护用户在搜索中表达的需求场景。运营只需创建一个场景并填写一个主场景词，系统会自动生成多语言搜索表达，所有语言搜索词共用同一组关联 SPU。
         </p>
       </div>
 
@@ -571,7 +609,11 @@ function SceneListView(p: ListProps) {
             <Input value={p.fName} onChange={(e) => p.setFName(e.target.value)} placeholder="请输入" className="mt-1 h-8" />
           </div>
           <div>
-            <Label className="text-xs text-slate-500">搜索词表达</Label>
+            <Label className="text-xs text-slate-500">主场景词</Label>
+            <Input value={p.fMain} onChange={(e) => p.setFMain(e.target.value)} placeholder="请输入" className="mt-1 h-8" />
+          </div>
+          <div>
+            <Label className="text-xs text-slate-500">多语言搜索词</Label>
             <Input value={p.fExpr} onChange={(e) => p.setFExpr(e.target.value)} placeholder="按任一表达搜索" className="mt-1 h-8" />
           </div>
           <div>
@@ -584,18 +626,31 @@ function SceneListView(p: ListProps) {
               </SelectContent>
             </Select>
           </div>
+        </div>
+        <div className="grid grid-cols-4 gap-3">
           <div>
-            <Label className="text-xs text-slate-500">覆盖语言</Label>
+            <Label className="text-xs text-slate-500">生成语言</Label>
             <Select value={p.fLang} onValueChange={p.setFLang}>
               <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="全部">全部</SelectItem>
-                {LANGS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                {ALL_LANGS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-        </div>
-        <div className="grid grid-cols-4 gap-3">
+          <div>
+            <Label className="text-xs text-slate-500">翻译生成状态</Label>
+            <Select value={p.fGen} onValueChange={p.setFGen}>
+              <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="全部">全部</SelectItem>
+                <SelectItem value="未生成">未生成</SelectItem>
+                <SelectItem value="生成中">生成中</SelectItem>
+                <SelectItem value="已生成">已生成</SelectItem>
+                <SelectItem value="生成失败">生成失败</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div>
             <Label className="text-xs text-slate-500">场景状态</Label>
             <Select value={p.fStatus} onValueChange={p.setFStatus}>
@@ -612,6 +667,8 @@ function SceneListView(p: ListProps) {
             <Label className="text-xs text-slate-500">关联 SPU</Label>
             <Input value={p.fSpu} onChange={(e) => p.setFSpu(e.target.value)} placeholder="SPU 名称 / ID" className="mt-1 h-8" />
           </div>
+        </div>
+        <div className="grid grid-cols-4 gap-3 items-end">
           <div>
             <Label className="text-xs text-slate-500">商品来源</Label>
             <Select value={p.fSource} onValueChange={p.setFSource}>
@@ -634,13 +691,11 @@ function SceneListView(p: ListProps) {
               </SelectContent>
             </Select>
           </div>
-        </div>
-        <div className="grid grid-cols-4 gap-3 items-end">
           <div>
             <Label className="text-xs text-slate-500">最近更新人</Label>
             <Input value={p.fUpdater} onChange={(e) => p.setFUpdater(e.target.value)} placeholder="请输入" className="mt-1 h-8" />
           </div>
-          <div className="col-span-3 flex items-end gap-2 justify-end">
+          <div className="flex items-end gap-2 justify-end">
             <Button size="sm" className="h-8 bg-blue-500 hover:bg-blue-600"><Search className="h-3.5 w-3.5 mr-1" />查询</Button>
             <Button size="sm" variant="outline" className="h-8" onClick={p.onReset}><RotateCcw className="h-3.5 w-3.5 mr-1" />重置</Button>
           </div>
@@ -659,29 +714,31 @@ function SceneListView(p: ListProps) {
         </Button>
       </div>
 
-      <div className="rounded-md border border-slate-200 bg-white">
+      <div className="rounded-md border border-slate-200 bg-white overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[90px]">场景 ID</TableHead>
-              <TableHead>场景名称</TableHead>
-              <TableHead className="w-[80px]">场景类型</TableHead>
-              <TableHead className="w-[90px] text-center">表达数</TableHead>
-              <TableHead className="w-[90px] text-center">语言数</TableHead>
-              <TableHead className="w-[110px] text-center">全语言通用</TableHead>
-              <TableHead className="w-[90px] text-center">关联 SPU</TableHead>
-              <TableHead className="w-[100px] text-center">可召回 SPU</TableHead>
-              <TableHead className="w-[110px] text-center">GamsGo 可召回</TableHead>
-              <TableHead className="w-[90px] text-center">C2C 可召回</TableHead>
-              <TableHead className="w-[80px]">场景状态</TableHead>
-              <TableHead className="w-[90px]">更新人</TableHead>
-              <TableHead className="w-[150px]">更新时间</TableHead>
-              <TableHead className="w-[200px]">操作</TableHead>
+              <TableHead className="w-[80px]">场景 ID</TableHead>
+              <TableHead className="w-[120px]">场景名称</TableHead>
+              <TableHead className="w-[120px]">主场景词</TableHead>
+              <TableHead className="w-[70px]">类型</TableHead>
+              <TableHead className="w-[70px] text-center">目标语言</TableHead>
+              <TableHead className="w-[70px] text-center">已生成</TableHead>
+              <TableHead className="w-[70px] text-center">已启用</TableHead>
+              <TableHead className="w-[70px] text-center">待处理</TableHead>
+              <TableHead className="w-[80px] text-center">关联 SPU</TableHead>
+              <TableHead className="w-[80px] text-center">可召回</TableHead>
+              <TableHead className="w-[80px] text-center">GamsGo</TableHead>
+              <TableHead className="w-[70px] text-center">C2C</TableHead>
+              <TableHead className="w-[70px]">状态</TableHead>
+              <TableHead className="w-[80px]">更新人</TableHead>
+              <TableHead className="w-[140px]">更新时间</TableHead>
+              <TableHead className="w-[210px]">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {p.rows.length === 0 ? (
-              <TableRow><TableCell colSpan={14} className="h-32 text-center text-slate-400">暂无场景配置</TableCell></TableRow>
+              <TableRow><TableCell colSpan={16} className="h-32 text-center text-slate-400">暂无场景配置</TableCell></TableRow>
             ) : (
               p.rows.map((r) => {
                 const noRecall = r.total > 0 && r.recallable === 0;
@@ -689,17 +746,15 @@ function SceneListView(p: ListProps) {
                   <TableRow key={r.id}>
                     <TableCell className="text-slate-500">{r.id}</TableCell>
                     <TableCell className="font-medium text-slate-800">{r.name}</TableCell>
+                    <TableCell className="text-slate-700">{r.mainTerm}</TableCell>
                     <TableCell>
                       <span className="rounded px-1.5 py-0.5 text-xs bg-fuchsia-100 text-fuchsia-700">{r.sceneType}</span>
                     </TableCell>
-                    <TableCell className="text-center">{r.exprCount}</TableCell>
-                    <TableCell className="text-center">{r.langCount}</TableCell>
+                    <TableCell className="text-center">{r.target}</TableCell>
+                    <TableCell className="text-center text-emerald-700">{r.generated}</TableCell>
+                    <TableCell className="text-center text-blue-700">{r.enabled}</TableCell>
                     <TableCell className="text-center">
-                      {r.hasUniversal ? (
-                        <span className="text-xs text-violet-700">是</span>
-                      ) : (
-                        <span className="text-xs text-slate-400">否</span>
-                      )}
+                      {r.pending > 0 ? <span className="text-amber-600">{r.pending}</span> : <span className="text-slate-400">0</span>}
                     </TableCell>
                     <TableCell className="text-center">{r.total}</TableCell>
                     <TableCell className="text-center">
@@ -767,9 +822,15 @@ function makeBlank(): Scene {
   return {
     id: `SC${String(Date.now()).slice(-6)}`,
     name: "",
+    mainTerm: "",
+    mainLang: "zh-CN",
     sceneType: "场景词",
     status: "草稿",
     remark: "",
+    targetLangs: ALL_LANGS,
+    postGenStatus: "自动启用",
+    overrideExisting: false,
+    keepManual: true,
     expressions: [],
     spus: [],
     updater: "Alex",
@@ -783,14 +844,14 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
     existing
       ? {
           ...existing,
+          targetLangs: [...existing.targetLangs],
           expressions: existing.expressions.map((e) => ({ ...e })),
           spus: existing.spus.map((s) => ({ ...s })),
         }
       : makeBlank(),
   );
   const [addSpuOpen, setAddSpuOpen] = useState(false);
-  const [exprOpen, setExprOpen] = useState(false);
-  const [editingExpr, setEditingExpr] = useState<SceneExpression | null>(null);
+  const [exprEditing, setExprEditing] = useState<SceneExpression | null>(null);
 
   function update<K extends keyof Scene>(key: K, value: Scene[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -798,9 +859,10 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
 
   function validate(forStatus: SceneStatus): string | null {
     if (!draft.name.trim()) return "请输入场景名称";
+    if (!draft.mainTerm.trim()) return "请输入主场景词";
     if (forStatus === "已启用") {
       if (!draft.expressions.some((e) => e.status === "已启用"))
-        return "请至少配置 1 个已启用的搜索词表达";
+        return "请至少存在 1 个已启用多语言搜索词";
       if (draft.spus.length === 0) return "请至少关联 1 个 SPU";
       if (!draft.spus.some((s) => s.relStatus === "已启用"))
         return "请至少保留 1 个关联状态为已启用的 SPU";
@@ -822,36 +884,57 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
     onBack();
   }
 
-  // 表达式操作
-  function openExprNew() { setEditingExpr(null); setExprOpen(true); }
-  function openExprEdit(e: SceneExpression) { setEditingExpr(e); setExprOpen(true); }
-  function saveExpr(payload: SceneExpression, isNew: boolean) {
-    const std = normalizeTerm(payload.content);
-    if (!payload.content.trim()) { toast.error("请输入搜索词内容"); return; }
-    // 同场景同语言重复
-    const dupSame = draft.expressions.find(
-      (e) => e.id !== payload.id && e.lang === payload.lang && e.standard === std,
+  // 自动生成多语言搜索词
+  function doGenerate() {
+    if (!draft.mainTerm.trim()) { toast.error("请先填写主场景词"); return; }
+    if (draft.targetLangs.length === 0) { toast.error("请至少选择 1 种目标语言"); return; }
+    const next = buildExpressionsFromMain(
+      draft.mainTerm.trim(), draft.mainLang, draft.targetLangs,
+      draft.postGenStatus, draft.expressions,
+      { overrideExisting: draft.overrideExisting, keepManual: draft.keepManual },
     );
-    if (dupSame) { toast.error("当前场景下已存在相同语言和标准化词的搜索词表达，请勿重复配置。"); return; }
-    // 跨场景冲突提示
-    const crossScene = allScenes.find(
-      (sc) => sc.id !== draft.id && sc.expressions.some((e) => e.lang === payload.lang && e.standard === std),
+    // 跨场景冲突提示（仅检查主语言）
+    const mainStd = normalizeTerm(draft.mainTerm);
+    const cross = allScenes.find(
+      (sc) => sc.id !== draft.id && sc.expressions.some((e) => e.lang === draft.mainLang && e.standard === mainStd),
     );
-    if (crossScene) toast.warning(`当前搜索词表达已被场景"${crossScene.name}"使用，可能导致同一搜索词命中多个场景。`);
-    if (SPU_DIRECT_STANDARDS.has(std)) toast.warning("当前搜索词已被配置为商品直连词条，搜索时明确商品结果将优先于场景结果。");
-    if (ATTR_WORDS.includes(std)) toast.warning("当前词更适合通过商品属性搜索数据自动参与搜索，不建议配置为场景搜索词。");
+    if (cross) toast.warning(`主场景词已被场景"${cross.name}"使用，可能导致同一搜索词命中多个场景。`);
+    if (SPU_DIRECT_STANDARDS.has(mainStd)) toast.warning("主场景词已被配置为商品直连词条，搜索时明确商品结果将优先于场景结果。");
+    if (ATTR_WORDS.includes(mainStd)) toast.warning("该词更适合通过商品属性搜索数据自动参与搜索，不建议作为场景搜索词启用。");
 
-    const finalExpr: SceneExpression = { ...payload, standard: std, updatedAt: nowStr(), updater: payload.updater || "Alex" };
+    setDraft((d) => ({ ...d, expressions: next }));
+    toast.success(`已生成 ${next.length} 个多语言搜索词`);
+  }
+
+  function toggleTarget(lang: SceneLang, on: boolean) {
     setDraft((d) => ({
       ...d,
-      expressions: isNew
-        ? [...d.expressions, finalExpr]
-        : d.expressions.map((e) => (e.id === payload.id ? finalExpr : e)),
+      targetLangs: on
+        ? Array.from(new Set([...d.targetLangs, lang]))
+        : d.targetLangs.filter((l) => l !== lang),
     }));
-    setExprOpen(false);
   }
-  function removeExpr(id: string) {
-    setDraft((d) => ({ ...d, expressions: d.expressions.filter((e) => e.id !== id) }));
+
+  function selectAllTargets() { setDraft((d) => ({ ...d, targetLangs: ALL_LANGS })); }
+  function clearAllTargets() { setDraft((d) => ({ ...d, targetLangs: [d.mainLang] })); }
+
+  // 单语言搜索词操作
+  function regenOne(lang: SceneLang) {
+    setDraft((d) => {
+      const exprs = d.expressions.map((e) => {
+        if (e.lang !== lang) return e;
+        const isMain = lang === d.mainLang;
+        const content = isMain ? d.mainTerm : translate(d.mainTerm, lang);
+        return {
+          ...e, content, standard: normalizeTerm(content),
+          genSource: isMain ? "主场景词" : "自动翻译" as GenSource,
+          translationStatus: "已生成" as TranslationStatus,
+          updater: "Alex", updatedAt: nowStr(),
+        };
+      });
+      return { ...d, expressions: exprs };
+    });
+    toast.success(`已重新生成：${lang}`);
   }
   function toggleExpr(id: string) {
     setDraft((d) => ({
@@ -860,6 +943,26 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
         e.id === id ? { ...e, status: e.status === "已启用" ? "已停用" : "已启用", updatedAt: nowStr() } : e,
       ),
     }));
+  }
+  function removeExpr(id: string) {
+    setDraft((d) => ({ ...d, expressions: d.expressions.filter((e) => e.id !== id) }));
+  }
+  function saveExprEdit(payload: SceneExpression) {
+    const std = normalizeTerm(payload.content);
+    if (!payload.content.trim()) { toast.error("搜索词内容不能为空"); return; }
+    const dupSame = draft.expressions.find(
+      (e) => e.id !== payload.id && e.lang === payload.lang && e.standard === std,
+    );
+    if (dupSame) { toast.error("当前场景下已存在相同语言和标准化词的搜索词。"); return; }
+    setDraft((d) => ({
+      ...d,
+      expressions: d.expressions.map((e) =>
+        e.id === payload.id
+          ? { ...payload, standard: std, genSource: "人工编辑", translationStatus: "已生成", updater: "Alex", updatedAt: nowStr() }
+          : e,
+      ),
+    }));
+    setExprEditing(null);
   }
 
   // SPU 操作
@@ -896,6 +999,14 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
     });
   }, [draft.spus]);
 
+  const sortedExprs = useMemo(() => {
+    return [...draft.expressions].sort((a, b) => {
+      if (a.lang === draft.mainLang) return -1;
+      if (b.lang === draft.mainLang) return 1;
+      return a.lang.localeCompare(b.lang);
+    });
+  }, [draft.expressions, draft.mainLang]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -905,14 +1016,26 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
         <h1 className="text-lg font-semibold text-slate-800">{isCreate ? "新增场景" : "编辑场景"}</h1>
       </div>
 
-      {/* 基础信息 */}
+      {/* 区域一：基础信息 */}
       <section className="rounded-md border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-800 mb-3">场景基础信息</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className="text-xs text-slate-600">场景名称 <span className="text-rose-500">*</span></Label>
             <Input value={draft.name} onChange={(e) => update("name", e.target.value)} placeholder="例如：AI 工具 / 写论文 / 看剧" className="mt-1 h-8" />
-            <p className="mt-1 text-[11px] text-slate-400">场景名称表示一个搜索意图，仅用于后台识别。</p>
+            <p className="mt-1 text-[11px] text-slate-400">仅用于后台识别一个搜索意图。</p>
+          </div>
+          <div>
+            <Label className="text-xs text-slate-600">主场景词 <span className="text-rose-500">*</span></Label>
+            <Input value={draft.mainTerm} onChange={(e) => update("mainTerm", e.target.value)} placeholder="例如：AI工具" className="mt-1 h-8" />
+            <p className="mt-1 text-[11px] text-slate-400">系统将根据主场景词自动翻译生成多语言搜索词。</p>
+          </div>
+          <div>
+            <Label className="text-xs text-slate-600">主语言 <span className="text-rose-500">*</span></Label>
+            <Select value={draft.mainLang} onValueChange={(v) => update("mainLang", v as SceneLang)}>
+              <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>{ALL_LANGS.map((l) => <SelectItem key={l} value={l}>{l} · {LANG_NAMES[l]}</SelectItem>)}</SelectContent>
+            </Select>
           </div>
           <div>
             <Label className="text-xs text-slate-600">场景类型 <span className="text-rose-500">*</span></Label>
@@ -933,146 +1056,243 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
         </div>
       </section>
 
-      {/* 多语言搜索词表达 */}
+      {/* 区域二：自动多语言生成配置 */}
       <section className="rounded-md border border-slate-200 bg-white p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-              <Languages className="h-4 w-4 text-slate-500" />多语言搜索词表达
+              <Sparkles className="h-4 w-4 text-blue-500" />自动多语言生成配置
             </h2>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              同一个场景可配置多个不同语言的搜索词表达，它们共用同一组关联 SPU。"全语言通用"在所有语言环境下可命中。
+              系统根据主场景词自动翻译生成下列目标语言的搜索表达，所有语言共用同一组关联 SPU。
             </p>
           </div>
-          <Button size="sm" variant="outline" className="h-8" onClick={openExprNew}>
-            <Plus className="h-3.5 w-3.5 mr-1" />新增表达
+          <Button size="sm" className="h-8 bg-blue-500 hover:bg-blue-600" onClick={doGenerate}>
+            <Sparkles className="h-3.5 w-3.5 mr-1" />生成多语言搜索词
           </Button>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>搜索词内容</TableHead>
-              <TableHead>标准化词</TableHead>
-              <TableHead className="w-[110px]">词条语言</TableHead>
-              <TableHead className="w-[90px]">匹配方式</TableHead>
-              <TableHead className="w-[80px]">状态</TableHead>
-              <TableHead className="w-[90px]">更新人</TableHead>
-              <TableHead className="w-[150px]">更新时间</TableHead>
-              <TableHead className="w-[160px]">操作</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {draft.expressions.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="h-20 text-center text-slate-400">暂无搜索词表达，点击"新增表达"开始配置</TableCell></TableRow>
-            ) : (
-              draft.expressions.map((e) => (
-                <TableRow key={e.id}>
-                  <TableCell className="font-medium text-slate-800">{e.content}</TableCell>
-                  <TableCell className="text-slate-600">{e.standard}</TableCell>
-                  <TableCell><span className={cn("rounded px-1.5 py-0.5 text-xs", langBadge(e.lang))}>{e.lang}</span></TableCell>
-                  <TableCell className="text-slate-600 text-xs">{e.matchType}</TableCell>
-                  <TableCell><span className={cn("rounded px-1.5 py-0.5 text-xs", statusBadge(e.status))}>{e.status}</span></TableCell>
-                  <TableCell className="text-slate-600">{e.updater}</TableCell>
-                  <TableCell className="text-slate-500 text-xs">{e.updatedAt}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2 text-blue-600 text-xs">
-                      <button className="hover:underline inline-flex items-center gap-0.5" onClick={() => openExprEdit(e)}>
-                        <Pencil className="h-3 w-3" />编辑
-                      </button>
-                      <button className="hover:underline inline-flex items-center gap-0.5" onClick={() => toggleExpr(e.id)}>
-                        <Power className="h-3 w-3" />{e.status === "已启用" ? "停用" : "启用"}
-                      </button>
-                      <button className="text-rose-600 hover:underline inline-flex items-center gap-0.5" onClick={() => removeExpr(e.id)}>
-                        <Trash2 className="h-3 w-3" />删除
-                      </button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <div className="space-y-3">
+          <div>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-slate-600">目标语言（{draft.targetLangs.length} / {ALL_LANGS.length}）</Label>
+              <div className="flex items-center gap-2 text-xs">
+                <button className="text-blue-600 hover:underline" onClick={selectAllTargets}>全选</button>
+                <span className="text-slate-300">|</span>
+                <button className="text-slate-500 hover:underline" onClick={clearAllTargets}>仅主语言</button>
+              </div>
+            </div>
+            <div className="mt-2 grid grid-cols-6 gap-2 rounded border border-slate-200 bg-slate-50 p-3">
+              {ALL_LANGS.map((l) => {
+                const on = draft.targetLangs.includes(l);
+                const isMain = l === draft.mainLang;
+                return (
+                  <label key={l} className={cn("flex items-center gap-1.5 cursor-pointer text-xs", isMain && "opacity-60")}>
+                    <Checkbox checked={on} disabled={isMain} onCheckedChange={(v) => toggleTarget(l, !!v)} />
+                    <span className="text-slate-700">{l}</span>
+                    <span className="text-slate-400 truncate">{LANG_NAMES[l]}</span>
+                  </label>
+                );
+              })}
+            </div>
+            <p className="mt-1 text-[11px] text-slate-400">主语言会自动包含在内，不可取消。</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs text-slate-600">生成方式</Label>
+              <Select value="自动翻译生成" onValueChange={() => {}}>
+                <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="自动翻译生成">自动翻译生成</SelectItem>
+                  <SelectItem value="手动补充" disabled>手动补充（本期不支持）</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-slate-600">生成后状态</Label>
+              <Select value={draft.postGenStatus} onValueChange={(v) => update("postGenStatus", v as PostGenStatus)}>
+                <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="自动启用">自动启用</SelectItem>
+                  <SelectItem value="生成后待确认">生成后待确认</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between rounded border border-slate-200 px-3 py-2">
+              <div>
+                <div className="text-xs text-slate-700">覆盖已有翻译</div>
+                <div className="text-[11px] text-slate-400">重新生成时是否覆盖已生成的搜索词</div>
+              </div>
+              <Switch checked={draft.overrideExisting} onCheckedChange={(v) => update("overrideExisting", v)} />
+            </div>
+            <div className="flex items-center justify-between rounded border border-slate-200 px-3 py-2">
+              <div>
+                <div className="text-xs text-slate-700">保留人工修改</div>
+                <div className="text-[11px] text-slate-400">不覆盖运营人工编辑过的语言</div>
+              </div>
+              <Switch checked={draft.keepManual} onCheckedChange={(v) => update("keepManual", v)} />
+            </div>
+          </div>
+        </div>
       </section>
 
-      {/* 关联 SPU 配置 */}
+      {/* 区域三：多语言搜索词结果 */}
+      <section className="rounded-md border border-slate-200 bg-white p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+              <Languages className="h-4 w-4 text-slate-500" />多语言搜索词结果
+              <span className="text-[11px] font-normal text-slate-400">
+                共 {draft.expressions.length} 条 · 已启用 {draft.expressions.filter((e) => e.status === "已启用").length}
+              </span>
+            </h2>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              下表展示系统根据主场景词自动生成的多语言搜索表达。可编辑、停用或重新生成单个语言。
+            </p>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[80px]">语言</TableHead>
+                <TableHead className="w-[110px]">语言名称</TableHead>
+                <TableHead>搜索词内容</TableHead>
+                <TableHead>标准化词</TableHead>
+                <TableHead className="w-[90px]">生成来源</TableHead>
+                <TableHead className="w-[90px]">翻译状态</TableHead>
+                <TableHead className="w-[80px]">词条状态</TableHead>
+                <TableHead className="w-[80px]">更新人</TableHead>
+                <TableHead className="w-[140px]">更新时间</TableHead>
+                <TableHead className="w-[180px]">操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedExprs.length === 0 ? (
+                <TableRow><TableCell colSpan={10} className="h-24 text-center text-slate-400">尚未生成多语言搜索词，请填写主场景词并点击"生成多语言搜索词"。</TableCell></TableRow>
+              ) : (
+                sortedExprs.map((e) => {
+                  const isMain = e.lang === draft.mainLang;
+                  return (
+                    <TableRow key={e.id}>
+                      <TableCell className="text-slate-700 font-medium">
+                        {e.lang}{isMain && <span className="ml-1 text-[10px] text-violet-600">(主)</span>}
+                      </TableCell>
+                      <TableCell className="text-slate-500 text-xs">{LANG_NAMES[e.lang]}</TableCell>
+                      <TableCell className="text-slate-800">{e.content}</TableCell>
+                      <TableCell className="text-slate-600">{e.standard}</TableCell>
+                      <TableCell><span className={cn("rounded px-1.5 py-0.5 text-xs", genSourceBadge(e.genSource))}>{e.genSource}</span></TableCell>
+                      <TableCell><span className={cn("rounded px-1.5 py-0.5 text-xs", transStatusBadge(e.translationStatus))}>{e.translationStatus}</span></TableCell>
+                      <TableCell><span className={cn("rounded px-1.5 py-0.5 text-xs", statusBadge(e.status))}>{e.status}</span></TableCell>
+                      <TableCell className="text-slate-600">{e.updater}</TableCell>
+                      <TableCell className="text-slate-500 text-xs">{e.updatedAt}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-blue-600 text-xs">
+                          <button className="hover:underline inline-flex items-center gap-0.5" onClick={() => setExprEditing(e)}>
+                            <Pencil className="h-3 w-3" />编辑
+                          </button>
+                          <button className="hover:underline inline-flex items-center gap-0.5" onClick={() => regenOne(e.lang)}>
+                            <RefreshCw className="h-3 w-3" />重新生成
+                          </button>
+                          <button className="hover:underline inline-flex items-center gap-0.5" onClick={() => toggleExpr(e.id)}>
+                            <Power className="h-3 w-3" />{e.status === "已启用" ? "停用" : "启用"}
+                          </button>
+                          {!isMain && (
+                            <button className="text-rose-600 hover:underline inline-flex items-center gap-0.5" onClick={() => removeExpr(e.id)}>
+                              <Trash2 className="h-3 w-3" />删除
+                            </button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </section>
+
+      {/* 区域四：关联 SPU 配置 */}
       <section className="rounded-md border border-slate-200 bg-white p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-sm font-semibold text-slate-800">关联 SPU 配置</h2>
-            <p className="text-[11px] text-slate-500 mt-0.5">场景命中后，系统以下列 SPU 为候选商品，最终是否展示由商品搜索状态、商品状态、站点可售状态等条件决定。</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">所有多语言搜索词共用同一组关联 SPU。最终是否展示由商品搜索状态、商品状态、站点可售状态等条件决定。</p>
           </div>
           <Button size="sm" variant="outline" className="h-8" onClick={() => setAddSpuOpen(true)}>
             <Plus className="h-3.5 w-3.5 mr-1" />添加 SPU
           </Button>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[90px]">SPU ID</TableHead>
-              <TableHead>SPU 名称</TableHead>
-              <TableHead className="w-[80px]">商品来源</TableHead>
-              <TableHead className="w-[90px]">SPU 分类</TableHead>
-              <TableHead className="w-[80px]">商品状态</TableHead>
-              <TableHead className="w-[110px]">商品搜索状态</TableHead>
-              <TableHead className="w-[110px]">当前站点可售</TableHead>
-              <TableHead className="w-[100px]">推荐级别</TableHead>
-              <TableHead className="w-[110px]">场景内排序</TableHead>
-              <TableHead className="w-[80px]">关联状态</TableHead>
-              <TableHead className="w-[150px]">召回状态</TableHead>
-              <TableHead className="w-[80px]">操作</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedSpus.length === 0 ? (
-              <TableRow><TableCell colSpan={12} className="h-24 text-center text-slate-400">暂无关联 SPU，点击"添加 SPU"开始配置</TableCell></TableRow>
-            ) : (
-              sortedSpus.map((s) => {
-                const r = computeRecall(draft, s);
-                return (
-                  <TableRow key={s.spuId}>
-                    <TableCell className="text-slate-500">{s.spuId}</TableCell>
-                    <TableCell className="font-medium text-slate-800">{s.spuName}</TableCell>
-                    <TableCell><span className={cn("rounded px-1.5 py-0.5 text-xs", sourceBadge(s.source))}>{s.source}</span></TableCell>
-                    <TableCell className="text-slate-600 text-xs">{s.category}</TableCell>
-                    <TableCell className="text-xs">{s.productStatus}</TableCell>
-                    <TableCell className="text-xs">{s.spuLibStatus}</TableCell>
-                    <TableCell className="text-xs">{s.siteSellable}</TableCell>
-                    <TableCell>
-                      <Select value={s.recLevel} onValueChange={(v) => updateSpu(s.spuId, { recLevel: v as RecLevel })}>
-                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>{REC_LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Input type="number" value={s.order} onChange={(e) => updateSpu(s.spuId, { order: Number(e.target.value) || 1 })} className="h-7 w-14 text-xs" />
-                        <button className="text-slate-400 hover:text-blue-600" onClick={() => moveSpu(s.spuId, -1)}><ArrowUp className="h-3 w-3" /></button>
-                        <button className="text-slate-400 hover:text-blue-600" onClick={() => moveSpu(s.spuId, 1)}><ArrowDown className="h-3 w-3" /></button>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Select value={s.relStatus} onValueChange={(v) => updateSpu(s.spuId, { relStatus: v as RelStatus })}>
-                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="已启用">已启用</SelectItem>
-                          <SelectItem value="已停用">已停用</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      {r.ok ? <span className="text-xs text-emerald-600">可召回</span> : <span className="text-xs text-rose-600">不可召回：{r.reason}</span>}
-                    </TableCell>
-                    <TableCell>
-                      <button className="text-rose-600 hover:underline text-xs inline-flex items-center gap-0.5" onClick={() => removeSpu(s.spuId)}>
-                        <Trash2 className="h-3 w-3" />移除
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[90px]">SPU ID</TableHead>
+                <TableHead>SPU 名称</TableHead>
+                <TableHead className="w-[80px]">商品来源</TableHead>
+                <TableHead className="w-[90px]">SPU 分类</TableHead>
+                <TableHead className="w-[80px]">商品状态</TableHead>
+                <TableHead className="w-[110px]">商品搜索状态</TableHead>
+                <TableHead className="w-[110px]">当前站点可售</TableHead>
+                <TableHead className="w-[100px]">推荐级别</TableHead>
+                <TableHead className="w-[110px]">场景内排序</TableHead>
+                <TableHead className="w-[80px]">关联状态</TableHead>
+                <TableHead className="w-[150px]">召回状态</TableHead>
+                <TableHead className="w-[80px]">操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedSpus.length === 0 ? (
+                <TableRow><TableCell colSpan={12} className="h-24 text-center text-slate-400">暂无关联 SPU，点击"添加 SPU"开始配置</TableCell></TableRow>
+              ) : (
+                sortedSpus.map((s) => {
+                  const r = computeRecall(draft, s);
+                  return (
+                    <TableRow key={s.spuId}>
+                      <TableCell className="text-slate-500">{s.spuId}</TableCell>
+                      <TableCell className="font-medium text-slate-800">{s.spuName}</TableCell>
+                      <TableCell><span className={cn("rounded px-1.5 py-0.5 text-xs", sourceBadge(s.source))}>{s.source}</span></TableCell>
+                      <TableCell className="text-slate-600 text-xs">{s.category}</TableCell>
+                      <TableCell className="text-xs">{s.productStatus}</TableCell>
+                      <TableCell className="text-xs">{s.spuLibStatus}</TableCell>
+                      <TableCell className="text-xs">{s.siteSellable}</TableCell>
+                      <TableCell>
+                        <Select value={s.recLevel} onValueChange={(v) => updateSpu(s.spuId, { recLevel: v as RecLevel })}>
+                          <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>{REC_LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Input type="number" value={s.order} onChange={(e) => updateSpu(s.spuId, { order: Number(e.target.value) || 1 })} className="h-7 w-14 text-xs" />
+                          <button className="text-slate-400 hover:text-blue-600" onClick={() => moveSpu(s.spuId, -1)}><ArrowUp className="h-3 w-3" /></button>
+                          <button className="text-slate-400 hover:text-blue-600" onClick={() => moveSpu(s.spuId, 1)}><ArrowDown className="h-3 w-3" /></button>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Select value={s.relStatus} onValueChange={(v) => updateSpu(s.spuId, { relStatus: v as RelStatus })}>
+                          <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="已启用">已启用</SelectItem>
+                            <SelectItem value="已停用">已停用</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        {r.ok ? <span className="text-xs text-emerald-600">可召回</span> : <span className="text-xs text-rose-600">不可召回：{r.reason}</span>}
+                      </TableCell>
+                      <TableCell>
+                        <button className="text-rose-600 hover:underline text-xs inline-flex items-center gap-0.5" onClick={() => removeSpu(s.spuId)}>
+                          <Trash2 className="h-3 w-3" />移除
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
         <p className="mt-3 text-[11px] text-slate-400">排序优先级：主推 &gt; 推荐 &gt; 备选，同级别按"场景内排序"升序。</p>
       </section>
 
@@ -1092,65 +1312,44 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
       </div>
 
       <AddSpuDialog open={addSpuOpen} onOpenChange={setAddSpuOpen} existingIds={draft.spus.map((s) => s.spuId)} onConfirm={addSpus} />
-      <ExpressionDialog open={exprOpen} onOpenChange={setExprOpen} editing={editingExpr} onSave={saveExpr} />
+      <EditExprDialog editing={exprEditing} onOpenChange={(v) => { if (!v) setExprEditing(null); }} onSave={saveExprEdit} />
     </div>
   );
 }
 
 // ============================================================
-//                       表达式弹窗
+//                       编辑单语言搜索词弹窗
 // ============================================================
-function ExpressionDialog({
-  open, onOpenChange, editing, onSave,
+function EditExprDialog({
+  editing, onOpenChange, onSave,
 }: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
   editing: SceneExpression | null;
-  onSave: (payload: SceneExpression, isNew: boolean) => void;
+  onOpenChange: (v: boolean) => void;
+  onSave: (payload: SceneExpression) => void;
 }) {
-  const blank: SceneExpression = {
-    id: uid("E"),
-    content: "",
-    standard: "",
-    lang: "zh-CN",
-    matchType: "精准匹配",
-    status: "草稿",
-    remark: "",
-    updater: "Alex",
-    updatedAt: "",
-  };
-  const [draft, setDraft] = useState<SceneExpression>(editing ?? blank);
-  // sync when opening
-  useMemo(() => { if (open) setDraft(editing ? { ...editing } : { ...blank, id: uid("E") }); }, [open, editing]);
+  const open = !!editing;
+  const [draft, setDraft] = useState<SceneExpression | null>(editing);
+  useEffect(() => { setDraft(editing); }, [editing]);
 
+  if (!draft) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-xl"><DialogHeader><DialogTitle>编辑</DialogTitle></DialogHeader></DialogContent>
+      </Dialog>
+    );
+  }
   const std = normalizeTerm(draft.content);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>{editing ? "编辑搜索词表达" : "新增搜索词表达"}</DialogTitle>
-          <DialogDescription>同一场景下，同一语言的标准化词不能重复。</DialogDescription>
+          <DialogTitle>编辑单语言搜索词</DialogTitle>
+          <DialogDescription>编辑后该语言的"生成来源"将变为"人工编辑"，重新生成时默认不会覆盖。</DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2">
-            <Label className="text-xs">搜索词内容 <span className="text-rose-500">*</span></Label>
-            <Input value={draft.content} onChange={(e) => setDraft({ ...draft, content: e.target.value })} placeholder="例如：AI tools / 写论文 / strumenti AI" className="mt-1 h-8" />
-          </div>
           <div>
-            <Label className="text-xs">标准化词（自动生成）</Label>
-            <Input value={std} readOnly className="mt-1 h-8 bg-slate-50 cursor-not-allowed" />
-          </div>
-          <div>
-            <Label className="text-xs">词条语言 <span className="text-rose-500">*</span></Label>
-            <Select value={draft.lang} onValueChange={(v) => setDraft({ ...draft, lang: v as SceneLang })}>
-              <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
-              <SelectContent>{LANGS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">匹配方式</Label>
-            <Input value={draft.matchType} readOnly className="mt-1 h-8 bg-slate-50 cursor-not-allowed" />
+            <Label className="text-xs">语言</Label>
+            <Input value={`${draft.lang} · ${LANG_NAMES[draft.lang]}`} readOnly className="mt-1 h-8 bg-slate-50 cursor-not-allowed" />
           </div>
           <div>
             <Label className="text-xs">词条状态</Label>
@@ -1164,13 +1363,17 @@ function ExpressionDialog({
             </Select>
           </div>
           <div className="col-span-2">
-            <Label className="text-xs">备注</Label>
-            <Input value={draft.remark ?? ""} onChange={(e) => setDraft({ ...draft, remark: e.target.value })} className="mt-1 h-8" />
+            <Label className="text-xs">搜索词内容 <span className="text-rose-500">*</span></Label>
+            <Input value={draft.content} onChange={(e) => setDraft({ ...draft, content: e.target.value })} className="mt-1 h-8" />
+          </div>
+          <div className="col-span-2">
+            <Label className="text-xs">标准化词（自动生成）</Label>
+            <Input value={std} readOnly className="mt-1 h-8 bg-slate-50 cursor-not-allowed" />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>取消</Button>
-          <Button size="sm" className="bg-blue-500 hover:bg-blue-600" onClick={() => onSave(draft, !editing)}>保存</Button>
+          <Button size="sm" className="bg-blue-500 hover:bg-blue-600" onClick={() => onSave(draft)}>保存</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1284,16 +1487,16 @@ function SearchTestSheet({
 }) {
   const [keyword, setKeyword] = useState("");
   const [site, setSite] = useState("全球站");
-  const [lang, setLang] = useState<string>("zh-CN");
+  const [lang, setLang] = useState<SceneLang>("zh-CN");
   const [userState, setUserState] = useState("全部");
 
   if (!scene) return null;
 
-  const input = keyword || (scene.expressions[0]?.content ?? "");
+  const input = keyword || (scene.expressions.find((e) => e.lang === lang)?.content ?? scene.mainTerm);
   const std = normalizeTerm(input);
-  // 命中规则：标准化词匹配，且语言为"全语言通用"或等于当前 lang
+  // 命中规则：标准化词匹配，且当前语言搜索词已启用
   const hitExpr = scene.expressions.find(
-    (e) => e.standard === std && (e.lang === "全语言通用" || e.lang === lang) && e.status === "已启用",
+    (e) => e.standard === std && e.lang === lang && e.status === "已启用",
   );
 
   const ranked = [...scene.spus]
@@ -1308,7 +1511,6 @@ function SearchTestSheet({
   const gamsRec = recallable.filter((s) => s.source === "GamsGo").length;
   const c2cRec = recallable.filter((s) => s.source === "C2C").length;
 
-  // 最终展示数量：GamsGo 5 + C2C 5，不足时另一来源补位，合计最多 10
   const finalGams = recallable.filter((s) => s.source === "GamsGo").slice(0, 5);
   const finalC2c = recallable.filter((s) => s.source === "C2C").slice(0, 5);
   let final = [...finalGams, ...finalC2c];
@@ -1328,7 +1530,7 @@ function SearchTestSheet({
           <div className="grid grid-cols-4 gap-3">
             <div>
               <Label className="text-xs">测试搜索词</Label>
-              <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={scene.expressions[0]?.content ?? ""} className="mt-1 h-8" />
+              <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={scene.mainTerm} className="mt-1 h-8" />
             </div>
             <div>
               <Label className="text-xs">站点</Label>
@@ -1343,9 +1545,9 @@ function SearchTestSheet({
             </div>
             <div>
               <Label className="text-xs">语言</Label>
-              <Select value={lang} onValueChange={setLang}>
+              <Select value={lang} onValueChange={(v) => setLang(v as SceneLang)}>
                 <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
-                <SelectContent>{LANGS.filter((l) => l !== "全语言通用").map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+                <SelectContent>{ALL_LANGS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
@@ -1365,7 +1567,8 @@ function SearchTestSheet({
             <div><span className="text-slate-500">原始搜索词：</span>{input}</div>
             <div><span className="text-slate-500">标准化搜索词：</span>{std}</div>
             <div><span className="text-slate-500">命中场景：</span>{hitExpr ? scene.name : <span className="text-rose-600">未命中</span>}</div>
-            <div><span className="text-slate-500">命中搜索词表达：</span>{hitExpr ? `${hitExpr.content} / ${hitExpr.lang}` : "—"}</div>
+            <div><span className="text-slate-500">命中语言 / 搜索词：</span>{hitExpr ? `${hitExpr.lang} · ${hitExpr.content}` : "—"}</div>
+            <div><span className="text-slate-500">生成来源：</span>{hitExpr?.genSource ?? "—"}</div>
             <div><span className="text-slate-500">场景类型 / 状态：</span>{scene.sceneType} / {scene.status}</div>
             <div><span className="text-slate-500">关联 / 可召回：</span>{scene.spus.length} / {recallable.length}（GamsGo {gamsRec} · C2C {c2cRec}）</div>
           </div>
