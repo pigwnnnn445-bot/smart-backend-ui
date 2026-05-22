@@ -595,7 +595,7 @@ export function SpuRuleManagement() {
                     to="/scene"
                     className="block py-1.5 cursor-pointer text-slate-700 hover:text-blue-600"
                   >
-                    场景词库管理
+                    场景搜索配置
                   </Link>
                 </div>
               </div>
