@@ -1241,6 +1241,13 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
 
       <AddSpuDialog open={addSpuOpen} onOpenChange={setAddSpuOpen} existingIds={draft.spus.map((s) => s.spuId)} onConfirm={addSpus} />
       <EditExprDialog editing={exprEditing} onOpenChange={(v) => { if (!v) setExprEditing(null); }} onSave={saveExprEdit} />
+      <LangConfigDialog
+        open={langCfgOpen}
+        onOpenChange={setLangCfgOpen}
+        sceneName={draft.name}
+        expressions={draft.expressions}
+        onSave={saveLangConfig}
+      />
     </div>
   );
 }
