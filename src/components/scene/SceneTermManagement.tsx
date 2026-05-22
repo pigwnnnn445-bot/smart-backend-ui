@@ -652,18 +652,6 @@ function SceneListView(p: ListProps) {
             </Select>
           </div>
           <div>
-            <Label className="text-xs text-slate-500">场景状态</Label>
-            <Select value={p.fStatus} onValueChange={p.setFStatus}>
-              <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="全部">全部</SelectItem>
-                <SelectItem value="草稿">草稿</SelectItem>
-                <SelectItem value="已启用">已启用</SelectItem>
-                <SelectItem value="已停用">已停用</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
             <Label className="text-xs text-slate-500">关联 SPU</Label>
             <Input value={p.fSpu} onChange={(e) => p.setFSpu(e.target.value)} placeholder="SPU 名称 / ID" className="mt-1 h-8" />
           </div>
