@@ -576,7 +576,6 @@ interface ListProps {
   fType: string; setFType: (v: string) => void;
   fLang: string; setFLang: (v: string) => void;
   fGen: string; setFGen: (v: string) => void;
-  fStatus: string; setFStatus: (v: string) => void;
   fSpu: string; setFSpu: (v: string) => void;
   fSource: string; setFSource: (v: string) => void;
   fRecall: string; setFRecall: (v: string) => void;
