@@ -1069,36 +1069,6 @@ export function SpuRuleManagement() {
         }}
       />
 
-      <I18nSheet
-        open={i18nSheetOpen}
-        onOpenChange={setI18nSheetOpen}
-        zhValue={draft.content}
-        value={draft.i18n || {}}
-        onSave={(v) => {
-          const en = (v.en || "").trim();
-          setDraft({
-            ...draft,
-            i18n: v,
-            content: en,
-            standard: en ? normalizeTerm(en) : "",
-          });
-          if (duplicateError) setDuplicateError("");
-          setI18nSheetOpen(false);
-        }}
-      />
-
-      <I18nSheet
-        open={standardSheetOpen}
-        onOpenChange={setStandardSheetOpen}
-        zhValue={draft.content}
-        value={Object.fromEntries(
-          Object.entries(draft.i18n || {}).map(([k, v]) => [k, normalizeTerm(v || "")])
-        )}
-        onSave={() => setStandardSheetOpen(false)}
-        readOnly
-        title="查看标准化词"
-      />
-
       <Dialog
         open={!!statusConfirm}
         onOpenChange={(o) => !o && setStatusConfirm(null)}
