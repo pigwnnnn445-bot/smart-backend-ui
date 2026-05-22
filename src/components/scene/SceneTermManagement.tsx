@@ -1039,11 +1039,6 @@ function SceneDetailView({ existing, allScenes, onBack, onSave, onTest }: Detail
             </Select>
           </div>
           <div>
-            <Label className="text-xs text-slate-600">场景状态</Label>
-            <Input value={draft.status} readOnly className="mt-1 h-8 bg-slate-50 cursor-not-allowed" />
-            <p className="mt-1 text-[11px] text-slate-400">通过底部"保存并启用 / 保存并停用"修改</p>
-          </div>
-          <div>
             <Label className="text-xs text-slate-600">备注</Label>
             <Textarea value={draft.remark} onChange={(e) => update("remark", e.target.value)} placeholder="运营说明" className="mt-1 min-h-[60px]" />
           </div>
