@@ -190,11 +190,11 @@ export function ProductSortManagement() {
       if (!isInt(r.weight) || r.weight < 0 || r.weight > 999) {
         errs[`recall_${i}`] = "请输入 0-999 之间的整数权重";
       } else if (r.enabled && r.weight < 1) {
-        errs[`recall_${i}`] = "已启用的召回来源权重不能小于 1";
+        errs[`recall_${i}`] = "已启用的词条类型权重不能小于 1";
       }
     });
     if (recall.every((r) => !r.enabled)) {
-      errs["recall_enabled"] = "至少需要启用 1 个召回来源";
+      errs["recall_enabled"] = "至少需要启用 1 个词条类型";
     }
 
     // term types
@@ -814,13 +814,13 @@ export function ProductSortManagement() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>编辑召回来源</DialogTitle>
-            <DialogDescription>修改该召回来源的启用状态、权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+            <DialogTitle>编辑词条类型</DialogTitle>
+            <DialogDescription>修改该词条类型的启用状态、权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
           </DialogHeader>
           {editDraft && (
             <div className="space-y-4 text-sm">
               <div className="rounded-md bg-slate-50 p-3">
-                <div className="mb-1 text-xs text-slate-500">召回来源</div>
+                <div className="mb-1 text-xs text-slate-500">词条类型</div>
                 <div className="font-medium text-slate-800">{editDraft.name}</div>
               </div>
               <div className="flex items-center justify-between rounded-md border border-slate-200 p-3">
@@ -868,7 +868,7 @@ export function ProductSortManagement() {
                 const orig = DEFAULT_RECALL[editIdx];
                 if (!orig) return;
                 setEditDraft({ ...orig });
-                toast.info("已恢复该召回来源默认值，点击保存后生效。");
+                toast.info("已恢复该词条类型默认值，点击保存后生效。");
               }}
             >
               恢复默认值
@@ -882,7 +882,7 @@ export function ProductSortManagement() {
                 setDirty(true);
                 setEditIdx(null);
                 setEditDraft(null);
-                toast.success("已更新该召回来源，请点击「保存配置」正式生效。");
+                toast.success("已更新该词条类型，请点击「保存配置」正式生效。");
               }}
             >
               保存
