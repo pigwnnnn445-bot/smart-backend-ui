@@ -640,6 +640,12 @@ export function SpuRuleManagement() {
                   >
                     场景搜索配置
                   </Link>
+                  <Link
+                    to="/product-sort"
+                    className="block py-1.5 cursor-pointer text-slate-700 hover:text-blue-600"
+                  >
+                    商品排序管理
+                  </Link>
                 </div>
               </div>
 
