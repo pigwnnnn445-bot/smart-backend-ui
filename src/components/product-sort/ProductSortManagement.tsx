@@ -563,17 +563,19 @@ export function ProductSortManagement() {
 
                 {tab === "extra" && (
                   <div>
-                    <FlatTable headers={["配置项", "数值 / 开关", "说明"]}>
+                    <FlatTable headers={["配置项", "数值 / 开关", "说明", "变更人", "变更时间"]}>
                       <FlatRow>
                         <FlatCell>明确指向当前SPU加权</FlatCell>
                         <FlatCell>
                           <NumberField
                             value={extra.exactSpuBoost}
                             error={errors["extra_exactSpuBoost"]}
-                            onChange={(v) => setExtra({ ...extra, exactSpuBoost: v })}
+                            onChange={(v) => { setExtra({ ...extra, exactSpuBoost: v }); stampExtra("exactSpuBoost"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">词条「是否明确指向当前SPU = 是」时增加的分数</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("exactSpuBoost").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("exactSpuBoost").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>商品热度分单位</FlatCell>
@@ -581,10 +583,12 @@ export function ProductSortManagement() {
                           <NumberField
                             value={extra.hotnessUnit}
                             error={errors["extra_hotnessUnit"]}
-                            onChange={(v) => setExtra({ ...extra, hotnessUnit: v })}
+                            onChange={(v) => { setExtra({ ...extra, hotnessUnit: v }); stampExtra("hotnessUnit"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">商品热度等级每提升 1 级增加的分数</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("hotnessUnit").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("hotnessUnit").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>商品热度分上限</FlatCell>
@@ -592,10 +596,12 @@ export function ProductSortManagement() {
                           <NumberField
                             value={extra.hotnessCap}
                             error={errors["extra_hotnessCap"]}
-                            onChange={(v) => setExtra({ ...extra, hotnessCap: v })}
+                            onChange={(v) => { setExtra({ ...extra, hotnessCap: v }); stampExtra("hotnessCap"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">商品热度最多可增加的分数</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("hotnessCap").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("hotnessCap").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>GamsGo自营加权</FlatCell>
@@ -603,20 +609,24 @@ export function ProductSortManagement() {
                           <NumberField
                             value={extra.gamsgoBoost}
                             error={errors["extra_gamsgoBoost"]}
-                            onChange={(v) => setExtra({ ...extra, gamsgoBoost: v })}
+                            onChange={(v) => { setExtra({ ...extra, gamsgoBoost: v }); stampExtra("gamsgoBoost"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">明确商品意图下，自营商品当前区域可购买时增加的分数</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("gamsgoBoost").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("gamsgoBoost").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>是否启用多命中奖励</FlatCell>
                         <FlatCell>
                           <Switch
                             checked={extra.multiHitEnabled}
-                            onCheckedChange={(v) => setExtra({ ...extra, multiHitEnabled: !!v })}
+                            onCheckedChange={(v) => { setExtra({ ...extra, multiHitEnabled: !!v }); stampExtra("multiHitEnabled"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">同一 SPU 被多个来源命中时是否增加少量奖励</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("multiHitEnabled").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("multiHitEnabled").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>单个额外命中奖励分</FlatCell>
@@ -624,10 +634,12 @@ export function ProductSortManagement() {
                           <NumberField
                             value={extra.multiHitPer}
                             error={errors["extra_multiHitPer"]}
-                            onChange={(v) => setExtra({ ...extra, multiHitPer: v })}
+                            onChange={(v) => { setExtra({ ...extra, multiHitPer: v }); stampExtra("multiHitPer"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">每个额外命中来源增加的分数</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("multiHitPer").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("multiHitPer").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>多命中奖励上限次数</FlatCell>
@@ -635,10 +647,12 @@ export function ProductSortManagement() {
                           <NumberField
                             value={extra.multiHitMax}
                             error={errors["extra_multiHitMax"]}
-                            onChange={(v) => setExtra({ ...extra, multiHitMax: v })}
+                            onChange={(v) => { setExtra({ ...extra, multiHitMax: v }); stampExtra("multiHitMax"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">最多计算几个额外命中来源（0-10）</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("multiHitMax").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("multiHitMax").updatedAt}</FlatCell>
                       </FlatRow>
                     </FlatTable>
                     <div className="mt-4 rounded-md border border-slate-200 bg-slate-50/60 p-3 text-xs leading-6 text-slate-600">
