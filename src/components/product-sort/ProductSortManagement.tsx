@@ -361,7 +361,7 @@ export function ProductSortManagement() {
               {/* Action toolbar */}
               <div className="flex items-center justify-between px-6 pt-5">
                 <div className="flex items-center gap-2">
-                  {dirty && (
+                  {dirty && tab !== "intro" && (
                     <>
                       <Button
                         onClick={handleSaveClick}
