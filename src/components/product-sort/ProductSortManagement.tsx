@@ -38,6 +38,7 @@ const DEFAULT_RECALL: RecallSource[] = [
 type TermType = {
   name: string;
   code: string;
+  enabled: boolean;
   weight: number;
   match: string;
   desc: string;
@@ -46,18 +47,18 @@ type TermType = {
 };
 
 const DEFAULT_TERM_TYPES: TermType[] = [
-  { name: "商品词", code: "PRODUCT_TERM", weight: 100, match: "精准匹配 / 前缀匹配", desc: "商品正式名称或核心商品名", updatedBy: "—", updatedAt: "—" },
-  { name: "品牌词", code: "BRAND_TERM", weight: 90, match: "精准匹配 / 前缀匹配", desc: "品牌、服务名、公司名", updatedBy: "—", updatedAt: "—" },
-  { name: "别名词", code: "ALIAS_TERM", weight: 85, match: "精准匹配", desc: "用户常见叫法或变体写法", updatedBy: "—", updatedAt: "—" },
-  { name: "错词", code: "TYPO_TERM", weight: 75, match: "精准匹配", desc: "用户常见拼写错误", updatedBy: "—", updatedAt: "—" },
-  { name: "短词", code: "SHORT_TERM", weight: 60, match: "精准匹配", desc: "用户常用简称或缩写", updatedBy: "—", updatedAt: "—" },
+  { name: "商品词", code: "PRODUCT_TERM", enabled: true, weight: 100, match: "精准匹配 / 前缀匹配", desc: "商品正式名称或核心商品名", updatedBy: "—", updatedAt: "—" },
+  { name: "品牌词", code: "BRAND_TERM", enabled: true, weight: 90, match: "精准匹配 / 前缀匹配", desc: "品牌、服务名、公司名", updatedBy: "—", updatedAt: "—" },
+  { name: "别名词", code: "ALIAS_TERM", enabled: true, weight: 85, match: "精准匹配", desc: "用户常见叫法或变体写法", updatedBy: "—", updatedAt: "—" },
+  { name: "错词", code: "TYPO_TERM", enabled: true, weight: 75, match: "精准匹配", desc: "用户常见拼写错误", updatedBy: "—", updatedAt: "—" },
+  { name: "短词", code: "SHORT_TERM", enabled: true, weight: 60, match: "精准匹配", desc: "用户常用简称或缩写", updatedBy: "—", updatedAt: "—" },
 ];
 
-type MatchType = { name: string; code: string; weight: number; desc: string; updatedBy: string; updatedAt: string };
+type MatchType = { name: string; code: string; enabled: boolean; weight: number; desc: string; updatedBy: string; updatedAt: string };
 
 const DEFAULT_MATCH: MatchType[] = [
-  { name: "精准匹配", code: "EXACT", weight: 100, desc: "用户输入标准化词与后台标准化词完全一致", updatedBy: "—", updatedAt: "—" },
-  { name: "前缀匹配", code: "PREFIX", weight: 70, desc: "用户输入标准化词是后台标准化词的前缀", updatedBy: "—", updatedAt: "—" },
+  { name: "精准匹配", code: "EXACT", enabled: true, weight: 100, desc: "用户输入标准化词与后台标准化词完全一致", updatedBy: "—", updatedAt: "—" },
+  { name: "前缀匹配", code: "PREFIX", enabled: true, weight: 70, desc: "用户输入标准化词是后台标准化词的前缀", updatedBy: "—", updatedAt: "—" },
 ];
 
 type ExtraFactors = {
@@ -152,6 +153,10 @@ export function ProductSortManagement() {
   const [dirty, setDirty] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState<RecallSource | null>(null);
+  const [editTermIdx, setEditTermIdx] = useState<number | null>(null);
+  const [editTermDraft, setEditTermDraft] = useState<TermType | null>(null);
+  const [editMatchIdx, setEditMatchIdx] = useState<number | null>(null);
+  const [editMatchDraft, setEditMatchDraft] = useState<MatchType | null>(null);
 
   // 排序开关：控制各排序因子是否参与最终排序计算
   type SortFactorKey = "termType" | "termSource" | "matchType" | "exactSpu" | "hotness";
@@ -542,27 +547,38 @@ export function ProductSortManagement() {
                     {warnings["term_short"] && (
                       <p className="mb-3 text-xs text-amber-600">{warnings["term_short"]}</p>
                     )}
-                    <FlatTable headers={["词条类型", "类型编码", "权重分", "推荐匹配方式", "说明", "变更人", "变更时间"]}>
+                    <FlatTable headers={["词条类型", "是否启用", "权重分", "说明", "变更人", "变更时间", "操作"]}>
                       {termTypes.map((t, i) => (
                         <FlatRow key={t.code}>
                           <FlatCell>{t.name}</FlatCell>
-                          <FlatCell className="text-slate-500">{t.code}</FlatCell>
                           <FlatCell>
-                            <NumberField
-                              value={t.weight}
-                              error={errors[`term_${i}`]}
-                              onChange={(v) => {
+                            <Switch
+                              checked={t.enabled}
+                              onCheckedChange={(v) => {
                                 const next = [...termTypes];
-                                next[i] = { ...t, weight: v, updatedBy: "admin", updatedAt: nowStr() };
+                                next[i] = { ...t, enabled: !!v, updatedBy: "admin", updatedAt: nowStr() };
                                 setTermTypes(next);
                                 setDirty(true);
                               }}
                             />
                           </FlatCell>
-                          <FlatCell className="text-slate-500">{t.match}</FlatCell>
+                          <FlatCell>
+                            <span className="text-sm text-slate-700">{t.weight}</span>
+                          </FlatCell>
                           <FlatCell className="text-slate-500">{t.desc}</FlatCell>
                           <FlatCell className="text-slate-500">{t.updatedBy}</FlatCell>
                           <FlatCell className="text-slate-500">{t.updatedAt}</FlatCell>
+                          <FlatCell>
+                            <button
+                              className="text-xs text-blue-600 hover:text-blue-700"
+                              onClick={() => {
+                                setEditTermIdx(i);
+                                setEditTermDraft({ ...t });
+                              }}
+                            >
+                              编辑
+                            </button>
+                          </FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
@@ -574,26 +590,38 @@ export function ProductSortManagement() {
                     {errors["match_order"] && (
                       <p className="mb-3 text-xs text-red-500">{errors["match_order"]}</p>
                     )}
-                    <FlatTable headers={["匹配方式", "匹配编码", "权重分", "说明", "变更人", "变更时间"]}>
+                    <FlatTable headers={["匹配方式", "是否启用", "权重分", "说明", "变更人", "变更时间", "操作"]}>
                       {matchTypes.map((m, i) => (
                         <FlatRow key={m.code}>
                           <FlatCell>{m.name}</FlatCell>
-                          <FlatCell className="text-slate-500">{m.code}</FlatCell>
                           <FlatCell>
-                            <NumberField
-                              value={m.weight}
-                              error={errors[`match_${i}`]}
-                              onChange={(v) => {
+                            <Switch
+                              checked={m.enabled}
+                              onCheckedChange={(v) => {
                                 const next = [...matchTypes];
-                                next[i] = { ...m, weight: v, updatedBy: "admin", updatedAt: nowStr() };
+                                next[i] = { ...m, enabled: !!v, updatedBy: "admin", updatedAt: nowStr() };
                                 setMatchTypes(next);
                                 setDirty(true);
                               }}
                             />
                           </FlatCell>
+                          <FlatCell>
+                            <span className="text-sm text-slate-700">{m.weight}</span>
+                          </FlatCell>
                           <FlatCell className="text-slate-500">{m.desc}</FlatCell>
                           <FlatCell className="text-slate-500">{m.updatedBy}</FlatCell>
                           <FlatCell className="text-slate-500">{m.updatedAt}</FlatCell>
+                          <FlatCell>
+                            <button
+                              className="text-xs text-blue-600 hover:text-blue-700"
+                              onClick={() => {
+                                setEditMatchIdx(i);
+                                setEditMatchDraft({ ...m });
+                              }}
+                            >
+                              编辑
+                            </button>
+                          </FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
@@ -907,7 +935,169 @@ export function ProductSortManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Sort factor edit dialog */}
+      {/* Edit term type dialog */}
+      <Dialog
+        open={editTermIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setEditTermIdx(null);
+            setEditTermDraft(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑词条类型</DialogTitle>
+            <DialogDescription>修改该词条类型的启用状态、权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+          </DialogHeader>
+          {editTermDraft && (
+            <div className="space-y-4 text-sm">
+              <div className="rounded-md bg-slate-50 p-3">
+                <div className="mb-1 text-xs text-slate-500">词条类型</div>
+                <div className="font-medium text-slate-800">{editTermDraft.name}</div>
+              </div>
+              <div className="flex items-center justify-between rounded-md border border-slate-200 p-3">
+                <div className="text-sm text-slate-700">是否启用</div>
+                <Switch
+                  checked={editTermDraft.enabled}
+                  onCheckedChange={(v) => setEditTermDraft({ ...editTermDraft, enabled: !!v })}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">权重分（0-999）</div>
+                <Input
+                  type="number"
+                  className="h-8 w-32"
+                  value={Number.isNaN(editTermDraft.weight) ? "" : editTermDraft.weight}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    setEditTermDraft({ ...editTermDraft, weight: Number.isNaN(n) ? 0 : n });
+                  }}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">说明</div>
+                <Input
+                  value={editTermDraft.desc}
+                  onChange={(e) => setEditTermDraft({ ...editTermDraft, desc: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditTermIdx(null); setEditTermDraft(null); }}>取消</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (editTermIdx === null || !editTermDraft) return;
+                const orig = DEFAULT_TERM_TYPES[editTermIdx];
+                if (!orig) return;
+                setEditTermDraft({ ...orig });
+                toast.info("已恢复该词条类型默认值，点击保存后生效。");
+              }}
+            >
+              恢复默认值
+            </Button>
+            <Button
+              onClick={() => {
+                if (editTermIdx === null || !editTermDraft) return;
+                const next = [...termTypes];
+                next[editTermIdx] = { ...editTermDraft, updatedBy: "admin", updatedAt: nowStr() };
+                setTermTypes(next);
+                setDirty(true);
+                setEditTermIdx(null);
+                setEditTermDraft(null);
+                toast.success("已更新该词条类型，请点击「保存配置」正式生效。");
+              }}
+            >
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit match type dialog */}
+      <Dialog
+        open={editMatchIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setEditMatchIdx(null);
+            setEditMatchDraft(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑匹配方式</DialogTitle>
+            <DialogDescription>修改该匹配方式的启用状态、权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+          </DialogHeader>
+          {editMatchDraft && (
+            <div className="space-y-4 text-sm">
+              <div className="rounded-md bg-slate-50 p-3">
+                <div className="mb-1 text-xs text-slate-500">匹配方式</div>
+                <div className="font-medium text-slate-800">{editMatchDraft.name}</div>
+              </div>
+              <div className="flex items-center justify-between rounded-md border border-slate-200 p-3">
+                <div className="text-sm text-slate-700">是否启用</div>
+                <Switch
+                  checked={editMatchDraft.enabled}
+                  onCheckedChange={(v) => setEditMatchDraft({ ...editMatchDraft, enabled: !!v })}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">权重分（0-999）</div>
+                <Input
+                  type="number"
+                  className="h-8 w-32"
+                  value={Number.isNaN(editMatchDraft.weight) ? "" : editMatchDraft.weight}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    setEditMatchDraft({ ...editMatchDraft, weight: Number.isNaN(n) ? 0 : n });
+                  }}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">说明</div>
+                <Input
+                  value={editMatchDraft.desc}
+                  onChange={(e) => setEditMatchDraft({ ...editMatchDraft, desc: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditMatchIdx(null); setEditMatchDraft(null); }}>取消</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (editMatchIdx === null || !editMatchDraft) return;
+                const orig = DEFAULT_MATCH[editMatchIdx];
+                if (!orig) return;
+                setEditMatchDraft({ ...orig });
+                toast.info("已恢复该匹配方式默认值，点击保存后生效。");
+              }}
+            >
+              恢复默认值
+            </Button>
+            <Button
+              onClick={() => {
+                if (editMatchIdx === null || !editMatchDraft) return;
+                const next = [...matchTypes];
+                next[editMatchIdx] = { ...editMatchDraft, updatedBy: "admin", updatedAt: nowStr() };
+                setMatchTypes(next);
+                setDirty(true);
+                setEditMatchIdx(null);
+                setEditMatchDraft(null);
+                toast.success("已更新该匹配方式，请点击「保存配置」正式生效。");
+              }}
+            >
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sort factor edit dialog (real) */}
       <Dialog
         open={sortEditIdx !== null}
         onOpenChange={(o) => {
