@@ -28,10 +28,9 @@ type RecallSource = {
 
 const DEFAULT_RECALL: RecallSource[] = [
   { name: "SPU词条召回", code: "SPU_TERM", enabled: true, weight: 100, stage: "一期启用", desc: "用户输入命中后台配置的 SPU 词条" },
-  { name: "SPU名称 / 品牌名前缀兜底", code: "SPU_NAME_PREFIX", enabled: true, weight: 70, stage: "一期启用", desc: "未命中词条时，使用 SPU 名称或品牌名前缀兜底" },
+  { name: "商品名前缀匹配兜底", code: "SPU_NAME_PREFIX", enabled: true, weight: 70, stage: "一期启用", desc: "未命中词条时，使用商品名前缀匹配兜底召回" },
   { name: "场景词召回", code: "SCENE_TERM", enabled: false, weight: 60, stage: "二期预留", desc: "用户输入场景词后召回一组关联 SPU" },
   { name: "商品属性词召回", code: "ATTRIBUTE_TERM", enabled: false, weight: 50, stage: "二期预留", desc: "用户输入 4K、Family、礼品码等属性词" },
-  { name: "热搜兜底", code: "HOT_FALLBACK", enabled: false, weight: 30, stage: "暂不启用", desc: "无明确结果时的兜底推荐" },
 ];
 
 type TermType = {
@@ -135,6 +134,9 @@ export function ProductSortManagement() {
   const [tab, setTab] = useState<
     "intro" | "recall" | "term" | "match" | "extra" | "quota"
   >("intro");
+  const [dirty, setDirty] = useState(false);
+  const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState<RecallSource | null>(null);
 
   function isInt(n: unknown) {
     return typeof n === "number" && Number.isInteger(n) && !Number.isNaN(n);
@@ -254,6 +256,7 @@ export function ProductSortManagement() {
       ...p,
     ]);
     setSaveOpen(false);
+    setDirty(false);
     toast.success("保存成功，搜索排序规则已更新。");
   }
 
@@ -278,6 +281,7 @@ export function ProductSortManagement() {
       ...p,
     ]);
     setResetOpen(false);
+    setDirty(false);
     toast.message("已恢复默认值，需点击「保存配置」后正式生效。");
   }
 
@@ -332,19 +336,23 @@ export function ProductSortManagement() {
               {/* Action toolbar */}
               <div className="flex items-center justify-between px-6 pt-5">
                 <div className="flex items-center gap-2">
-                  <Button
-                    onClick={handleSaveClick}
-                    className="h-9 bg-blue-500 hover:bg-blue-600 text-white shadow-none"
-                  >
-                    保存配置
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setResetOpen(true)}
-                    className="h-9 border-slate-300 text-slate-700"
-                  >
-                    恢复默认值
-                  </Button>
+                  {dirty && (
+                    <>
+                      <Button
+                        onClick={handleSaveClick}
+                        className="h-9 bg-blue-500 hover:bg-blue-600 text-white shadow-none"
+                      >
+                        保存配置
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setResetOpen(true)}
+                        className="h-9 border-slate-300 text-slate-700"
+                      >
+                        恢复默认值
+                      </Button>
+                    </>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 text-slate-500">
                   <button
@@ -388,11 +396,10 @@ export function ProductSortManagement() {
                     {errors["recall_enabled"] && (
                       <p className="mb-3 text-xs text-red-500">{errors["recall_enabled"]}</p>
                     )}
-                    <FlatTable headers={["召回来源", "来源编码", "是否启用", "权重分", "当前阶段", "说明"]}>
+                    <FlatTable headers={["召回来源", "是否启用", "权重分", "说明", "操作"]}>
                       {recall.map((r, i) => (
                         <FlatRow key={r.code}>
                           <FlatCell>{r.name}</FlatCell>
-                          <FlatCell className="text-slate-500">{r.code}</FlatCell>
                           <FlatCell>
                             <Switch
                               checked={r.enabled}
@@ -400,6 +407,7 @@ export function ProductSortManagement() {
                                 const next = [...recall];
                                 next[i] = { ...r, enabled: !!v };
                                 setRecall(next);
+                                setDirty(true);
                               }}
                             />
                           </FlatCell>
@@ -411,11 +419,22 @@ export function ProductSortManagement() {
                                 const next = [...recall];
                                 next[i] = { ...r, weight: v };
                                 setRecall(next);
+                                setDirty(true);
                               }}
                             />
                           </FlatCell>
-                          <FlatCell><StageBadge stage={r.stage} /></FlatCell>
                           <FlatCell className="text-slate-500">{r.desc}</FlatCell>
+                          <FlatCell>
+                            <button
+                              className="text-xs text-blue-600 hover:text-blue-700"
+                              onClick={() => {
+                                setEditIdx(i);
+                                setEditDraft({ ...r });
+                              }}
+                            >
+                              编辑
+                            </button>
+                          </FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
@@ -669,6 +688,86 @@ export function ProductSortManagement() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setResetOpen(false)}>取消</Button>
             <Button onClick={confirmReset}>确认恢复</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit recall source dialog */}
+      <Dialog
+        open={editIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setEditIdx(null);
+            setEditDraft(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑召回来源</DialogTitle>
+            <DialogDescription>修改该召回来源的启用状态、权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+          </DialogHeader>
+          {editDraft && (
+            <div className="space-y-3 text-sm">
+              <div>
+                <div className="mb-1 text-xs text-slate-600">召回来源</div>
+                <Input
+                  value={editDraft.name}
+                  onChange={(e) => setEditDraft({ ...editDraft, name: e.target.value })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-slate-600">是否启用</div>
+                <Switch
+                  checked={editDraft.enabled}
+                  onCheckedChange={(v) => setEditDraft({ ...editDraft, enabled: !!v })}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">权重分（0-999）</div>
+                <Input
+                  type="number"
+                  className="h-8 w-32"
+                  value={Number.isNaN(editDraft.weight) ? "" : editDraft.weight}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    setEditDraft({ ...editDraft, weight: Number.isNaN(n) ? 0 : n });
+                  }}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">说明</div>
+                <Input
+                  value={editDraft.desc}
+                  onChange={(e) => setEditDraft({ ...editDraft, desc: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditIdx(null);
+                setEditDraft(null);
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={() => {
+                if (editIdx === null || !editDraft) return;
+                const next = [...recall];
+                next[editIdx] = { ...editDraft };
+                setRecall(next);
+                setDirty(true);
+                setEditIdx(null);
+                setEditDraft(null);
+                toast.success("已更新该召回来源，请点击「保存配置」正式生效。");
+              }}
+            >
+              保存
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
