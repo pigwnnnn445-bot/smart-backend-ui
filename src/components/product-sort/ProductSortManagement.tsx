@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { RefreshCw, Settings, Search, History } from "lucide-react";
+import { RefreshCw, Settings, Search, History, Menu, ChevronDown, Maximize2, Bell, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -326,22 +326,61 @@ export function ProductSortManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="flex h-12 items-center border-b border-slate-200 bg-white px-4">
-        <h1 className="text-lg font-semibold text-slate-800">搜索召回与排序规则配置</h1>
-      </header>
-      <main className="p-4">
-        <div className="rounded-md bg-white shadow-sm">
-          <div className="flex">
-            {/* Side menu */}
-            <div className="w-44 shrink-0 border-r border-slate-200 p-4">
-              <div className="space-y-2 text-slate-700">
-                <Link to="/" className="block py-1.5 cursor-pointer hover:text-blue-600">SPU词库管理</Link>
-                <Link to="/" className="block py-1.5 cursor-pointer hover:text-blue-600">SPU词条管理</Link>
-                <Link to="/scene" className="block py-1.5 cursor-pointer hover:text-blue-600">场景搜索配置</Link>
-                <div className="py-1.5 cursor-pointer text-blue-600 font-medium">搜索召回与排序规则</div>
-              </div>
+    <div className="flex min-h-screen bg-slate-100 text-sm text-slate-800">
+      <aside className="flex w-56 shrink-0 flex-col bg-white border-r border-slate-200">
+        <div className="flex h-12 items-center px-4 border-b border-slate-200 font-semibold text-slate-700">
+          后台管理系统
+        </div>
+        <nav className="flex-1 overflow-y-auto py-2">
+          <div>
+            <div className="flex items-center justify-between px-4 py-2.5 cursor-pointer hover:bg-slate-50">
+              <span className="flex items-center gap-2 text-slate-700">
+                <Menu className="h-4 w-4 text-slate-400" />
+                SPU配置
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 text-slate-400 rotate-180" />
             </div>
+            <div className="bg-slate-50 pb-2">
+              <div className="pl-12 py-2 cursor-pointer hover:bg-blue-50 text-slate-700">SPU基础配置</div>
+              <div className="pl-12 py-2 cursor-pointer hover:bg-blue-50 text-slate-700">SPU管理</div>
+              <div className="pl-12 py-2 cursor-pointer bg-blue-500 text-white hover:bg-blue-500">
+                SPU搜索配置
+              </div>
+              <div className="pl-12 py-2 cursor-pointer hover:bg-blue-50 text-slate-700">SPU内容配置</div>
+            </div>
+          </div>
+        </nav>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex h-12 items-center gap-3 border-b border-slate-200 bg-white px-4">
+          <Menu className="h-4 w-4 text-slate-500" />
+          <RefreshCw className="h-4 w-4 text-slate-500" />
+          <div className="text-slate-500">
+            SPU配置 <span className="px-1">/</span>
+            <span className="text-slate-700">SPU搜索配置</span>
+            <span className="px-1">/</span>
+            <span className="text-slate-700">商品排序管理</span>
+          </div>
+          <div className="ml-auto flex items-center gap-3">
+            <div className="w-72"><Input placeholder="通过名称搜索页面" className="h-8" /></div>
+            <Maximize2 className="h-4 w-4 text-slate-500" />
+            <Bell className="h-4 w-4 text-slate-500" />
+            <User className="h-4 w-4 text-slate-500" />
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-4">
+          <div className="rounded-md bg-white shadow-sm">
+            <div className="flex">
+              <div className="w-44 shrink-0 border-r border-slate-200 p-4">
+                <div className="space-y-2 text-slate-700">
+                  <Link to="/" className="block py-1.5 cursor-pointer hover:text-blue-600">SPU词库管理</Link>
+                  <Link to="/" className="block py-1.5 cursor-pointer hover:text-blue-600">SPU词条管理</Link>
+                  <Link to="/scene" className="block py-1.5 cursor-pointer hover:text-blue-600">场景搜索配置</Link>
+                  <div className="py-1.5 cursor-pointer text-blue-600 font-medium">商品排序管理</div>
+                </div>
+              </div>
 
             {/* Main content */}
             <div className="flex-1 min-w-0">
@@ -1013,6 +1052,7 @@ export function ProductSortManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
