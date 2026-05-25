@@ -134,6 +134,9 @@ export function ProductSortManagement() {
   const [tab, setTab] = useState<
     "intro" | "recall" | "term" | "match" | "extra" | "quota"
   >("intro");
+  const [dirty, setDirty] = useState(false);
+  const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState<RecallSource | null>(null);
 
   function isInt(n: unknown) {
     return typeof n === "number" && Number.isInteger(n) && !Number.isNaN(n);
@@ -253,6 +256,7 @@ export function ProductSortManagement() {
       ...p,
     ]);
     setSaveOpen(false);
+    setDirty(false);
     toast.success("保存成功，搜索排序规则已更新。");
   }
 
@@ -277,6 +281,7 @@ export function ProductSortManagement() {
       ...p,
     ]);
     setResetOpen(false);
+    setDirty(false);
     toast.message("已恢复默认值，需点击「保存配置」后正式生效。");
   }
 
