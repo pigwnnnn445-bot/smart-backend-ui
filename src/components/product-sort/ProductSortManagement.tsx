@@ -152,6 +152,8 @@ export function ProductSortManagement() {
   const [dirty, setDirty] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState<RecallSource | null>(null);
+  const [termEditIdx, setTermEditIdx] = useState<number | null>(null);
+  const [termEditDraft, setTermEditDraft] = useState<TermType | null>(null);
 
   // 排序开关：控制各排序因子是否参与最终排序计算
   type SortFactorKey = "termType" | "termSource" | "matchType" | "exactSpu" | "hotness";
@@ -526,27 +528,29 @@ export function ProductSortManagement() {
                     {warnings["term_short"] && (
                       <p className="mb-3 text-xs text-amber-600">{warnings["term_short"]}</p>
                     )}
-                    <FlatTable headers={["词条来源", "类型编码", "权重分", "推荐匹配方式", "说明", "变更人", "变更时间"]}>
+                    <FlatTable headers={["词条来源", "类型编码", "权重分", "推荐匹配方式", "说明", "变更人", "变更时间", "操作"]}>
                       {termTypes.map((t, i) => (
                         <FlatRow key={t.code}>
                           <FlatCell>{t.name}</FlatCell>
                           <FlatCell className="text-slate-500">{t.code}</FlatCell>
                           <FlatCell>
-                            <NumberField
-                              value={t.weight}
-                              error={errors[`term_${i}`]}
-                              onChange={(v) => {
-                                const next = [...termTypes];
-                                next[i] = { ...t, weight: v, updatedBy: "admin", updatedAt: nowStr() };
-                                setTermTypes(next);
-                                setDirty(true);
-                              }}
-                            />
+                            <span className="text-sm text-slate-700">{t.weight}</span>
                           </FlatCell>
                           <FlatCell className="text-slate-500">{t.match}</FlatCell>
                           <FlatCell className="text-slate-500">{t.desc}</FlatCell>
                           <FlatCell className="text-slate-500">{t.updatedBy}</FlatCell>
                           <FlatCell className="text-slate-500">{t.updatedAt}</FlatCell>
+                          <FlatCell>
+                            <button
+                              className="text-xs text-blue-600 hover:text-blue-700"
+                              onClick={() => {
+                                setTermEditIdx(i);
+                                setTermEditDraft({ ...t });
+                              }}
+                            >
+                              编辑
+                            </button>
+                          </FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
@@ -883,6 +887,88 @@ export function ProductSortManagement() {
                 setEditIdx(null);
                 setEditDraft(null);
                 toast.success("已更新该词条类型，请点击「保存配置」正式生效。");
+              }}
+            >
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit term type dialog */}
+      <Dialog
+        open={termEditIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setTermEditIdx(null);
+            setTermEditDraft(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑词条来源</DialogTitle>
+            <DialogDescription>修改该词条来源的权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+          </DialogHeader>
+          {termEditDraft && (
+            <div className="space-y-4 text-sm">
+              <div className="rounded-md bg-slate-50 p-3">
+                <div className="mb-1 text-xs text-slate-500">词条来源</div>
+                <div className="font-medium text-slate-800">{termEditDraft.name}</div>
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">权重分（0-999）</div>
+                <Input
+                  type="number"
+                  className="h-8 w-32"
+                  value={Number.isNaN(termEditDraft.weight) ? "" : termEditDraft.weight}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    setTermEditDraft({ ...termEditDraft, weight: Number.isNaN(n) ? 0 : n });
+                  }}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">说明</div>
+                <Input
+                  value={termEditDraft.desc}
+                  onChange={(e) => setTermEditDraft({ ...termEditDraft, desc: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setTermEditIdx(null);
+                setTermEditDraft(null);
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (termEditIdx === null || !termEditDraft) return;
+                const orig = DEFAULT_TERM_TYPES[termEditIdx];
+                if (!orig) return;
+                setTermEditDraft({ ...orig });
+                toast.info("已恢复该词条来源默认值，点击保存后生效。");
+              }}
+            >
+              恢复默认值
+            </Button>
+            <Button
+              onClick={() => {
+                if (termEditIdx === null || !termEditDraft) return;
+                const next = [...termTypes];
+                next[termEditIdx] = { ...termEditDraft, updatedBy: "admin", updatedAt: nowStr() };
+                setTermTypes(next);
+                setDirty(true);
+                setTermEditIdx(null);
+                setTermEditDraft(null);
+                toast.success("已更新该词条来源，请点击「保存配置」正式生效。");
               }}
             >
               保存
