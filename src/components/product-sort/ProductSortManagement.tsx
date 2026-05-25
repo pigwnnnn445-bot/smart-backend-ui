@@ -290,6 +290,7 @@ export function ProductSortManagement() {
     setMatchTypes(clone(DEFAULT_MATCH));
     setExtra(clone(DEFAULT_EXTRA));
     setQuota(clone(DEFAULT_QUOTA));
+    setSortFactors(clone(DEFAULT_SORT_FACTORS));
     setErrors({});
     setWarnings({});
     setLogs((p) => [
@@ -812,6 +813,78 @@ export function ProductSortManagement() {
                 setEditIdx(null);
                 setEditDraft(null);
                 toast.success("已更新该召回来源，请点击「保存配置」正式生效。");
+              }}
+            >
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sort factor edit dialog */}
+      <Dialog
+        open={sortEditIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSortEditIdx(null);
+            setSortEditDraft(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑排序因子</DialogTitle>
+            <DialogDescription>修改该排序因子的启用状态和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+          </DialogHeader>
+          {sortEditDraft && (
+            <div className="space-y-3 text-sm">
+              <div>
+                <div className="mb-1 text-xs text-slate-600">排序因子</div>
+                <Input
+                  value={sortEditDraft.name}
+                  onChange={(e) => setSortEditDraft({ ...sortEditDraft, name: e.target.value })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-slate-600">是否参与排序</div>
+                <Switch
+                  checked={sortEditDraft.enabled}
+                  onCheckedChange={(v) => setSortEditDraft({ ...sortEditDraft, enabled: !!v })}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">说明</div>
+                <Input
+                  value={sortEditDraft.desc}
+                  onChange={(e) => setSortEditDraft({ ...sortEditDraft, desc: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSortEditIdx(null);
+                setSortEditDraft(null);
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={() => {
+                if (sortEditIdx === null || !sortEditDraft) return;
+                const next = [...sortFactors];
+                next[sortEditIdx] = {
+                  ...sortEditDraft,
+                  updatedBy: "admin",
+                  updatedAt: nowStr(),
+                };
+                setSortFactors(next);
+                setDirty(true);
+                setSortEditIdx(null);
+                setSortEditDraft(null);
+                toast.success("已更新该排序因子，请点击「保存配置」正式生效。");
               }}
             >
               保存
