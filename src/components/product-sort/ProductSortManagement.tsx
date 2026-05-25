@@ -24,13 +24,15 @@ type RecallSource = {
   weight: number;
   stage: "一期启用" | "二期预留" | "暂不启用";
   desc: string;
+  updatedBy: string;
+  updatedAt: string;
 };
 
 const DEFAULT_RECALL: RecallSource[] = [
-  { name: "SPU词条召回", code: "SPU_TERM", enabled: true, weight: 100, stage: "一期启用", desc: "用户输入命中后台配置的 SPU 词条" },
-  { name: "商品名前缀匹配兜底", code: "SPU_NAME_PREFIX", enabled: true, weight: 70, stage: "一期启用", desc: "未命中词条时，使用商品名前缀匹配兜底召回" },
-  { name: "场景词召回", code: "SCENE_TERM", enabled: false, weight: 60, stage: "二期预留", desc: "用户输入场景词后召回一组关联 SPU" },
-  { name: "商品属性词召回", code: "ATTRIBUTE_TERM", enabled: false, weight: 50, stage: "二期预留", desc: "用户输入 4K、Family、礼品码等属性词" },
+  { name: "SPU词条召回", code: "SPU_TERM", enabled: true, weight: 100, stage: "一期启用", desc: "用户输入命中后台配置的 SPU 词条", updatedBy: "—", updatedAt: "—" },
+  { name: "商品名前缀匹配兜底", code: "SPU_NAME_PREFIX", enabled: true, weight: 70, stage: "一期启用", desc: "未命中词条时，使用商品名前缀匹配兜底召回", updatedBy: "—", updatedAt: "—" },
+  { name: "场景词召回", code: "SCENE_TERM", enabled: false, weight: 60, stage: "二期预留", desc: "用户输入场景词后召回一组关联 SPU", updatedBy: "—", updatedAt: "—" },
+  { name: "商品属性词召回", code: "ATTRIBUTE_TERM", enabled: false, weight: 50, stage: "二期预留", desc: "用户输入 4K、Family、礼品码等属性词", updatedBy: "—", updatedAt: "—" },
 ];
 
 type TermType = {
@@ -39,21 +41,23 @@ type TermType = {
   weight: number;
   match: string;
   desc: string;
+  updatedBy: string;
+  updatedAt: string;
 };
 
 const DEFAULT_TERM_TYPES: TermType[] = [
-  { name: "商品词", code: "PRODUCT_TERM", weight: 100, match: "精准匹配 / 前缀匹配", desc: "商品正式名称或核心商品名" },
-  { name: "品牌词", code: "BRAND_TERM", weight: 90, match: "精准匹配 / 前缀匹配", desc: "品牌、服务名、公司名" },
-  { name: "别名词", code: "ALIAS_TERM", weight: 85, match: "精准匹配", desc: "用户常见叫法或变体写法" },
-  { name: "错词", code: "TYPO_TERM", weight: 75, match: "精准匹配", desc: "用户常见拼写错误" },
-  { name: "短词", code: "SHORT_TERM", weight: 60, match: "精准匹配", desc: "用户常用简称或缩写" },
+  { name: "商品词", code: "PRODUCT_TERM", weight: 100, match: "精准匹配 / 前缀匹配", desc: "商品正式名称或核心商品名", updatedBy: "—", updatedAt: "—" },
+  { name: "品牌词", code: "BRAND_TERM", weight: 90, match: "精准匹配 / 前缀匹配", desc: "品牌、服务名、公司名", updatedBy: "—", updatedAt: "—" },
+  { name: "别名词", code: "ALIAS_TERM", weight: 85, match: "精准匹配", desc: "用户常见叫法或变体写法", updatedBy: "—", updatedAt: "—" },
+  { name: "错词", code: "TYPO_TERM", weight: 75, match: "精准匹配", desc: "用户常见拼写错误", updatedBy: "—", updatedAt: "—" },
+  { name: "短词", code: "SHORT_TERM", weight: 60, match: "精准匹配", desc: "用户常用简称或缩写", updatedBy: "—", updatedAt: "—" },
 ];
 
-type MatchType = { name: string; code: string; weight: number; desc: string };
+type MatchType = { name: string; code: string; weight: number; desc: string; updatedBy: string; updatedAt: string };
 
 const DEFAULT_MATCH: MatchType[] = [
-  { name: "精准匹配", code: "EXACT", weight: 100, desc: "用户输入标准化词与后台标准化词完全一致" },
-  { name: "前缀匹配", code: "PREFIX", weight: 70, desc: "用户输入标准化词是后台标准化词的前缀" },
+  { name: "精准匹配", code: "EXACT", weight: 100, desc: "用户输入标准化词与后台标准化词完全一致", updatedBy: "—", updatedAt: "—" },
+  { name: "前缀匹配", code: "PREFIX", weight: 70, desc: "用户输入标准化词是后台标准化词的前缀", updatedBy: "—", updatedAt: "—" },
 ];
 
 type ExtraFactors = {
