@@ -396,18 +396,27 @@ export function ProductSortManagement() {
 
               <div className="px-6 pb-8 pt-4">
                 {tab === "intro" && (
-                  <div className="space-y-3">
-                    <div className="rounded-md border border-blue-100 bg-blue-50/60 p-4 text-sm leading-7 text-slate-700">
-                      当前页面用于配置搜索正常可购买商品的排序权重。搜索服务会先根据 SPU词条、SPU名称前缀兜底等召回候选 SPU，再根据当前用户 IP 区域判断商品是否可购买。只有当前区域可售且有库存 / 有可购买供给的商品，才进入本页面配置的排序规则。
-                      <br />
-                      GamsGo 自营商品如果当前区域不可购买但允许预约，将作为顶部提示卡展示，不参与本页面排序，也不占用正常结果数量。
-                    </div>
-                    <div className="rounded-md border border-slate-200 bg-slate-50/60 p-4 font-mono text-xs leading-7 text-slate-700">
-                      正常结果排序分 =<br />
-                      &nbsp;&nbsp;召回来源权重 + 词条类型权重 + 匹配方式权重<br />
-                      + 是否明确指向当前SPU加权 + 商品热度分 + GamsGo自营加权 + 多命中奖励
-                    </div>
-                    <p className="text-xs text-slate-500">排序分越高，商品在正常搜索结果中越靠前。</p>
+                  <div>
+                    <p className="mb-3 text-xs text-slate-500">
+                      控制下列召回商品排序因子是否参与最终排序计算。关闭后该因子在排序分中按 0 计算，相关权重配置仍可保留。
+                    </p>
+                    <FlatTable headers={["召回商品排序因子", "是否参与排序", "说明"]}>
+                      {SORT_FACTORS.map((f) => (
+                        <FlatRow key={f.key}>
+                          <FlatCell>{f.name}</FlatCell>
+                          <FlatCell>
+                            <Switch
+                              checked={sortSwitch[f.key]}
+                              onCheckedChange={(v) => {
+                                setSortSwitch({ ...sortSwitch, [f.key]: !!v });
+                                setDirty(true);
+                              }}
+                            />
+                          </FlatCell>
+                          <FlatCell className="text-slate-500">{f.desc}</FlatCell>
+                        </FlatRow>
+                      ))}
+                    </FlatTable>
                   </div>
                 )}
 
