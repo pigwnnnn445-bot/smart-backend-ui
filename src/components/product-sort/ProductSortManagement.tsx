@@ -671,17 +671,19 @@ export function ProductSortManagement() {
                     {errors["quota_zero"] && (
                       <p className="mb-2 text-xs text-red-500">{errors["quota_zero"]}</p>
                     )}
-                    <FlatTable headers={["配置项", "数值 / 开关", "说明"]}>
+                    <FlatTable headers={["配置项", "数值 / 开关", "说明", "变更人", "变更时间"]}>
                       <FlatRow>
                         <FlatCell>搜索面板最多商品数</FlatCell>
                         <FlatCell>
                           <NumberField
                             value={quota.panelMax}
                             error={errors["quota_panelMax"]}
-                            onChange={(v) => setQuota({ ...quota, panelMax: v })}
+                            onChange={(v) => { setQuota({ ...quota, panelMax: v }); stampQuota("panelMax"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">1-20，正常商品结果最多返回数量</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("panelMax").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("panelMax").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>GamsGo默认展示数</FlatCell>
@@ -689,10 +691,12 @@ export function ProductSortManagement() {
                           <NumberField
                             value={quota.gamsgoDefault}
                             error={errors["quota_gamsgo"]}
-                            onChange={(v) => setQuota({ ...quota, gamsgoDefault: v })}
+                            onChange={(v) => { setQuota({ ...quota, gamsgoDefault: v }); stampQuota("gamsgoDefault"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">0-20，GamsGo 自营默认最多展示数量</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("gamsgoDefault").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("gamsgoDefault").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>C2C默认展示数</FlatCell>
@@ -700,30 +704,36 @@ export function ProductSortManagement() {
                           <NumberField
                             value={quota.c2cDefault}
                             error={errors["quota_c2c"]}
-                            onChange={(v) => setQuota({ ...quota, c2cDefault: v })}
+                            onChange={(v) => { setQuota({ ...quota, c2cDefault: v }); stampQuota("c2cDefault"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">0-20，C2C 默认最多展示数量</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("c2cDefault").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("c2cDefault").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>一方不足是否允许补位</FlatCell>
                         <FlatCell>
                           <Switch
                             checked={quota.allowBackfill}
-                            onCheckedChange={(v) => setQuota({ ...quota, allowBackfill: !!v })}
+                            onCheckedChange={(v) => { setQuota({ ...quota, allowBackfill: !!v }); stampQuota("allowBackfill"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">某一来源不足时，由另一来源补满</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("allowBackfill").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("allowBackfill").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>是否按最终分重新排序</FlatCell>
                         <FlatCell>
                           <Switch
                             checked={quota.rerankByScore}
-                            onCheckedChange={(v) => setQuota({ ...quota, rerankByScore: !!v })}
+                            onCheckedChange={(v) => { setQuota({ ...quota, rerankByScore: !!v }); stampQuota("rerankByScore"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">分桶后是否再按分数整体重排</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("rerankByScore").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("rerankByScore").updatedAt}</FlatCell>
                       </FlatRow>
                     </FlatTable>
                     <div className="mt-4 rounded-md border border-slate-200 bg-slate-50/60 p-3 text-xs leading-6 text-slate-600">
