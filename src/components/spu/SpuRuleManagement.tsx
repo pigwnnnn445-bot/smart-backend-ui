@@ -422,13 +422,21 @@ export function SpuRuleManagement() {
     } else {
       setCrossSpuWarning("");
     }
+    if (action === "publish") {
+      // 校验通过后，先弹出二次确认弹窗
+      setPublishConfirmOpen(true);
+      return;
+    }
+    commitSave(action);
+  }
+
+  function commitSave(action: "draft" | "publish") {
     const now = new Date()
       .toISOString()
       .replace("T", " ")
       .slice(0, 19);
     let nextStatus: Status;
     if (action === "draft") {
-      // 新增时进入草稿；编辑已发布词条仅存草稿，前台仍用原线上版本，保持原状态展示
       nextStatus = mode === "create" ? "草稿" : draft.status;
     } else {
       nextStatus = "已启用";
@@ -450,6 +458,17 @@ export function SpuRuleManagement() {
             : "编辑词条草稿",
       target: payload.content,
     });
+    if (action === "publish") {
+      const lib = computeLibStatus(activeSpu);
+      if (lib === "已启用") {
+        toast.success("保存并发布成功，词条已参与前台搜索匹配。");
+      } else if (lib === "已停用") {
+        toast.success("保存并发布成功。当前SPU词库处于停用状态，词条暂不参与前台搜索，重新启用词库后生效。");
+      } else {
+        // 未配置 / 草稿（含本次新增使原"未配置"变"草稿"）
+        toast.success("保存并发布成功。当前SPU词库未启用，词条暂不参与前台搜索，启用词库后生效。");
+      }
+    }
     setEditOpen(false);
   }
 
