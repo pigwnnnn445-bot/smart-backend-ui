@@ -895,10 +895,91 @@ export function ProductSortManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit term type dialog */}
+      <Dialog
+        open={termEditIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setTermEditIdx(null);
+            setTermEditDraft(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑词条来源</DialogTitle>
+            <DialogDescription>修改该词条来源的权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+          </DialogHeader>
+          {termEditDraft && (
+            <div className="space-y-4 text-sm">
+              <div className="rounded-md bg-slate-50 p-3">
+                <div className="mb-1 text-xs text-slate-500">词条来源</div>
+                <div className="font-medium text-slate-800">{termEditDraft.name}</div>
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">权重分（0-999）</div>
+                <Input
+                  type="number"
+                  className="h-8 w-32"
+                  value={Number.isNaN(termEditDraft.weight) ? "" : termEditDraft.weight}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    setTermEditDraft({ ...termEditDraft, weight: Number.isNaN(n) ? 0 : n });
+                  }}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">说明</div>
+                <Input
+                  value={termEditDraft.desc}
+                  onChange={(e) => setTermEditDraft({ ...termEditDraft, desc: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setTermEditIdx(null);
+                setTermEditDraft(null);
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (termEditIdx === null || !termEditDraft) return;
+                const orig = DEFAULT_TERM_TYPES[termEditIdx];
+                if (!orig) return;
+                setTermEditDraft({ ...orig });
+                toast.info("已恢复该词条来源默认值，点击保存后生效。");
+              }}
+            >
+              恢复默认值
+            </Button>
+            <Button
+              onClick={() => {
+                if (termEditIdx === null || !termEditDraft) return;
+                const next = [...termTypes];
+                next[termEditIdx] = { ...termEditDraft, updatedBy: "admin", updatedAt: nowStr() };
+                setTermTypes(next);
+                setDirty(true);
+                setTermEditIdx(null);
+                setTermEditDraft(null);
+                toast.success("已更新该词条来源，请点击「保存配置」正式生效。");
+              }}
+            >
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Sort factor edit dialog */}
       <Dialog
         open={sortEditIdx !== null}
-
         onOpenChange={(o) => {
           if (!o) {
             setSortEditIdx(null);
