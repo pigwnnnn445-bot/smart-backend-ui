@@ -748,16 +748,13 @@ export function ProductSortManagement() {
             <DialogDescription>修改该召回来源的启用状态、权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
           </DialogHeader>
           {editDraft && (
-            <div className="space-y-3 text-sm">
-              <div>
-                <div className="mb-1 text-xs text-slate-600">召回来源</div>
-                <Input
-                  value={editDraft.name}
-                  onChange={(e) => setEditDraft({ ...editDraft, name: e.target.value })}
-                />
+            <div className="space-y-4 text-sm">
+              <div className="rounded-md bg-slate-50 p-3">
+                <div className="mb-1 text-xs text-slate-500">召回来源</div>
+                <div className="font-medium text-slate-800">{editDraft.name}</div>
               </div>
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-slate-600">是否启用</div>
+              <div className="flex items-center justify-between rounded-md border border-slate-200 p-3">
+                <div className="text-sm text-slate-700">是否启用</div>
                 <Switch
                   checked={editDraft.enabled}
                   onCheckedChange={(v) => setEditDraft({ ...editDraft, enabled: !!v })}
@@ -793,6 +790,18 @@ export function ProductSortManagement() {
               }}
             >
               取消
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (editIdx === null || !editDraft) return;
+                const orig = initialRecallRef.current[editIdx];
+                if (!orig) return;
+                setEditDraft({ ...orig });
+                toast.info("已恢复该召回来源默认值，点击保存后生效。");
+              }}
+            >
+              恢复默认值
             </Button>
             <Button
               onClick={() => {
