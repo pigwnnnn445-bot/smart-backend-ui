@@ -323,6 +323,13 @@ export function SpuRuleManagement() {
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [scopeError, setScopeError] = useState("");
   const [duplicateError, setDuplicateError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    content?: string;
+    standard?: string;
+    termType?: string;
+    remark?: string;
+  }>({});
+  const [crossSpuWarning, setCrossSpuWarning] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
   const [statusConfirm, setStatusConfirm] = useState<RuleRow | null>(null);
 
