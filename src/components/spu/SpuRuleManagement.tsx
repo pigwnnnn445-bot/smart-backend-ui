@@ -323,6 +323,13 @@ export function SpuRuleManagement() {
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [scopeError, setScopeError] = useState("");
   const [duplicateError, setDuplicateError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    content?: string;
+    standard?: string;
+    termType?: string;
+    remark?: string;
+  }>({});
+  const [crossSpuWarning, setCrossSpuWarning] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
   const [statusConfirm, setStatusConfirm] = useState<RuleRow | null>(null);
 
@@ -352,6 +359,8 @@ export function SpuRuleManagement() {
     setDraft({ ...blank, id: crypto.randomUUID() });
     setDuplicateError("");
     setScopeError("");
+    setFieldErrors({});
+    setCrossSpuWarning("");
     setEditOpen(true);
   }
 
@@ -360,34 +369,24 @@ export function SpuRuleManagement() {
     setDraft({ ...row });
     setDuplicateError("");
     setScopeError("");
+    setFieldErrors({});
+    setCrossSpuWarning("");
     setEditOpen(true);
   }
 
   function saveDraft(action: "draft" | "publish") {
-    if (!draft.content.trim()) {
-      toast.error("请输入词条内容");
+    const errs: typeof fieldErrors = {};
+    if (!draft.content.trim()) errs.content = "请输入词条内容";
+    else if (draft.content.length > 100) errs.content = "词条内容不能超过100字符";
+    else if (!normalizeTerm(draft.content)) errs.content = "词条内容无效，请输入有效搜索词";
+    if (!draft.standard.trim()) errs.standard = "请输入标准化词";
+    if (draft.termType.length === 0) errs.termType = "请选择词条类型";
+    if (draft.remark && draft.remark.length > 300) errs.remark = "备注内容不能超过300字符";
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
       return;
     }
-    if (draft.content.length > 100) {
-      toast.error("词条内容不能超过100字符");
-      return;
-    }
-    if (!normalizeTerm(draft.content)) {
-      toast.error("词条内容无效，请输入有效搜索词");
-      return;
-    }
-    if (!draft.standard.trim()) {
-      toast.error("请输入标准化词");
-      return;
-    }
-    if (draft.termType.length === 0) {
-      toast.error("请选择词条类型");
-      return;
-    }
-    if (draft.remark && draft.remark.length > 300) {
-      toast.error("备注内容不能超过300字符");
-      return;
-    }
+    setFieldErrors({});
     const dup = rows.find(
       (r) => r.id !== draft.id && r.standard && r.standard === draft.standard,
     );
@@ -405,7 +404,9 @@ export function SpuRuleManagement() {
         list.some((r) => r.standard && r.standard === draft.standard),
     );
     if (crossSpu) {
-      toast.warning("该标准化词已被其他SPU使用，用户搜索时可能同时召回多个商品");
+      setCrossSpuWarning("该标准化词已被其他SPU使用，用户搜索时可能同时召回多个商品");
+    } else {
+      setCrossSpuWarning("");
     }
     if (
       (draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") &&
@@ -965,9 +966,15 @@ export function SpuRuleManagement() {
                   const v = e.target.value;
                   setDraft({ ...draft, content: v, standard: normalizeTerm(v) });
                   if (duplicateError) setDuplicateError("");
+                  if (fieldErrors.content || fieldErrors.standard)
+                    setFieldErrors({ ...fieldErrors, content: undefined, standard: undefined });
+                  if (crossSpuWarning) setCrossSpuWarning("");
                 }}
                 placeholder="请输入词条内容"
               />
+              {fieldErrors.content && (
+                <p className="text-xs text-rose-500 mt-1">{fieldErrors.content}</p>
+              )}
               {duplicateError && (
                 <p className="text-xs text-rose-500 mt-1">{duplicateError}</p>
               )}
@@ -979,13 +986,26 @@ export function SpuRuleManagement() {
                 placeholder="根据词条内容自动生成"
                 className="bg-slate-50 cursor-not-allowed"
               />
+              {fieldErrors.standard && (
+                <p className="text-xs text-rose-500 mt-1">{fieldErrors.standard}</p>
+              )}
+              {crossSpuWarning && (
+                <p className="text-xs text-amber-600 mt-1">{crossSpuWarning}</p>
+              )}
             </Field>
             <Field label="词条类型" required>
               <MultiSelect
                 options={TERM_TYPES}
                 value={draft.termType}
-                onChange={(v) => setDraft({ ...draft, termType: v as TermType[] })}
+                onChange={(v) => {
+                  setDraft({ ...draft, termType: v as TermType[] });
+                  if (fieldErrors.termType)
+                    setFieldErrors({ ...fieldErrors, termType: undefined });
+                }}
               />
+              {fieldErrors.termType && (
+                <p className="text-xs text-rose-500 mt-1">{fieldErrors.termType}</p>
+              )}
             </Field>
             <Field label="匹配方式" required>
               <Select
@@ -1058,9 +1078,16 @@ export function SpuRuleManagement() {
                 <Textarea
                   rows={3}
                   value={draft.remark}
-                  onChange={(e) => setDraft({ ...draft, remark: e.target.value })}
+                  onChange={(e) => {
+                    setDraft({ ...draft, remark: e.target.value });
+                    if (fieldErrors.remark)
+                      setFieldErrors({ ...fieldErrors, remark: undefined });
+                  }}
                   placeholder="请输入备注"
                 />
+                {fieldErrors.remark && (
+                  <p className="text-xs text-rose-500 mt-1">{fieldErrors.remark}</p>
+                )}
               </Field>
             </div>
           </div>
