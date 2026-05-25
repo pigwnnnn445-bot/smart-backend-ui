@@ -404,20 +404,35 @@ export function ProductSortManagement() {
                     <p className="mb-3 text-xs text-slate-500">
                       控制下列召回商品排序因子是否参与最终排序计算。关闭后该因子在排序分中按 0 计算，相关权重配置仍可保留。
                     </p>
-                    <FlatTable headers={["召回商品排序因子", "是否参与排序", "说明"]}>
-                      {SORT_FACTORS.map((f) => (
+                    <FlatTable headers={["召回商品排序因子", "是否参与排序", "说明", "变更人", "变更时间", "操作"]}>
+                      {sortFactors.map((f, i) => (
                         <FlatRow key={f.key}>
                           <FlatCell>{f.name}</FlatCell>
                           <FlatCell>
                             <Switch
-                              checked={sortSwitch[f.key]}
+                              checked={f.enabled}
                               onCheckedChange={(v) => {
-                                setSortSwitch({ ...sortSwitch, [f.key]: !!v });
+                                const next = [...sortFactors];
+                                next[i] = { ...f, enabled: !!v, updatedBy: "admin", updatedAt: nowStr() };
+                                setSortFactors(next);
                                 setDirty(true);
                               }}
                             />
                           </FlatCell>
                           <FlatCell className="text-slate-500">{f.desc}</FlatCell>
+                          <FlatCell className="text-slate-500">{f.updatedBy}</FlatCell>
+                          <FlatCell className="text-slate-500">{f.updatedAt}</FlatCell>
+                          <FlatCell>
+                            <button
+                              className="text-xs text-blue-600 hover:text-blue-700"
+                              onClick={() => {
+                                setSortEditIdx(i);
+                                setSortEditDraft({ ...f });
+                              }}
+                            >
+                              编辑
+                            </button>
+                          </FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
