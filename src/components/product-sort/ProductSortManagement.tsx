@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { RefreshCw, Settings, Search, History } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -131,6 +132,9 @@ export function ProductSortManagement() {
   const [logOpen, setLogOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [tab, setTab] = useState<
+    "intro" | "recall" | "term" | "match" | "extra" | "quota"
+  >("intro");
 
   function isInt(n: unknown) {
     return typeof n === "number" && Number.isInteger(n) && !Number.isNaN(n);
@@ -296,264 +300,341 @@ export function ProductSortManagement() {
             </div>
 
             {/* Main content */}
-            <div className="flex-1 min-w-0 p-6">
-              {/* Breadcrumb + actions */}
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-slate-500">
-                  首页 / 搜索管理 / <span className="text-slate-700">搜索召回与排序规则</span>
-                </div>
+            <div className="flex-1 min-w-0">
+              {/* Tabs row */}
+              <div className="flex items-center border-b border-slate-200 px-6">
+                {[
+                  { k: "intro", label: "规则说明" },
+                  { k: "recall", label: "召回来源权重" },
+                  { k: "term", label: "词条类型权重" },
+                  { k: "match", label: "匹配方式权重" },
+                  { k: "extra", label: "附加排序因子" },
+                  { k: "quota", label: "展示配额" },
+                ].map((t) => {
+                  const active = tab === t.k;
+                  return (
+                    <button
+                      key={t.k}
+                      onClick={() => setTab(t.k as typeof tab)}
+                      className={`relative mr-8 py-3 text-sm transition-colors ${
+                        active ? "text-blue-600 font-medium" : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      {t.label}
+                      {active && (
+                        <span className="absolute -bottom-px left-0 right-0 h-0.5 bg-blue-600" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Action toolbar */}
+              <div className="flex items-center justify-between px-6 pt-5">
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setTestOpen(true)}>搜索测试</Button>
-                  <Button variant="outline" size="sm" onClick={() => setLogOpen(true)}>查看操作日志</Button>
-                  <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>恢复默认值</Button>
-                  <Button size="sm" onClick={handleSaveClick}>保存配置</Button>
+                  <Button
+                    onClick={handleSaveClick}
+                    className="h-9 bg-blue-500 hover:bg-blue-600 text-white shadow-none"
+                  >
+                    保存配置
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setResetOpen(true)}
+                    className="h-9 border-slate-300 text-slate-700"
+                  >
+                    恢复默认值
+                  </Button>
+                </div>
+                <div className="flex items-center gap-3 text-slate-500">
+                  <button
+                    onClick={() => setTestOpen(true)}
+                    className="flex items-center gap-1 text-xs hover:text-blue-600"
+                    title="搜索测试"
+                  >
+                    <Search className="h-4 w-4" /> 搜索测试
+                  </button>
+                  <button
+                    onClick={() => setLogOpen(true)}
+                    className="flex items-center gap-1 text-xs hover:text-blue-600"
+                    title="操作日志"
+                  >
+                    <History className="h-4 w-4" /> 操作日志
+                  </button>
+                  <RefreshCw className="h-4 w-4 cursor-pointer hover:text-blue-600" />
+                  <Settings className="h-4 w-4 cursor-pointer hover:text-blue-600" />
                 </div>
               </div>
 
-              {/* Section: Rule description */}
-              <Section title="规则说明">
-                <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-xs leading-6 text-slate-700">
-                  当前页面用于配置搜索正常可购买商品的排序权重。搜索服务会先根据 SPU词条、SPU名称前缀兜底等召回候选 SPU，再根据当前用户 IP 区域判断商品是否可购买。只有当前区域可售且有库存 / 有可购买供给的商品，才进入本页面配置的排序规则。
-                  <br />
-                  GamsGo 自营商品如果当前区域不可购买但允许预约，将作为顶部提示卡展示，不参与本页面排序，也不占用正常结果数量。
-                </div>
-                <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3 font-mono text-xs leading-6 text-slate-700">
-                  正常结果排序分 =<br />
-                  &nbsp;&nbsp;召回来源权重<br />
-                  + 词条类型权重<br />
-                  + 匹配方式权重<br />
-                  + 是否明确指向当前SPU加权<br />
-                  + 商品热度分<br />
-                  + GamsGo自营加权<br />
-                  + 多命中奖励
-                </div>
-                <p className="mt-2 text-xs text-slate-500">排序分越高，商品在正常搜索结果中越靠前。</p>
-              </Section>
-
-              {/* Section: Recall sources */}
-              <Section title="召回来源权重配置">
-                {errors["recall_enabled"] && (
-                  <p className="mb-2 text-xs text-red-500">{errors["recall_enabled"]}</p>
+              <div className="px-6 pb-8 pt-4">
+                {tab === "intro" && (
+                  <div className="space-y-3">
+                    <div className="rounded-md border border-blue-100 bg-blue-50/60 p-4 text-sm leading-7 text-slate-700">
+                      当前页面用于配置搜索正常可购买商品的排序权重。搜索服务会先根据 SPU词条、SPU名称前缀兜底等召回候选 SPU，再根据当前用户 IP 区域判断商品是否可购买。只有当前区域可售且有库存 / 有可购买供给的商品，才进入本页面配置的排序规则。
+                      <br />
+                      GamsGo 自营商品如果当前区域不可购买但允许预约，将作为顶部提示卡展示，不参与本页面排序，也不占用正常结果数量。
+                    </div>
+                    <div className="rounded-md border border-slate-200 bg-slate-50/60 p-4 font-mono text-xs leading-7 text-slate-700">
+                      正常结果排序分 =<br />
+                      &nbsp;&nbsp;召回来源权重 + 词条类型权重 + 匹配方式权重<br />
+                      + 是否明确指向当前SPU加权 + 商品热度分 + GamsGo自营加权 + 多命中奖励
+                    </div>
+                    <p className="text-xs text-slate-500">排序分越高，商品在正常搜索结果中越靠前。</p>
+                  </div>
                 )}
-                <TableShell headers={["召回来源", "来源编码", "是否启用", "权重分", "当前阶段", "说明"]}>
-                  {recall.map((r, i) => (
-                    <tr key={r.code} className="border-t border-slate-100">
-                      <Td>{r.name}</Td>
-                      <Td className="text-slate-500">{r.code}</Td>
-                      <Td>
-                        <Switch
-                          checked={r.enabled}
-                          onCheckedChange={(v) => {
-                            const next = [...recall];
-                            next[i] = { ...r, enabled: !!v };
-                            setRecall(next);
-                          }}
-                        />
-                      </Td>
-                      <Td>
-                        <NumberField
-                          value={r.weight}
-                          error={errors[`recall_${i}`]}
-                          onChange={(v) => {
-                            const next = [...recall];
-                            next[i] = { ...r, weight: v };
-                            setRecall(next);
-                          }}
-                        />
-                      </Td>
-                      <Td>
-                        <StageBadge stage={r.stage} />
-                      </Td>
-                      <Td className="text-slate-500">{r.desc}</Td>
-                    </tr>
-                  ))}
-                </TableShell>
-              </Section>
 
-              {/* Section: Term type weights */}
-              <Section title="SPU词条类型权重配置" subtitle="只作用于 SPU 词条召回">
-                {warnings["term_short"] && (
-                  <p className="mb-2 text-xs text-amber-600">{warnings["term_short"]}</p>
+                {tab === "recall" && (
+                  <div>
+                    {errors["recall_enabled"] && (
+                      <p className="mb-3 text-xs text-red-500">{errors["recall_enabled"]}</p>
+                    )}
+                    <FlatTable headers={["召回来源", "来源编码", "是否启用", "权重分", "当前阶段", "说明"]}>
+                      {recall.map((r, i) => (
+                        <FlatRow key={r.code}>
+                          <FlatCell>{r.name}</FlatCell>
+                          <FlatCell className="text-slate-500">{r.code}</FlatCell>
+                          <FlatCell>
+                            <Switch
+                              checked={r.enabled}
+                              onCheckedChange={(v) => {
+                                const next = [...recall];
+                                next[i] = { ...r, enabled: !!v };
+                                setRecall(next);
+                              }}
+                            />
+                          </FlatCell>
+                          <FlatCell>
+                            <NumberField
+                              value={r.weight}
+                              error={errors[`recall_${i}`]}
+                              onChange={(v) => {
+                                const next = [...recall];
+                                next[i] = { ...r, weight: v };
+                                setRecall(next);
+                              }}
+                            />
+                          </FlatCell>
+                          <FlatCell><StageBadge stage={r.stage} /></FlatCell>
+                          <FlatCell className="text-slate-500">{r.desc}</FlatCell>
+                        </FlatRow>
+                      ))}
+                    </FlatTable>
+                  </div>
                 )}
-                <TableShell headers={["词条类型", "类型编码", "权重分", "推荐匹配方式", "说明"]}>
-                  {termTypes.map((t, i) => (
-                    <tr key={t.code} className="border-t border-slate-100">
-                      <Td>{t.name}</Td>
-                      <Td className="text-slate-500">{t.code}</Td>
-                      <Td>
-                        <NumberField
-                          value={t.weight}
-                          error={errors[`term_${i}`]}
-                          onChange={(v) => {
-                            const next = [...termTypes];
-                            next[i] = { ...t, weight: v };
-                            setTermTypes(next);
-                          }}
-                        />
-                      </Td>
-                      <Td className="text-slate-500">{t.match}</Td>
-                      <Td className="text-slate-500">{t.desc}</Td>
-                    </tr>
-                  ))}
-                </TableShell>
-              </Section>
 
-              {/* Section: Match weights */}
-              <Section title="匹配方式权重配置">
-                {errors["match_order"] && (
-                  <p className="mb-2 text-xs text-red-500">{errors["match_order"]}</p>
+                {tab === "term" && (
+                  <div>
+                    {warnings["term_short"] && (
+                      <p className="mb-3 text-xs text-amber-600">{warnings["term_short"]}</p>
+                    )}
+                    <FlatTable headers={["词条类型", "类型编码", "权重分", "推荐匹配方式", "说明"]}>
+                      {termTypes.map((t, i) => (
+                        <FlatRow key={t.code}>
+                          <FlatCell>{t.name}</FlatCell>
+                          <FlatCell className="text-slate-500">{t.code}</FlatCell>
+                          <FlatCell>
+                            <NumberField
+                              value={t.weight}
+                              error={errors[`term_${i}`]}
+                              onChange={(v) => {
+                                const next = [...termTypes];
+                                next[i] = { ...t, weight: v };
+                                setTermTypes(next);
+                              }}
+                            />
+                          </FlatCell>
+                          <FlatCell className="text-slate-500">{t.match}</FlatCell>
+                          <FlatCell className="text-slate-500">{t.desc}</FlatCell>
+                        </FlatRow>
+                      ))}
+                    </FlatTable>
+                  </div>
                 )}
-                <TableShell headers={["匹配方式", "匹配编码", "权重分", "说明"]}>
-                  {matchTypes.map((m, i) => (
-                    <tr key={m.code} className="border-t border-slate-100">
-                      <Td>{m.name}</Td>
-                      <Td className="text-slate-500">{m.code}</Td>
-                      <Td>
-                        <NumberField
-                          value={m.weight}
-                          error={errors[`match_${i}`]}
-                          onChange={(v) => {
-                            const next = [...matchTypes];
-                            next[i] = { ...m, weight: v };
-                            setMatchTypes(next);
-                          }}
-                        />
-                      </Td>
-                      <Td className="text-slate-500">{m.desc}</Td>
-                    </tr>
-                  ))}
-                </TableShell>
-              </Section>
 
-              {/* Section: Extra factors */}
-              <Section title="附加排序因子配置">
-                <div className="grid grid-cols-2 gap-4">
-                  <Field
-                    label="明确指向当前SPU加权"
-                    hint="词条「是否明确指向当前SPU = 是」时增加的分数"
-                    error={errors["extra_exactSpuBoost"]}
-                  >
-                    <NumberField
-                      value={extra.exactSpuBoost}
-                      onChange={(v) => setExtra({ ...extra, exactSpuBoost: v })}
-                    />
-                  </Field>
-                  <Field
-                    label="商品热度分单位"
-                    hint="商品热度等级每提升 1 级增加的分数"
-                    error={errors["extra_hotnessUnit"]}
-                  >
-                    <NumberField
-                      value={extra.hotnessUnit}
-                      onChange={(v) => setExtra({ ...extra, hotnessUnit: v })}
-                    />
-                  </Field>
-                  <Field
-                    label="商品热度分上限"
-                    hint="商品热度最多可增加的分数"
-                    error={errors["extra_hotnessCap"]}
-                  >
-                    <NumberField
-                      value={extra.hotnessCap}
-                      onChange={(v) => setExtra({ ...extra, hotnessCap: v })}
-                    />
-                  </Field>
-                  <Field
-                    label="GamsGo自营加权"
-                    hint="明确商品意图下，自营商品当前区域可购买时增加的分数"
-                    error={errors["extra_gamsgoBoost"]}
-                  >
-                    <NumberField
-                      value={extra.gamsgoBoost}
-                      onChange={(v) => setExtra({ ...extra, gamsgoBoost: v })}
-                    />
-                  </Field>
-                  <Field
-                    label="是否启用多命中奖励"
-                    hint="同一 SPU 被多个来源命中时是否增加少量奖励"
-                  >
-                    <Switch
-                      checked={extra.multiHitEnabled}
-                      onCheckedChange={(v) => setExtra({ ...extra, multiHitEnabled: !!v })}
-                    />
-                  </Field>
-                  <Field
-                    label="单个额外命中奖励分"
-                    hint="每个额外命中来源增加的分数"
-                    error={errors["extra_multiHitPer"]}
-                  >
-                    <NumberField
-                      value={extra.multiHitPer}
-                      onChange={(v) => setExtra({ ...extra, multiHitPer: v })}
-                    />
-                  </Field>
-                  <Field
-                    label="多命中奖励上限次数"
-                    hint="最多计算几个额外命中来源（0-10）"
-                    error={errors["extra_multiHitMax"]}
-                  >
-                    <NumberField
-                      value={extra.multiHitMax}
-                      onChange={(v) => setExtra({ ...extra, multiHitMax: v })}
-                    />
-                  </Field>
-                </div>
-                <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-600">
-                  商品热度分 = min(商品热度等级 × 商品热度分单位, 商品热度分上限)。<br />
-                  GamsGo自营加权仅在「明确商品意图 + 当前区域可售 + 有库存」时生效；不可购买时商品将作为顶部预约卡展示，不参与本页面排序。<br />
-                  多命中最终分 = 最高召回分 + min(额外命中来源数, 多命中奖励上限次数) × 单个额外命中奖励分。
-                </div>
-              </Section>
-
-              {/* Section: Quota */}
-              <Section title="GamsGo / C2C 展示配额配置" subtitle="只作用于正常可购买结果，顶部预约卡不占名额">
-                {errors["quota_sum"] && (
-                  <p className="mb-2 text-xs text-red-500">{errors["quota_sum"]}</p>
+                {tab === "match" && (
+                  <div>
+                    {errors["match_order"] && (
+                      <p className="mb-3 text-xs text-red-500">{errors["match_order"]}</p>
+                    )}
+                    <FlatTable headers={["匹配方式", "匹配编码", "权重分", "说明"]}>
+                      {matchTypes.map((m, i) => (
+                        <FlatRow key={m.code}>
+                          <FlatCell>{m.name}</FlatCell>
+                          <FlatCell className="text-slate-500">{m.code}</FlatCell>
+                          <FlatCell>
+                            <NumberField
+                              value={m.weight}
+                              error={errors[`match_${i}`]}
+                              onChange={(v) => {
+                                const next = [...matchTypes];
+                                next[i] = { ...m, weight: v };
+                                setMatchTypes(next);
+                              }}
+                            />
+                          </FlatCell>
+                          <FlatCell className="text-slate-500">{m.desc}</FlatCell>
+                        </FlatRow>
+                      ))}
+                    </FlatTable>
+                  </div>
                 )}
-                {errors["quota_zero"] && (
-                  <p className="mb-2 text-xs text-red-500">{errors["quota_zero"]}</p>
-                )}
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="搜索面板最多商品数" hint="1-20" error={errors["quota_panelMax"]}>
-                    <NumberField
-                      value={quota.panelMax}
-                      onChange={(v) => setQuota({ ...quota, panelMax: v })}
-                    />
-                  </Field>
-                  <Field label="GamsGo默认展示数" hint="0-20" error={errors["quota_gamsgo"]}>
-                    <NumberField
-                      value={quota.gamsgoDefault}
-                      onChange={(v) => setQuota({ ...quota, gamsgoDefault: v })}
-                    />
-                  </Field>
-                  <Field label="C2C默认展示数" hint="0-20" error={errors["quota_c2c"]}>
-                    <NumberField
-                      value={quota.c2cDefault}
-                      onChange={(v) => setQuota({ ...quota, c2cDefault: v })}
-                    />
-                  </Field>
-                  <Field label="一方不足是否允许补位" hint="某一来源不足时，由另一来源补满">
-                    <Switch
-                      checked={quota.allowBackfill}
-                      onCheckedChange={(v) => setQuota({ ...quota, allowBackfill: !!v })}
-                    />
-                  </Field>
-                  <Field label="是否按最终分重新排序" hint="分桶后是否再按分数整体重排">
-                    <Switch
-                      checked={quota.rerankByScore}
-                      onCheckedChange={(v) => setQuota({ ...quota, rerankByScore: !!v })}
-                    />
-                  </Field>
-                </div>
-                <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-600">
-                  示例：GamsGo 可展示 3 个、C2C 可展示 8 个，允许补位时最终展示 3 + 7 = 10 个。顶部预约卡不参与该数量计算。
-                </div>
-              </Section>
 
-              {/* Bottom actions */}
-              <div className="mt-6 flex justify-end gap-2 border-t border-slate-200 pt-4">
-                <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>恢复默认值</Button>
-                <Button size="sm" onClick={handleSaveClick}>保存配置</Button>
+                {tab === "extra" && (
+                  <div>
+                    <FlatTable headers={["配置项", "数值 / 开关", "说明"]}>
+                      <FlatRow>
+                        <FlatCell>明确指向当前SPU加权</FlatCell>
+                        <FlatCell>
+                          <NumberField
+                            value={extra.exactSpuBoost}
+                            error={errors["extra_exactSpuBoost"]}
+                            onChange={(v) => setExtra({ ...extra, exactSpuBoost: v })}
+                          />
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">词条「是否明确指向当前SPU = 是」时增加的分数</FlatCell>
+                      </FlatRow>
+                      <FlatRow>
+                        <FlatCell>商品热度分单位</FlatCell>
+                        <FlatCell>
+                          <NumberField
+                            value={extra.hotnessUnit}
+                            error={errors["extra_hotnessUnit"]}
+                            onChange={(v) => setExtra({ ...extra, hotnessUnit: v })}
+                          />
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">商品热度等级每提升 1 级增加的分数</FlatCell>
+                      </FlatRow>
+                      <FlatRow>
+                        <FlatCell>商品热度分上限</FlatCell>
+                        <FlatCell>
+                          <NumberField
+                            value={extra.hotnessCap}
+                            error={errors["extra_hotnessCap"]}
+                            onChange={(v) => setExtra({ ...extra, hotnessCap: v })}
+                          />
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">商品热度最多可增加的分数</FlatCell>
+                      </FlatRow>
+                      <FlatRow>
+                        <FlatCell>GamsGo自营加权</FlatCell>
+                        <FlatCell>
+                          <NumberField
+                            value={extra.gamsgoBoost}
+                            error={errors["extra_gamsgoBoost"]}
+                            onChange={(v) => setExtra({ ...extra, gamsgoBoost: v })}
+                          />
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">明确商品意图下，自营商品当前区域可购买时增加的分数</FlatCell>
+                      </FlatRow>
+                      <FlatRow>
+                        <FlatCell>是否启用多命中奖励</FlatCell>
+                        <FlatCell>
+                          <Switch
+                            checked={extra.multiHitEnabled}
+                            onCheckedChange={(v) => setExtra({ ...extra, multiHitEnabled: !!v })}
+                          />
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">同一 SPU 被多个来源命中时是否增加少量奖励</FlatCell>
+                      </FlatRow>
+                      <FlatRow>
+                        <FlatCell>单个额外命中奖励分</FlatCell>
+                        <FlatCell>
+                          <NumberField
+                            value={extra.multiHitPer}
+                            error={errors["extra_multiHitPer"]}
+                            onChange={(v) => setExtra({ ...extra, multiHitPer: v })}
+                          />
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">每个额外命中来源增加的分数</FlatCell>
+                      </FlatRow>
+                      <FlatRow>
+                        <FlatCell>多命中奖励上限次数</FlatCell>
+                        <FlatCell>
+                          <NumberField
+                            value={extra.multiHitMax}
+                            error={errors["extra_multiHitMax"]}
+                            onChange={(v) => setExtra({ ...extra, multiHitMax: v })}
+                          />
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">最多计算几个额外命中来源（0-10）</FlatCell>
+                      </FlatRow>
+                    </FlatTable>
+                    <div className="mt-4 rounded-md border border-slate-200 bg-slate-50/60 p-3 text-xs leading-6 text-slate-600">
+                      商品热度分 = min(商品热度等级 × 商品热度分单位, 商品热度分上限)。<br />
+                      GamsGo自营加权仅在「明确商品意图 + 当前区域可售 + 有库存」时生效；不可购买时商品将作为顶部预约卡展示，不参与本页面排序。<br />
+                      多命中最终分 = 最高召回分 + min(额外命中来源数, 多命中奖励上限次数) × 单个额外命中奖励分。
+                    </div>
+                  </div>
+                )}
+
+                {tab === "quota" && (
+                  <div>
+                    {errors["quota_sum"] && (
+                      <p className="mb-2 text-xs text-red-500">{errors["quota_sum"]}</p>
+                    )}
+                    {errors["quota_zero"] && (
+                      <p className="mb-2 text-xs text-red-500">{errors["quota_zero"]}</p>
+                    )}
+                    <FlatTable headers={["配置项", "数值 / 开关", "说明"]}>
+                      <FlatRow>
+                        <FlatCell>搜索面板最多商品数</FlatCell>
+                        <FlatCell>
+                          <NumberField
+                            value={quota.panelMax}
+                            error={errors["quota_panelMax"]}
+                            onChange={(v) => setQuota({ ...quota, panelMax: v })}
+                          />
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">1-20，正常商品结果最多返回数量</FlatCell>
+                      </FlatRow>
+                      <FlatRow>
+                        <FlatCell>GamsGo默认展示数</FlatCell>
+                        <FlatCell>
+                          <NumberField
+                            value={quota.gamsgoDefault}
+                            error={errors["quota_gamsgo"]}
+                            onChange={(v) => setQuota({ ...quota, gamsgoDefault: v })}
+                          />
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">0-20，GamsGo 自营默认最多展示数量</FlatCell>
+                      </FlatRow>
+                      <FlatRow>
+                        <FlatCell>C2C默认展示数</FlatCell>
+                        <FlatCell>
+                          <NumberField
+                            value={quota.c2cDefault}
+                            error={errors["quota_c2c"]}
+                            onChange={(v) => setQuota({ ...quota, c2cDefault: v })}
+                          />
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">0-20，C2C 默认最多展示数量</FlatCell>
+                      </FlatRow>
+                      <FlatRow>
+                        <FlatCell>一方不足是否允许补位</FlatCell>
+                        <FlatCell>
+                          <Switch
+                            checked={quota.allowBackfill}
+                            onCheckedChange={(v) => setQuota({ ...quota, allowBackfill: !!v })}
+                          />
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">某一来源不足时，由另一来源补满</FlatCell>
+                      </FlatRow>
+                      <FlatRow>
+                        <FlatCell>是否按最终分重新排序</FlatCell>
+                        <FlatCell>
+                          <Switch
+                            checked={quota.rerankByScore}
+                            onCheckedChange={(v) => setQuota({ ...quota, rerankByScore: !!v })}
+                          />
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">分桶后是否再按分数整体重排</FlatCell>
+                      </FlatRow>
+                    </FlatTable>
+                    <div className="mt-4 rounded-md border border-slate-200 bg-slate-50/60 p-3 text-xs leading-6 text-slate-600">
+                      示例：GamsGo 可展示 3 个、C2C 可展示 8 个，允许补位时最终展示 3 + 7 = 10 个。顶部预约卡不参与该数量计算。
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -674,27 +755,7 @@ export function ProductSortManagement() {
 
 // ============ Subcomponents ============
 
-function Section({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="mt-6">
-      <div className="mb-3 flex items-baseline gap-2">
-        <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
-        {subtitle && <span className="text-xs text-slate-500">{subtitle}</span>}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function TableShell({
+function FlatTable({
   headers,
   children,
 }: {
@@ -702,23 +763,40 @@ function TableShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-md border border-slate-200">
-      <table className="w-full text-xs">
-        <thead className="bg-slate-50 text-slate-600">
-          <tr>
-            {headers.map((h) => (
-              <th key={h} className="p-2 text-left font-medium">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>{children}</tbody>
-      </table>
-    </div>
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="bg-slate-50 text-slate-500">
+          {headers.map((h) => (
+            <th
+              key={h}
+              className="px-4 py-3 text-left text-xs font-normal first:rounded-l-md last:rounded-r-md"
+            >
+              {h}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>{children}</tbody>
+    </table>
   );
 }
 
-function Td({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <td className={`p-2 align-middle text-slate-700 ${className ?? ""}`}>{children}</td>;
+function FlatRow({ children }: { children: React.ReactNode }) {
+  return <tr className="border-b border-slate-100 last:border-b-0">{children}</tr>;
+}
+
+function FlatCell({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <td className={`px-4 py-4 align-middle text-slate-700 ${className ?? ""}`}>
+      {children}
+    </td>
+  );
 }
 
 function NumberField({
@@ -747,27 +825,6 @@ function NumberField({
         }}
       />
       {error && <p className="text-[11px] text-red-500">{error}</p>}
-    </div>
-  );
-}
-
-function Field({
-  label,
-  hint,
-  error,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-md border border-slate-200 p-3">
-      <div className="mb-1 text-xs font-medium text-slate-700">{label}</div>
-      {hint && <div className="mb-2 text-[11px] text-slate-500">{hint}</div>}
-      {children}
-      {error && <p className="mt-1 text-[11px] text-red-500">{error}</p>}
     </div>
   );
 }
