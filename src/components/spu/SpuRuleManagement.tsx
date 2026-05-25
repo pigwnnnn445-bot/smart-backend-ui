@@ -382,7 +382,19 @@ export function SpuRuleManagement() {
     if (!draft.standard.trim()) errs.standard = "请输入标准化词";
     if (draft.termType.length === 0) errs.termType = "请选择词条类型";
     if (draft.remark && draft.remark.length > 300) errs.remark = "备注内容不能超过300字符";
-    if (Object.keys(errs).length > 0) {
+    let scopeErr = "";
+    if (
+      (draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") &&
+      draft.regions.length === 0
+    ) {
+      scopeErr =
+        draft.scope === "部分IP生效"
+          ? "请选择「生效」的国家/地区"
+          : "请选择「不生效」的国家/地区";
+    }
+    if (scopeErr) setScopeError(scopeErr);
+    else setScopeError("");
+    if (Object.keys(errs).length > 0 || scopeErr) {
       setFieldErrors(errs);
       return;
     }
@@ -408,18 +420,6 @@ export function SpuRuleManagement() {
     } else {
       setCrossSpuWarning("");
     }
-    if (
-      (draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") &&
-      draft.regions.length === 0
-    ) {
-      setScopeError(
-        draft.scope === "部分IP生效"
-          ? "请选择「生效」的国家/地区"
-          : "请选择「不生效」的国家/地区",
-      );
-      return;
-    }
-    setScopeError("");
     const now = new Date()
       .toISOString()
       .replace("T", " ")
