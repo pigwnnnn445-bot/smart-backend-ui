@@ -528,15 +528,13 @@ export function ProductSortManagement() {
                     {warnings["term_short"] && (
                       <p className="mb-3 text-xs text-amber-600">{warnings["term_short"]}</p>
                     )}
-                    <FlatTable headers={["词条来源", "类型编码", "权重分", "推荐匹配方式", "说明", "变更人", "变更时间", "操作"]}>
+                    <FlatTable headers={["词条来源", "权重分", "说明", "变更人", "变更时间", "操作"]}>
                       {termTypes.map((t, i) => (
                         <FlatRow key={t.code}>
                           <FlatCell>{t.name}</FlatCell>
-                          <FlatCell className="text-slate-500">{t.code}</FlatCell>
                           <FlatCell>
                             <span className="text-sm text-slate-700">{t.weight}</span>
                           </FlatCell>
-                          <FlatCell className="text-slate-500">{t.match}</FlatCell>
                           <FlatCell className="text-slate-500">{t.desc}</FlatCell>
                           <FlatCell className="text-slate-500">{t.updatedBy}</FlatCell>
                           <FlatCell className="text-slate-500">{t.updatedAt}</FlatCell>
