@@ -496,15 +496,7 @@ export function ProductSortManagement() {
                         <FlatRow key={r.code}>
                           <FlatCell>{r.name}</FlatCell>
                           <FlatCell>
-                            <Switch
-                              checked={r.enabled}
-                              onCheckedChange={(v) => {
-                                const next = [...recall];
-                                next[i] = { ...r, enabled: !!v, updatedBy: "admin", updatedAt: nowStr() };
-                                setRecall(next);
-                                setDirty(true);
-                              }}
-                            />
+                            <span className={r.enabled ? "text-green-600" : "text-slate-400"}>{r.enabled ? "是" : "否"}</span>
                           </FlatCell>
                           <FlatCell>
                             <span className="text-sm text-slate-700">{r.weight}</span>
