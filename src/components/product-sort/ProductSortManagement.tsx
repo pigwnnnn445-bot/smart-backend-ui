@@ -336,19 +336,23 @@ export function ProductSortManagement() {
               {/* Action toolbar */}
               <div className="flex items-center justify-between px-6 pt-5">
                 <div className="flex items-center gap-2">
-                  <Button
-                    onClick={handleSaveClick}
-                    className="h-9 bg-blue-500 hover:bg-blue-600 text-white shadow-none"
-                  >
-                    保存配置
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setResetOpen(true)}
-                    className="h-9 border-slate-300 text-slate-700"
-                  >
-                    恢复默认值
-                  </Button>
+                  {dirty && (
+                    <>
+                      <Button
+                        onClick={handleSaveClick}
+                        className="h-9 bg-blue-500 hover:bg-blue-600 text-white shadow-none"
+                      >
+                        保存配置
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setResetOpen(true)}
+                        className="h-9 border-slate-300 text-slate-700"
+                      >
+                        恢复默认值
+                      </Button>
+                    </>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 text-slate-500">
                   <button
