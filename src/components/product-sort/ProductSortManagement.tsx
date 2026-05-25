@@ -127,6 +127,17 @@ export function ProductSortManagement() {
   const [extra, setExtra] = useState<ExtraFactors>(clone(DEFAULT_EXTRA));
   const [quota, setQuota] = useState<Quota>(clone(DEFAULT_QUOTA));
 
+  type Meta = { updatedBy: string; updatedAt: string };
+  const EMPTY_META: Meta = { updatedBy: "—", updatedAt: "—" };
+  const [extraMeta, setExtraMeta] = useState<Record<string, Meta>>({});
+  const [quotaMeta, setQuotaMeta] = useState<Record<string, Meta>>({});
+  const getExtraMeta = (k: string) => extraMeta[k] ?? EMPTY_META;
+  const getQuotaMeta = (k: string) => quotaMeta[k] ?? EMPTY_META;
+  const stampExtra = (k: string) =>
+    setExtraMeta((p) => ({ ...p, [k]: { updatedBy: "admin", updatedAt: nowStr() } }));
+  const stampQuota = (k: string) =>
+    setQuotaMeta((p) => ({ ...p, [k]: { updatedBy: "admin", updatedAt: nowStr() } }));
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [warnings, setWarnings] = useState<Record<string, string>>({});
 
