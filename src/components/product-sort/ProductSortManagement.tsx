@@ -396,11 +396,10 @@ export function ProductSortManagement() {
                     {errors["recall_enabled"] && (
                       <p className="mb-3 text-xs text-red-500">{errors["recall_enabled"]}</p>
                     )}
-                    <FlatTable headers={["召回来源", "来源编码", "是否启用", "权重分", "当前阶段", "说明"]}>
+                    <FlatTable headers={["召回来源", "是否启用", "权重分", "说明", "操作"]}>
                       {recall.map((r, i) => (
                         <FlatRow key={r.code}>
                           <FlatCell>{r.name}</FlatCell>
-                          <FlatCell className="text-slate-500">{r.code}</FlatCell>
                           <FlatCell>
                             <Switch
                               checked={r.enabled}
@@ -408,6 +407,7 @@ export function ProductSortManagement() {
                                 const next = [...recall];
                                 next[i] = { ...r, enabled: !!v };
                                 setRecall(next);
+                                setDirty(true);
                               }}
                             />
                           </FlatCell>
@@ -419,11 +419,22 @@ export function ProductSortManagement() {
                                 const next = [...recall];
                                 next[i] = { ...r, weight: v };
                                 setRecall(next);
+                                setDirty(true);
                               }}
                             />
                           </FlatCell>
-                          <FlatCell><StageBadge stage={r.stage} /></FlatCell>
                           <FlatCell className="text-slate-500">{r.desc}</FlatCell>
+                          <FlatCell>
+                            <button
+                              className="text-xs text-blue-600 hover:text-blue-700"
+                              onClick={() => {
+                                setEditIdx(i);
+                                setEditDraft({ ...r });
+                              }}
+                            >
+                              编辑
+                            </button>
+                          </FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
