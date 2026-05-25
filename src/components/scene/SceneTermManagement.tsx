@@ -518,6 +518,7 @@ export function SceneTermManagement() {
                   <Link to="/" className="block py-1.5 cursor-pointer hover:text-blue-600">SPU词库管理</Link>
                   <Link to="/" className="block py-1.5 cursor-pointer hover:text-blue-600">SPU词条管理</Link>
                   <div className="py-1.5 cursor-pointer text-blue-600 font-medium">场景搜索配置</div>
+                  <Link to="/product-sort" className="block py-1.5 cursor-pointer hover:text-blue-600">商品排序管理</Link>
                 </div>
               </div>
 
