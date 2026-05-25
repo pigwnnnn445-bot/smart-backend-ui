@@ -328,7 +328,7 @@ export function ProductSortManagement() {
               {/* Tabs row */}
               <div className="flex items-center border-b border-slate-200 px-6">
                 {[
-                  { k: "intro", label: "规则说明" },
+                  { k: "intro", label: "排序开关" },
                   { k: "recall", label: "召回来源权重" },
                   { k: "term", label: "词条类型权重" },
                   { k: "match", label: "匹配方式权重" },
