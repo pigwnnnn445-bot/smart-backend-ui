@@ -461,16 +461,7 @@ export function ProductSortManagement() {
                             />
                           </FlatCell>
                           <FlatCell>
-                            <NumberField
-                              value={r.weight}
-                              error={errors[`recall_${i}`]}
-                              onChange={(v) => {
-                                const next = [...recall];
-                                next[i] = { ...r, weight: v };
-                                setRecall(next);
-                                setDirty(true);
-                              }}
-                            />
+                            <span className="text-sm text-slate-700">{r.weight}</span>
                           </FlatCell>
                           <FlatCell className="text-slate-500">{r.desc}</FlatCell>
                           <FlatCell>
