@@ -535,7 +535,7 @@ export function ProductSortManagement() {
                     {errors["match_order"] && (
                       <p className="mb-3 text-xs text-red-500">{errors["match_order"]}</p>
                     )}
-                    <FlatTable headers={["匹配方式", "匹配编码", "权重分", "说明"]}>
+                    <FlatTable headers={["匹配方式", "匹配编码", "权重分", "说明", "变更人", "变更时间"]}>
                       {matchTypes.map((m, i) => (
                         <FlatRow key={m.code}>
                           <FlatCell>{m.name}</FlatCell>
@@ -546,12 +546,15 @@ export function ProductSortManagement() {
                               error={errors[`match_${i}`]}
                               onChange={(v) => {
                                 const next = [...matchTypes];
-                                next[i] = { ...m, weight: v };
+                                next[i] = { ...m, weight: v, updatedBy: "admin", updatedAt: nowStr() };
                                 setMatchTypes(next);
+                                setDirty(true);
                               }}
                             />
                           </FlatCell>
                           <FlatCell className="text-slate-500">{m.desc}</FlatCell>
+                          <FlatCell className="text-slate-500">{m.updatedBy}</FlatCell>
+                          <FlatCell className="text-slate-500">{m.updatedAt}</FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
