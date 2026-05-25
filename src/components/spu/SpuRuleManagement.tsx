@@ -966,9 +966,15 @@ export function SpuRuleManagement() {
                   const v = e.target.value;
                   setDraft({ ...draft, content: v, standard: normalizeTerm(v) });
                   if (duplicateError) setDuplicateError("");
+                  if (fieldErrors.content || fieldErrors.standard)
+                    setFieldErrors({ ...fieldErrors, content: undefined, standard: undefined });
+                  if (crossSpuWarning) setCrossSpuWarning("");
                 }}
                 placeholder="请输入词条内容"
               />
+              {fieldErrors.content && (
+                <p className="text-xs text-rose-500 mt-1">{fieldErrors.content}</p>
+              )}
               {duplicateError && (
                 <p className="text-xs text-rose-500 mt-1">{duplicateError}</p>
               )}
@@ -980,13 +986,26 @@ export function SpuRuleManagement() {
                 placeholder="根据词条内容自动生成"
                 className="bg-slate-50 cursor-not-allowed"
               />
+              {fieldErrors.standard && (
+                <p className="text-xs text-rose-500 mt-1">{fieldErrors.standard}</p>
+              )}
+              {crossSpuWarning && (
+                <p className="text-xs text-amber-600 mt-1">{crossSpuWarning}</p>
+              )}
             </Field>
             <Field label="词条类型" required>
               <MultiSelect
                 options={TERM_TYPES}
                 value={draft.termType}
-                onChange={(v) => setDraft({ ...draft, termType: v as TermType[] })}
+                onChange={(v) => {
+                  setDraft({ ...draft, termType: v as TermType[] });
+                  if (fieldErrors.termType)
+                    setFieldErrors({ ...fieldErrors, termType: undefined });
+                }}
               />
+              {fieldErrors.termType && (
+                <p className="text-xs text-rose-500 mt-1">{fieldErrors.termType}</p>
+              )}
             </Field>
             <Field label="匹配方式" required>
               <Select
@@ -1059,9 +1078,16 @@ export function SpuRuleManagement() {
                 <Textarea
                   rows={3}
                   value={draft.remark}
-                  onChange={(e) => setDraft({ ...draft, remark: e.target.value })}
+                  onChange={(e) => {
+                    setDraft({ ...draft, remark: e.target.value });
+                    if (fieldErrors.remark)
+                      setFieldErrors({ ...fieldErrors, remark: undefined });
+                  }}
                   placeholder="请输入备注"
                 />
+                {fieldErrors.remark && (
+                  <p className="text-xs text-rose-500 mt-1">{fieldErrors.remark}</p>
+                )}
               </Field>
             </div>
           </div>
