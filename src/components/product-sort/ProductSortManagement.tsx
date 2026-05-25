@@ -795,7 +795,7 @@ export function ProductSortManagement() {
               variant="outline"
               onClick={() => {
                 if (editIdx === null || !editDraft) return;
-                const orig = initialRecallRef.current[editIdx];
+                const orig = DEFAULT_RECALL[editIdx];
                 if (!orig) return;
                 setEditDraft({ ...orig });
                 toast.info("已恢复该召回来源默认值，点击保存后生效。");
