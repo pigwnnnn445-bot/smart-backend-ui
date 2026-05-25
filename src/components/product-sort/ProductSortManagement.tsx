@@ -388,8 +388,8 @@ export function ProductSortManagement() {
               <div className="flex items-center border-b border-slate-200 px-6">
                 {[
                   { k: "intro", label: "排序开关" },
-                  { k: "recall", label: "召回来源权重" },
-                  { k: "term", label: "词条类型权重" },
+                  { k: "recall", label: "词条类型权重" },
+                  { k: "term", label: "词条来源权重" },
                   { k: "match", label: "匹配方式权重" },
                   { k: "extra", label: "附加排序因子" },
                   { k: "quota", label: "展示配额" },
@@ -491,7 +491,7 @@ export function ProductSortManagement() {
                     {errors["recall_enabled"] && (
                       <p className="mb-3 text-xs text-red-500">{errors["recall_enabled"]}</p>
                     )}
-                    <FlatTable headers={["召回来源", "是否启用", "权重分", "说明", "变更人", "变更时间", "操作"]}>
+                    <FlatTable headers={["词条类型", "是否启用", "权重分", "说明", "变更人", "变更时间", "操作"]}>
                       {recall.map((r, i) => (
                         <FlatRow key={r.code}>
                           <FlatCell>{r.name}</FlatCell>
@@ -526,7 +526,7 @@ export function ProductSortManagement() {
                     {warnings["term_short"] && (
                       <p className="mb-3 text-xs text-amber-600">{warnings["term_short"]}</p>
                     )}
-                    <FlatTable headers={["词条类型", "类型编码", "权重分", "推荐匹配方式", "说明", "变更人", "变更时间"]}>
+                    <FlatTable headers={["词条来源", "类型编码", "权重分", "推荐匹配方式", "说明", "变更人", "变更时间"]}>
                       {termTypes.map((t, i) => (
                         <FlatRow key={t.code}>
                           <FlatCell>{t.name}</FlatCell>
