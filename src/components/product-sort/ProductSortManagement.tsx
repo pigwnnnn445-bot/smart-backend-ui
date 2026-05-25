@@ -154,6 +154,8 @@ export function ProductSortManagement() {
   const [editDraft, setEditDraft] = useState<RecallSource | null>(null);
   const [termEditIdx, setTermEditIdx] = useState<number | null>(null);
   const [termEditDraft, setTermEditDraft] = useState<TermType | null>(null);
+  const [matchEditIdx, setMatchEditIdx] = useState<number | null>(null);
+  const [matchEditDraft, setMatchEditDraft] = useState<MatchType | null>(null);
 
   // 排序开关：控制各排序因子是否参与最终排序计算
   type SortFactorKey = "termType" | "termSource" | "matchType" | "exactSpu" | "hotness";
@@ -560,26 +562,27 @@ export function ProductSortManagement() {
                     {errors["match_order"] && (
                       <p className="mb-3 text-xs text-red-500">{errors["match_order"]}</p>
                     )}
-                    <FlatTable headers={["匹配方式", "匹配编码", "权重分", "说明", "变更人", "变更时间"]}>
+                    <FlatTable headers={["匹配方式", "权重分", "说明", "变更人", "变更时间", "操作"]}>
                       {matchTypes.map((m, i) => (
                         <FlatRow key={m.code}>
                           <FlatCell>{m.name}</FlatCell>
-                          <FlatCell className="text-slate-500">{m.code}</FlatCell>
                           <FlatCell>
-                            <NumberField
-                              value={m.weight}
-                              error={errors[`match_${i}`]}
-                              onChange={(v) => {
-                                const next = [...matchTypes];
-                                next[i] = { ...m, weight: v, updatedBy: "admin", updatedAt: nowStr() };
-                                setMatchTypes(next);
-                                setDirty(true);
-                              }}
-                            />
+                            <span className={errors[`match_${i}`] ? "text-red-500" : ""}>{m.weight}</span>
                           </FlatCell>
                           <FlatCell className="text-slate-500">{m.desc}</FlatCell>
                           <FlatCell className="text-slate-500">{m.updatedBy}</FlatCell>
                           <FlatCell className="text-slate-500">{m.updatedAt}</FlatCell>
+                          <FlatCell>
+                            <button
+                              className="text-xs text-blue-600 hover:underline"
+                              onClick={() => {
+                                setMatchEditIdx(i);
+                                setMatchEditDraft({ ...m });
+                              }}
+                            >
+                              编辑
+                            </button>
+                          </FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
@@ -967,6 +970,88 @@ export function ProductSortManagement() {
                 setTermEditIdx(null);
                 setTermEditDraft(null);
                 toast.success("已更新该词条来源，请点击「保存配置」正式生效。");
+              }}
+            >
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit match type dialog */}
+      <Dialog
+        open={matchEditIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setMatchEditIdx(null);
+            setMatchEditDraft(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑匹配方式</DialogTitle>
+            <DialogDescription>修改该匹配方式的权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+          </DialogHeader>
+          {matchEditDraft && (
+            <div className="space-y-4 text-sm">
+              <div className="rounded-md bg-slate-50 p-3">
+                <div className="mb-1 text-xs text-slate-500">匹配方式</div>
+                <div className="font-medium text-slate-800">{matchEditDraft.name}</div>
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">权重分（0-999）</div>
+                <Input
+                  type="number"
+                  className="h-8 w-32"
+                  value={Number.isNaN(matchEditDraft.weight) ? "" : matchEditDraft.weight}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    setMatchEditDraft({ ...matchEditDraft, weight: Number.isNaN(n) ? 0 : n });
+                  }}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">说明</div>
+                <Input
+                  value={matchEditDraft.desc}
+                  onChange={(e) => setMatchEditDraft({ ...matchEditDraft, desc: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setMatchEditIdx(null);
+                setMatchEditDraft(null);
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (matchEditIdx === null || !matchEditDraft) return;
+                const orig = DEFAULT_MATCH[matchEditIdx];
+                if (!orig) return;
+                setMatchEditDraft({ ...orig });
+                toast.info("已恢复该匹配方式默认值，点击保存后生效。");
+              }}
+            >
+              恢复默认值
+            </Button>
+            <Button
+              onClick={() => {
+                if (matchEditIdx === null || !matchEditDraft) return;
+                const next = [...matchTypes];
+                next[matchEditIdx] = { ...matchEditDraft, updatedBy: "admin", updatedAt: nowStr() };
+                setMatchTypes(next);
+                setDirty(true);
+                setMatchEditIdx(null);
+                setMatchEditDraft(null);
+                toast.success("已更新该匹配方式，请点击「保存配置」正式生效。");
               }}
             >
               保存
