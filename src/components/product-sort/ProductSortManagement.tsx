@@ -460,7 +460,7 @@ export function ProductSortManagement() {
                     {errors["recall_enabled"] && (
                       <p className="mb-3 text-xs text-red-500">{errors["recall_enabled"]}</p>
                     )}
-                    <FlatTable headers={["召回来源", "是否启用", "权重分", "说明", "操作"]}>
+                    <FlatTable headers={["召回来源", "是否启用", "权重分", "说明", "变更人", "变更时间", "操作"]}>
                       {recall.map((r, i) => (
                         <FlatRow key={r.code}>
                           <FlatCell>{r.name}</FlatCell>
@@ -469,7 +469,7 @@ export function ProductSortManagement() {
                               checked={r.enabled}
                               onCheckedChange={(v) => {
                                 const next = [...recall];
-                                next[i] = { ...r, enabled: !!v };
+                                next[i] = { ...r, enabled: !!v, updatedBy: "admin", updatedAt: nowStr() };
                                 setRecall(next);
                                 setDirty(true);
                               }}
@@ -479,6 +479,8 @@ export function ProductSortManagement() {
                             <span className="text-sm text-slate-700">{r.weight}</span>
                           </FlatCell>
                           <FlatCell className="text-slate-500">{r.desc}</FlatCell>
+                          <FlatCell className="text-slate-500">{r.updatedBy}</FlatCell>
+                          <FlatCell className="text-slate-500">{r.updatedAt}</FlatCell>
                           <FlatCell>
                             <button
                               className="text-xs text-blue-600 hover:text-blue-700"
