@@ -140,23 +140,27 @@ export function ProductSortManagement() {
 
   // 排序开关：控制各排序因子是否参与最终排序计算
   type SortFactorKey = "termType" | "termSource" | "matchType" | "exactSpu" | "hotness";
-  const DEFAULT_SORT_SWITCH: Record<SortFactorKey, boolean> = {
-    termType: true,
-    termSource: true,
-    matchType: true,
-    exactSpu: true,
-    hotness: true,
+
+  type SortFactor = {
+    key: SortFactorKey;
+    name: string;
+    desc: string;
+    enabled: boolean;
+    updatedBy: string;
+    updatedAt: string;
   };
-  const [sortSwitch, setSortSwitch] = useState<Record<SortFactorKey, boolean>>(
-    { ...DEFAULT_SORT_SWITCH }
-  );
-  const SORT_FACTORS: { key: SortFactorKey; name: string; desc: string }[] = [
-    { key: "termType", name: "词条类型", desc: "商品词 / 品牌词 / 别名词 / 错词 / 短词 等不同类型的权重参与排序" },
-    { key: "termSource", name: "词条来源", desc: "SPU词条 / 商品名前缀兜底 / 场景词 / 属性词 等召回来源权重参与排序" },
-    { key: "matchType", name: "匹配方式", desc: "精准匹配 / 前缀匹配 的权重参与排序" },
-    { key: "exactSpu", name: "明确指向当前SPU", desc: "用户输入命中商品自身词条时的额外加权参与排序" },
-    { key: "hotness", name: "商品热度分", desc: "近 7 天搜索点击、收藏、订单等综合热度分参与排序" },
+
+  const DEFAULT_SORT_FACTORS: SortFactor[] = [
+    { key: "termType", name: "词条类型", enabled: true, desc: "商品词 / 品牌词 / 别名词 / 错词 / 短词 等不同类型的权重参与排序", updatedBy: "—", updatedAt: "—" },
+    { key: "termSource", name: "词条来源", enabled: true, desc: "SPU词条 / 商品名前缀兜底 / 场景词 / 属性词 等召回来源权重参与排序", updatedBy: "—", updatedAt: "—" },
+    { key: "matchType", name: "匹配方式", enabled: true, desc: "精准匹配 / 前缀匹配 的权重参与排序", updatedBy: "—", updatedAt: "—" },
+    { key: "exactSpu", name: "明确指向当前SPU", enabled: true, desc: "用户输入命中商品自身词条时的额外加权参与排序", updatedBy: "—", updatedAt: "—" },
+    { key: "hotness", name: "商品热度分", enabled: true, desc: "近 7 天搜索点击、收藏、订单等综合热度分参与排序", updatedBy: "—", updatedAt: "—" },
   ];
+
+  const [sortFactors, setSortFactors] = useState<SortFactor[]>(clone(DEFAULT_SORT_FACTORS));
+  const [sortEditIdx, setSortEditIdx] = useState<number | null>(null);
+  const [sortEditDraft, setSortEditDraft] = useState<SortFactor | null>(null);
 
   function isInt(n: unknown) {
     return typeof n === "number" && Number.isInteger(n) && !Number.isNaN(n);
@@ -286,6 +290,7 @@ export function ProductSortManagement() {
     setMatchTypes(clone(DEFAULT_MATCH));
     setExtra(clone(DEFAULT_EXTRA));
     setQuota(clone(DEFAULT_QUOTA));
+    setSortFactors(clone(DEFAULT_SORT_FACTORS));
     setErrors({});
     setWarnings({});
     setLogs((p) => [
@@ -400,20 +405,35 @@ export function ProductSortManagement() {
                     <p className="mb-3 text-xs text-slate-500">
                       控制下列召回商品排序因子是否参与最终排序计算。关闭后该因子在排序分中按 0 计算，相关权重配置仍可保留。
                     </p>
-                    <FlatTable headers={["召回商品排序因子", "是否参与排序", "说明"]}>
-                      {SORT_FACTORS.map((f) => (
+                    <FlatTable headers={["召回商品排序因子", "是否参与排序", "说明", "变更人", "变更时间", "操作"]}>
+                      {sortFactors.map((f, i) => (
                         <FlatRow key={f.key}>
                           <FlatCell>{f.name}</FlatCell>
                           <FlatCell>
                             <Switch
-                              checked={sortSwitch[f.key]}
+                              checked={f.enabled}
                               onCheckedChange={(v) => {
-                                setSortSwitch({ ...sortSwitch, [f.key]: !!v });
+                                const next = [...sortFactors];
+                                next[i] = { ...f, enabled: !!v, updatedBy: "admin", updatedAt: nowStr() };
+                                setSortFactors(next);
                                 setDirty(true);
                               }}
                             />
                           </FlatCell>
                           <FlatCell className="text-slate-500">{f.desc}</FlatCell>
+                          <FlatCell className="text-slate-500">{f.updatedBy}</FlatCell>
+                          <FlatCell className="text-slate-500">{f.updatedAt}</FlatCell>
+                          <FlatCell>
+                            <button
+                              className="text-xs text-blue-600 hover:text-blue-700"
+                              onClick={() => {
+                                setSortEditIdx(i);
+                                setSortEditDraft({ ...f });
+                              }}
+                            >
+                              编辑
+                            </button>
+                          </FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
@@ -793,6 +813,78 @@ export function ProductSortManagement() {
                 setEditIdx(null);
                 setEditDraft(null);
                 toast.success("已更新该召回来源，请点击「保存配置」正式生效。");
+              }}
+            >
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sort factor edit dialog */}
+      <Dialog
+        open={sortEditIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSortEditIdx(null);
+            setSortEditDraft(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑排序因子</DialogTitle>
+            <DialogDescription>修改该排序因子的启用状态和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+          </DialogHeader>
+          {sortEditDraft && (
+            <div className="space-y-3 text-sm">
+              <div>
+                <div className="mb-1 text-xs text-slate-600">排序因子</div>
+                <Input
+                  value={sortEditDraft.name}
+                  onChange={(e) => setSortEditDraft({ ...sortEditDraft, name: e.target.value })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-slate-600">是否参与排序</div>
+                <Switch
+                  checked={sortEditDraft.enabled}
+                  onCheckedChange={(v) => setSortEditDraft({ ...sortEditDraft, enabled: !!v })}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">说明</div>
+                <Input
+                  value={sortEditDraft.desc}
+                  onChange={(e) => setSortEditDraft({ ...sortEditDraft, desc: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSortEditIdx(null);
+                setSortEditDraft(null);
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={() => {
+                if (sortEditIdx === null || !sortEditDraft) return;
+                const next = [...sortFactors];
+                next[sortEditIdx] = {
+                  ...sortEditDraft,
+                  updatedBy: "admin",
+                  updatedAt: nowStr(),
+                };
+                setSortFactors(next);
+                setDirty(true);
+                setSortEditIdx(null);
+                setSortEditDraft(null);
+                toast.success("已更新该排序因子，请点击「保存配置」正式生效。");
               }}
             >
               保存
