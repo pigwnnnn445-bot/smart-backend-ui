@@ -898,6 +898,7 @@ export function ProductSortManagement() {
       {/* Sort factor edit dialog */}
       <Dialog
         open={sortEditIdx !== null}
+
         onOpenChange={(o) => {
           if (!o) {
             setSortEditIdx(null);
