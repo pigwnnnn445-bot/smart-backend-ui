@@ -38,6 +38,7 @@ const DEFAULT_RECALL: RecallSource[] = [
 type TermType = {
   name: string;
   code: string;
+  enabled: boolean;
   weight: number;
   match: string;
   desc: string;
@@ -46,18 +47,18 @@ type TermType = {
 };
 
 const DEFAULT_TERM_TYPES: TermType[] = [
-  { name: "商品词", code: "PRODUCT_TERM", weight: 100, match: "精准匹配 / 前缀匹配", desc: "商品正式名称或核心商品名", updatedBy: "—", updatedAt: "—" },
-  { name: "品牌词", code: "BRAND_TERM", weight: 90, match: "精准匹配 / 前缀匹配", desc: "品牌、服务名、公司名", updatedBy: "—", updatedAt: "—" },
-  { name: "别名词", code: "ALIAS_TERM", weight: 85, match: "精准匹配", desc: "用户常见叫法或变体写法", updatedBy: "—", updatedAt: "—" },
-  { name: "错词", code: "TYPO_TERM", weight: 75, match: "精准匹配", desc: "用户常见拼写错误", updatedBy: "—", updatedAt: "—" },
-  { name: "短词", code: "SHORT_TERM", weight: 60, match: "精准匹配", desc: "用户常用简称或缩写", updatedBy: "—", updatedAt: "—" },
+  { name: "商品词", code: "PRODUCT_TERM", enabled: true, weight: 100, match: "精准匹配 / 前缀匹配", desc: "商品正式名称或核心商品名", updatedBy: "—", updatedAt: "—" },
+  { name: "品牌词", code: "BRAND_TERM", enabled: true, weight: 90, match: "精准匹配 / 前缀匹配", desc: "品牌、服务名、公司名", updatedBy: "—", updatedAt: "—" },
+  { name: "别名词", code: "ALIAS_TERM", enabled: true, weight: 85, match: "精准匹配", desc: "用户常见叫法或变体写法", updatedBy: "—", updatedAt: "—" },
+  { name: "错词", code: "TYPO_TERM", enabled: true, weight: 75, match: "精准匹配", desc: "用户常见拼写错误", updatedBy: "—", updatedAt: "—" },
+  { name: "短词", code: "SHORT_TERM", enabled: true, weight: 60, match: "精准匹配", desc: "用户常用简称或缩写", updatedBy: "—", updatedAt: "—" },
 ];
 
-type MatchType = { name: string; code: string; weight: number; desc: string; updatedBy: string; updatedAt: string };
+type MatchType = { name: string; code: string; enabled: boolean; weight: number; desc: string; updatedBy: string; updatedAt: string };
 
 const DEFAULT_MATCH: MatchType[] = [
-  { name: "精准匹配", code: "EXACT", weight: 100, desc: "用户输入标准化词与后台标准化词完全一致", updatedBy: "—", updatedAt: "—" },
-  { name: "前缀匹配", code: "PREFIX", weight: 70, desc: "用户输入标准化词是后台标准化词的前缀", updatedBy: "—", updatedAt: "—" },
+  { name: "精准匹配", code: "EXACT", enabled: true, weight: 100, desc: "用户输入标准化词与后台标准化词完全一致", updatedBy: "—", updatedAt: "—" },
+  { name: "前缀匹配", code: "PREFIX", enabled: true, weight: 70, desc: "用户输入标准化词是后台标准化词的前缀", updatedBy: "—", updatedAt: "—" },
 ];
 
 type ExtraFactors = {
