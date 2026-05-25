@@ -464,15 +464,7 @@ export function ProductSortManagement() {
                         <FlatRow key={f.key}>
                           <FlatCell>{f.name}</FlatCell>
                           <FlatCell>
-                            <Switch
-                              checked={f.enabled}
-                              onCheckedChange={(v) => {
-                                const next = [...sortFactors];
-                                next[i] = { ...f, enabled: !!v, updatedBy: "admin", updatedAt: nowStr() };
-                                setSortFactors(next);
-                                setDirty(true);
-                              }}
-                            />
+                            <span className={f.enabled ? "text-green-600" : "text-slate-400"}>{f.enabled ? "是" : "否"}</span>
                           </FlatCell>
                           <FlatCell className="text-slate-500">{f.desc}</FlatCell>
                           <FlatCell className="text-slate-500">{f.updatedBy}</FlatCell>
