@@ -166,7 +166,7 @@ export function ProductSortManagement() {
   };
 
   const DEFAULT_SORT_FACTORS: SortFactor[] = [
-    { key: "termType", name: "词条类型", enabled: true, desc: "商品词 / 品牌词 / 别名词 / 错词 / 短词 等不同类型的权重参与排序", updatedBy: "—", updatedAt: "—" },
+    { key: "termType", name: "词条类型", enabled: true, desc: "SPU词条召回和SPU商品名前缀匹配兜底不同权重参与排序", updatedBy: "—", updatedAt: "—" },
     { key: "termSource", name: "词条来源", enabled: true, desc: "SPU词条 / 商品名前缀兜底 / 场景词 / 属性词 等召回来源权重参与排序", updatedBy: "—", updatedAt: "—" },
     { key: "matchType", name: "匹配方式", enabled: true, desc: "精准匹配 / 前缀匹配 的权重参与排序", updatedBy: "—", updatedAt: "—" },
     { key: "exactSpu", name: "明确指向当前SPU", enabled: true, desc: "用户输入命中商品自身词条时的额外加权参与排序", updatedBy: "—", updatedAt: "—" },
