@@ -1134,6 +1134,23 @@ export function SpuRuleManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* 保存并发布二次确认弹窗 */}
+      <PublishConfirmDialog
+        open={publishConfirmOpen}
+        libStatus={computeLibStatus(activeSpu)}
+        loading={publishing}
+        onCancel={() => setPublishConfirmOpen(false)}
+        onConfirm={() => {
+          setPublishing(true);
+          // 模拟提交，实际项目接入后端
+          setTimeout(() => {
+            commitSave("publish");
+            setPublishing(false);
+            setPublishConfirmOpen(false);
+          }, 0);
+        }}
+      />
+
       <RegionSheet
         open={regionSheetOpen}
         onOpenChange={setRegionSheetOpen}
