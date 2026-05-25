@@ -692,6 +692,86 @@ export function ProductSortManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit recall source dialog */}
+      <Dialog
+        open={editIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setEditIdx(null);
+            setEditDraft(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑召回来源</DialogTitle>
+            <DialogDescription>修改该召回来源的启用状态、权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+          </DialogHeader>
+          {editDraft && (
+            <div className="space-y-3 text-sm">
+              <div>
+                <div className="mb-1 text-xs text-slate-600">召回来源</div>
+                <Input
+                  value={editDraft.name}
+                  onChange={(e) => setEditDraft({ ...editDraft, name: e.target.value })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-slate-600">是否启用</div>
+                <Switch
+                  checked={editDraft.enabled}
+                  onCheckedChange={(v) => setEditDraft({ ...editDraft, enabled: !!v })}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">权重分（0-999）</div>
+                <Input
+                  type="number"
+                  className="h-8 w-32"
+                  value={Number.isNaN(editDraft.weight) ? "" : editDraft.weight}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    setEditDraft({ ...editDraft, weight: Number.isNaN(n) ? 0 : n });
+                  }}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">说明</div>
+                <Input
+                  value={editDraft.desc}
+                  onChange={(e) => setEditDraft({ ...editDraft, desc: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditIdx(null);
+                setEditDraft(null);
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={() => {
+                if (editIdx === null || !editDraft) return;
+                const next = [...recall];
+                next[editIdx] = { ...editDraft };
+                setRecall(next);
+                setDirty(true);
+                setEditIdx(null);
+                setEditDraft(null);
+                toast.success("已更新该召回来源，请点击「保存配置」正式生效。");
+              }}
+            >
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Logs dialog */}
       <Dialog open={logOpen} onOpenChange={setLogOpen}>
         <DialogContent className="max-w-3xl">
