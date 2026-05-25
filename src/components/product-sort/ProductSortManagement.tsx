@@ -503,7 +503,7 @@ export function ProductSortManagement() {
                     {warnings["term_short"] && (
                       <p className="mb-3 text-xs text-amber-600">{warnings["term_short"]}</p>
                     )}
-                    <FlatTable headers={["词条类型", "类型编码", "权重分", "推荐匹配方式", "说明"]}>
+                    <FlatTable headers={["词条类型", "类型编码", "权重分", "推荐匹配方式", "说明", "变更人", "变更时间"]}>
                       {termTypes.map((t, i) => (
                         <FlatRow key={t.code}>
                           <FlatCell>{t.name}</FlatCell>
@@ -514,13 +514,16 @@ export function ProductSortManagement() {
                               error={errors[`term_${i}`]}
                               onChange={(v) => {
                                 const next = [...termTypes];
-                                next[i] = { ...t, weight: v };
+                                next[i] = { ...t, weight: v, updatedBy: "admin", updatedAt: nowStr() };
                                 setTermTypes(next);
+                                setDirty(true);
                               }}
                             />
                           </FlatCell>
                           <FlatCell className="text-slate-500">{t.match}</FlatCell>
                           <FlatCell className="text-slate-500">{t.desc}</FlatCell>
+                          <FlatCell className="text-slate-500">{t.updatedBy}</FlatCell>
+                          <FlatCell className="text-slate-500">{t.updatedAt}</FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
