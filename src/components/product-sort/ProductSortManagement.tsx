@@ -755,27 +755,7 @@ export function ProductSortManagement() {
 
 // ============ Subcomponents ============
 
-function Section({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="mt-6">
-      <div className="mb-3 flex items-baseline gap-2">
-        <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
-        {subtitle && <span className="text-xs text-slate-500">{subtitle}</span>}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function TableShell({
+function FlatTable({
   headers,
   children,
 }: {
@@ -783,23 +763,40 @@ function TableShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-md border border-slate-200">
-      <table className="w-full text-xs">
-        <thead className="bg-slate-50 text-slate-600">
-          <tr>
-            {headers.map((h) => (
-              <th key={h} className="p-2 text-left font-medium">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>{children}</tbody>
-      </table>
-    </div>
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="bg-slate-50 text-slate-500">
+          {headers.map((h) => (
+            <th
+              key={h}
+              className="px-4 py-3 text-left text-xs font-normal first:rounded-l-md last:rounded-r-md"
+            >
+              {h}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>{children}</tbody>
+    </table>
   );
 }
 
-function Td({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <td className={`p-2 align-middle text-slate-700 ${className ?? ""}`}>{children}</td>;
+function FlatRow({ children }: { children: React.ReactNode }) {
+  return <tr className="border-b border-slate-100 last:border-b-0">{children}</tr>;
+}
+
+function FlatCell({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <td className={`px-4 py-4 align-middle text-slate-700 ${className ?? ""}`}>
+      {children}
+    </td>
+  );
 }
 
 function NumberField({
@@ -828,27 +825,6 @@ function NumberField({
         }}
       />
       {error && <p className="text-[11px] text-red-500">{error}</p>}
-    </div>
-  );
-}
-
-function Field({
-  label,
-  hint,
-  error,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-md border border-slate-200 p-3">
-      <div className="mb-1 text-xs font-medium text-slate-700">{label}</div>
-      {hint && <div className="mb-2 text-[11px] text-slate-500">{hint}</div>}
-      {children}
-      {error && <p className="mt-1 text-[11px] text-red-500">{error}</p>}
     </div>
   );
 }
