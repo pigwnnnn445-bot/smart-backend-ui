@@ -140,23 +140,27 @@ export function ProductSortManagement() {
 
   // 排序开关：控制各排序因子是否参与最终排序计算
   type SortFactorKey = "termType" | "termSource" | "matchType" | "exactSpu" | "hotness";
-  const DEFAULT_SORT_SWITCH: Record<SortFactorKey, boolean> = {
-    termType: true,
-    termSource: true,
-    matchType: true,
-    exactSpu: true,
-    hotness: true,
+
+  type SortFactor = {
+    key: SortFactorKey;
+    name: string;
+    desc: string;
+    enabled: boolean;
+    updatedBy: string;
+    updatedAt: string;
   };
-  const [sortSwitch, setSortSwitch] = useState<Record<SortFactorKey, boolean>>(
-    { ...DEFAULT_SORT_SWITCH }
-  );
-  const SORT_FACTORS: { key: SortFactorKey; name: string; desc: string }[] = [
-    { key: "termType", name: "词条类型", desc: "商品词 / 品牌词 / 别名词 / 错词 / 短词 等不同类型的权重参与排序" },
-    { key: "termSource", name: "词条来源", desc: "SPU词条 / 商品名前缀兜底 / 场景词 / 属性词 等召回来源权重参与排序" },
-    { key: "matchType", name: "匹配方式", desc: "精准匹配 / 前缀匹配 的权重参与排序" },
-    { key: "exactSpu", name: "明确指向当前SPU", desc: "用户输入命中商品自身词条时的额外加权参与排序" },
-    { key: "hotness", name: "商品热度分", desc: "近 7 天搜索点击、收藏、订单等综合热度分参与排序" },
+
+  const DEFAULT_SORT_FACTORS: SortFactor[] = [
+    { key: "termType", name: "词条类型", enabled: true, desc: "商品词 / 品牌词 / 别名词 / 错词 / 短词 等不同类型的权重参与排序", updatedBy: "—", updatedAt: "—" },
+    { key: "termSource", name: "词条来源", enabled: true, desc: "SPU词条 / 商品名前缀兜底 / 场景词 / 属性词 等召回来源权重参与排序", updatedBy: "—", updatedAt: "—" },
+    { key: "matchType", name: "匹配方式", enabled: true, desc: "精准匹配 / 前缀匹配 的权重参与排序", updatedBy: "—", updatedAt: "—" },
+    { key: "exactSpu", name: "明确指向当前SPU", enabled: true, desc: "用户输入命中商品自身词条时的额外加权参与排序", updatedBy: "—", updatedAt: "—" },
+    { key: "hotness", name: "商品热度分", enabled: true, desc: "近 7 天搜索点击、收藏、订单等综合热度分参与排序", updatedBy: "—", updatedAt: "—" },
   ];
+
+  const [sortFactors, setSortFactors] = useState<SortFactor[]>(clone(DEFAULT_SORT_FACTORS));
+  const [sortEditIdx, setSortEditIdx] = useState<number | null>(null);
+  const [sortEditDraft, setSortEditDraft] = useState<SortFactor | null>(null);
 
   function isInt(n: unknown) {
     return typeof n === "number" && Number.isInteger(n) && !Number.isNaN(n);
