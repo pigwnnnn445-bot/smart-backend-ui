@@ -359,6 +359,8 @@ export function SpuRuleManagement() {
     setDraft({ ...blank, id: crypto.randomUUID() });
     setDuplicateError("");
     setScopeError("");
+    setFieldErrors({});
+    setCrossSpuWarning("");
     setEditOpen(true);
   }
 
@@ -367,34 +369,24 @@ export function SpuRuleManagement() {
     setDraft({ ...row });
     setDuplicateError("");
     setScopeError("");
+    setFieldErrors({});
+    setCrossSpuWarning("");
     setEditOpen(true);
   }
 
   function saveDraft(action: "draft" | "publish") {
-    if (!draft.content.trim()) {
-      toast.error("请输入词条内容");
+    const errs: typeof fieldErrors = {};
+    if (!draft.content.trim()) errs.content = "请输入词条内容";
+    else if (draft.content.length > 100) errs.content = "词条内容不能超过100字符";
+    else if (!normalizeTerm(draft.content)) errs.content = "词条内容无效，请输入有效搜索词";
+    if (!draft.standard.trim()) errs.standard = "请输入标准化词";
+    if (draft.termType.length === 0) errs.termType = "请选择词条类型";
+    if (draft.remark && draft.remark.length > 300) errs.remark = "备注内容不能超过300字符";
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
       return;
     }
-    if (draft.content.length > 100) {
-      toast.error("词条内容不能超过100字符");
-      return;
-    }
-    if (!normalizeTerm(draft.content)) {
-      toast.error("词条内容无效，请输入有效搜索词");
-      return;
-    }
-    if (!draft.standard.trim()) {
-      toast.error("请输入标准化词");
-      return;
-    }
-    if (draft.termType.length === 0) {
-      toast.error("请选择词条类型");
-      return;
-    }
-    if (draft.remark && draft.remark.length > 300) {
-      toast.error("备注内容不能超过300字符");
-      return;
-    }
+    setFieldErrors({});
     const dup = rows.find(
       (r) => r.id !== draft.id && r.standard && r.standard === draft.standard,
     );
@@ -412,7 +404,9 @@ export function SpuRuleManagement() {
         list.some((r) => r.standard && r.standard === draft.standard),
     );
     if (crossSpu) {
-      toast.warning("该标准化词已被其他SPU使用，用户搜索时可能同时召回多个商品");
+      setCrossSpuWarning("该标准化词已被其他SPU使用，用户搜索时可能同时召回多个商品");
+    } else {
+      setCrossSpuWarning("");
     }
     if (
       (draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") &&
