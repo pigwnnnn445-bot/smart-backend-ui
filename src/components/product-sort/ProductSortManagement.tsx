@@ -28,10 +28,9 @@ type RecallSource = {
 
 const DEFAULT_RECALL: RecallSource[] = [
   { name: "SPU词条召回", code: "SPU_TERM", enabled: true, weight: 100, stage: "一期启用", desc: "用户输入命中后台配置的 SPU 词条" },
-  { name: "SPU名称 / 品牌名前缀兜底", code: "SPU_NAME_PREFIX", enabled: true, weight: 70, stage: "一期启用", desc: "未命中词条时，使用 SPU 名称或品牌名前缀兜底" },
+  { name: "商品名前缀匹配兜底", code: "SPU_NAME_PREFIX", enabled: true, weight: 70, stage: "一期启用", desc: "未命中词条时，使用商品名前缀匹配兜底召回" },
   { name: "场景词召回", code: "SCENE_TERM", enabled: false, weight: 60, stage: "二期预留", desc: "用户输入场景词后召回一组关联 SPU" },
   { name: "商品属性词召回", code: "ATTRIBUTE_TERM", enabled: false, weight: 50, stage: "二期预留", desc: "用户输入 4K、Family、礼品码等属性词" },
-  { name: "热搜兜底", code: "HOT_FALLBACK", enabled: false, weight: 30, stage: "暂不启用", desc: "无明确结果时的兜底推荐" },
 ];
 
 type TermType = {
