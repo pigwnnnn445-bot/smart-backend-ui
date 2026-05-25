@@ -132,6 +132,9 @@ export function ProductSortManagement() {
   const [logOpen, setLogOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [tab, setTab] = useState<
+    "intro" | "recall" | "term" | "match" | "extra" | "quota"
+  >("intro");
 
   function isInt(n: unknown) {
     return typeof n === "number" && Number.isInteger(n) && !Number.isNaN(n);
