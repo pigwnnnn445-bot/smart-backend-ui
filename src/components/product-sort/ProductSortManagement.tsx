@@ -153,6 +153,10 @@ export function ProductSortManagement() {
   const [dirty, setDirty] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState<RecallSource | null>(null);
+  const [editTermIdx, setEditTermIdx] = useState<number | null>(null);
+  const [editTermDraft, setEditTermDraft] = useState<TermType | null>(null);
+  const [editMatchIdx, setEditMatchIdx] = useState<number | null>(null);
+  const [editMatchDraft, setEditMatchDraft] = useState<MatchType | null>(null);
 
   // 排序开关：控制各排序因子是否参与最终排序计算
   type SortFactorKey = "termType" | "termSource" | "matchType" | "exactSpu" | "hotness";
