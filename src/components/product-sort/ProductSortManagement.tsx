@@ -562,26 +562,27 @@ export function ProductSortManagement() {
                     {errors["match_order"] && (
                       <p className="mb-3 text-xs text-red-500">{errors["match_order"]}</p>
                     )}
-                    <FlatTable headers={["匹配方式", "匹配编码", "权重分", "说明", "变更人", "变更时间"]}>
+                    <FlatTable headers={["匹配方式", "权重分", "说明", "变更人", "变更时间", "操作"]}>
                       {matchTypes.map((m, i) => (
                         <FlatRow key={m.code}>
                           <FlatCell>{m.name}</FlatCell>
-                          <FlatCell className="text-slate-500">{m.code}</FlatCell>
                           <FlatCell>
-                            <NumberField
-                              value={m.weight}
-                              error={errors[`match_${i}`]}
-                              onChange={(v) => {
-                                const next = [...matchTypes];
-                                next[i] = { ...m, weight: v, updatedBy: "admin", updatedAt: nowStr() };
-                                setMatchTypes(next);
-                                setDirty(true);
-                              }}
-                            />
+                            <span className={errors[`match_${i}`] ? "text-red-500" : ""}>{m.weight}</span>
                           </FlatCell>
                           <FlatCell className="text-slate-500">{m.desc}</FlatCell>
                           <FlatCell className="text-slate-500">{m.updatedBy}</FlatCell>
                           <FlatCell className="text-slate-500">{m.updatedAt}</FlatCell>
+                          <FlatCell>
+                            <button
+                              className="text-xs text-blue-600 hover:underline"
+                              onClick={() => {
+                                setMatchEditIdx(i);
+                                setMatchEditDraft({ ...m });
+                              }}
+                            >
+                              编辑
+                            </button>
+                          </FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
