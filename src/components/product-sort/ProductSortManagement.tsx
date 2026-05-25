@@ -837,16 +837,13 @@ export function ProductSortManagement() {
             <DialogDescription>修改该排序因子的启用状态和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
           </DialogHeader>
           {sortEditDraft && (
-            <div className="space-y-3 text-sm">
-              <div>
-                <div className="mb-1 text-xs text-slate-600">排序因子</div>
-                <Input
-                  value={sortEditDraft.name}
-                  onChange={(e) => setSortEditDraft({ ...sortEditDraft, name: e.target.value })}
-                />
+            <div className="space-y-4 text-sm">
+              <div className="rounded-md bg-slate-50 p-3">
+                <div className="mb-1 text-xs text-slate-500">排序因子</div>
+                <div className="font-medium text-slate-800">{sortEditDraft.name}</div>
               </div>
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-slate-600">是否参与排序</div>
+              <div className="flex items-center justify-between rounded-md border border-slate-200 p-3">
+                <div className="text-sm text-slate-700">是否参与排序</div>
                 <Switch
                   checked={sortEditDraft.enabled}
                   onCheckedChange={(v) => setSortEditDraft({ ...sortEditDraft, enabled: !!v })}
