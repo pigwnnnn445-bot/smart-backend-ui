@@ -824,7 +824,7 @@ export function ProductSortManagement() {
               onClick={() => {
                 if (editIdx === null || !editDraft) return;
                 const next = [...recall];
-                next[editIdx] = { ...editDraft };
+                next[editIdx] = { ...editDraft, updatedBy: "admin", updatedAt: nowStr() };
                 setRecall(next);
                 setDirty(true);
                 setEditIdx(null);
