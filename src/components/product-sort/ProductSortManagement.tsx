@@ -547,27 +547,38 @@ export function ProductSortManagement() {
                     {warnings["term_short"] && (
                       <p className="mb-3 text-xs text-amber-600">{warnings["term_short"]}</p>
                     )}
-                    <FlatTable headers={["词条类型", "类型编码", "权重分", "推荐匹配方式", "说明", "变更人", "变更时间"]}>
+                    <FlatTable headers={["词条类型", "是否启用", "权重分", "说明", "变更人", "变更时间", "操作"]}>
                       {termTypes.map((t, i) => (
                         <FlatRow key={t.code}>
                           <FlatCell>{t.name}</FlatCell>
-                          <FlatCell className="text-slate-500">{t.code}</FlatCell>
                           <FlatCell>
-                            <NumberField
-                              value={t.weight}
-                              error={errors[`term_${i}`]}
-                              onChange={(v) => {
+                            <Switch
+                              checked={t.enabled}
+                              onCheckedChange={(v) => {
                                 const next = [...termTypes];
-                                next[i] = { ...t, weight: v, updatedBy: "admin", updatedAt: nowStr() };
+                                next[i] = { ...t, enabled: !!v, updatedBy: "admin", updatedAt: nowStr() };
                                 setTermTypes(next);
                                 setDirty(true);
                               }}
                             />
                           </FlatCell>
-                          <FlatCell className="text-slate-500">{t.match}</FlatCell>
+                          <FlatCell>
+                            <span className="text-sm text-slate-700">{t.weight}</span>
+                          </FlatCell>
                           <FlatCell className="text-slate-500">{t.desc}</FlatCell>
                           <FlatCell className="text-slate-500">{t.updatedBy}</FlatCell>
                           <FlatCell className="text-slate-500">{t.updatedAt}</FlatCell>
+                          <FlatCell>
+                            <button
+                              className="text-xs text-blue-600 hover:text-blue-700"
+                              onClick={() => {
+                                setEditTermIdx(i);
+                                setEditTermDraft({ ...t });
+                              }}
+                            >
+                              编辑
+                            </button>
+                          </FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
@@ -579,26 +590,38 @@ export function ProductSortManagement() {
                     {errors["match_order"] && (
                       <p className="mb-3 text-xs text-red-500">{errors["match_order"]}</p>
                     )}
-                    <FlatTable headers={["匹配方式", "匹配编码", "权重分", "说明", "变更人", "变更时间"]}>
+                    <FlatTable headers={["匹配方式", "是否启用", "权重分", "说明", "变更人", "变更时间", "操作"]}>
                       {matchTypes.map((m, i) => (
                         <FlatRow key={m.code}>
                           <FlatCell>{m.name}</FlatCell>
-                          <FlatCell className="text-slate-500">{m.code}</FlatCell>
                           <FlatCell>
-                            <NumberField
-                              value={m.weight}
-                              error={errors[`match_${i}`]}
-                              onChange={(v) => {
+                            <Switch
+                              checked={m.enabled}
+                              onCheckedChange={(v) => {
                                 const next = [...matchTypes];
-                                next[i] = { ...m, weight: v, updatedBy: "admin", updatedAt: nowStr() };
+                                next[i] = { ...m, enabled: !!v, updatedBy: "admin", updatedAt: nowStr() };
                                 setMatchTypes(next);
                                 setDirty(true);
                               }}
                             />
                           </FlatCell>
+                          <FlatCell>
+                            <span className="text-sm text-slate-700">{m.weight}</span>
+                          </FlatCell>
                           <FlatCell className="text-slate-500">{m.desc}</FlatCell>
                           <FlatCell className="text-slate-500">{m.updatedBy}</FlatCell>
                           <FlatCell className="text-slate-500">{m.updatedAt}</FlatCell>
+                          <FlatCell>
+                            <button
+                              className="text-xs text-blue-600 hover:text-blue-700"
+                              onClick={() => {
+                                setEditMatchIdx(i);
+                                setEditMatchDraft({ ...m });
+                              }}
+                            >
+                              编辑
+                            </button>
+                          </FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
