@@ -935,19 +935,6 @@ export function ProductSortManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Sort factor edit dialog */}
-      <Dialog
-        open={sortEditIdx !== null}
-        onOpenChange={(o) => {
-          if (!o) {
-            setSortEditIdx(null);
-            setSortEditDraft(null);
-          }
-        }}
-      >
-        {/* placeholder */}
-      </Dialog>
-
       {/* Edit term type dialog */}
       <Dialog
         open={editTermIdx !== null}
