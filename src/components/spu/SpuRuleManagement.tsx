@@ -332,6 +332,8 @@ export function SpuRuleManagement() {
   const [crossSpuWarning, setCrossSpuWarning] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
   const [statusConfirm, setStatusConfirm] = useState<RuleRow | null>(null);
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -420,13 +422,21 @@ export function SpuRuleManagement() {
     } else {
       setCrossSpuWarning("");
     }
+    if (action === "publish") {
+      // 校验通过后，先弹出二次确认弹窗
+      setPublishConfirmOpen(true);
+      return;
+    }
+    commitSave(action);
+  }
+
+  function commitSave(action: "draft" | "publish") {
     const now = new Date()
       .toISOString()
       .replace("T", " ")
       .slice(0, 19);
     let nextStatus: Status;
     if (action === "draft") {
-      // 新增时进入草稿；编辑已发布词条仅存草稿，前台仍用原线上版本，保持原状态展示
       nextStatus = mode === "create" ? "草稿" : draft.status;
     } else {
       nextStatus = "已启用";
@@ -448,6 +458,17 @@ export function SpuRuleManagement() {
             : "编辑词条草稿",
       target: payload.content,
     });
+    if (action === "publish") {
+      const lib = computeLibStatus(activeSpu);
+      if (lib === "已启用") {
+        toast.success("保存并发布成功，词条已参与前台搜索匹配。");
+      } else if (lib === "已停用") {
+        toast.success("保存并发布成功。当前SPU词库处于停用状态，词条暂不参与前台搜索，重新启用词库后生效。");
+      } else {
+        // 未配置 / 草稿（含本次新增使原"未配置"变"草稿"）
+        toast.success("保存并发布成功。当前SPU词库未启用，词条暂不参与前台搜索，启用词库后生效。");
+      }
+    }
     setEditOpen(false);
   }
 
@@ -1113,6 +1134,23 @@ export function SpuRuleManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* 保存并发布二次确认弹窗 */}
+      <PublishConfirmDialog
+        open={publishConfirmOpen}
+        libStatus={computeLibStatus(activeSpu)}
+        loading={publishing}
+        onCancel={() => setPublishConfirmOpen(false)}
+        onConfirm={() => {
+          setPublishing(true);
+          // 模拟提交，实际项目接入后端
+          setTimeout(() => {
+            commitSave("publish");
+            setPublishing(false);
+            setPublishConfirmOpen(false);
+          }, 0);
+        }}
+      />
+
       <RegionSheet
         open={regionSheetOpen}
         onOpenChange={setRegionSheetOpen}
@@ -1663,6 +1701,90 @@ function RegionSheet({
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function PublishConfirmDialog({
+  open,
+  libStatus,
+  loading,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  libStatus: LibStatus;
+  loading: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  let body: React.ReactNode = null;
+  if (libStatus === "已启用") {
+    body = (
+      <>
+        <p>
+          发布后，该词条状态将变为「<span className="font-medium text-slate-900">已启用</span>」。由于当前 SPU 词库已启用，词条发布后将
+          <span className="font-medium text-emerald-600">立即参与前台搜索匹配</span>。
+        </p>
+        <p className="text-slate-500">请确认词条内容、标准化词、匹配方式和生效范围配置无误。</p>
+      </>
+    );
+  } else if (libStatus === "未配置") {
+    body = (
+      <>
+        <p>
+          发布后，该词条状态将变为「<span className="font-medium text-slate-900">已启用</span>」。由于当前 SPU 词库尚未启用，词条
+          <span className="font-medium text-amber-600">暂不会参与前台搜索</span>。
+        </p>
+        <p className="text-slate-500">
+          保存成功后，当前 SPU 词库状态将由「未配置」变为「草稿」。后续需要启用 SPU 词库后，该词条才会正式参与搜索。
+        </p>
+      </>
+    );
+  } else if (libStatus === "草稿") {
+    body = (
+      <>
+        <p>
+          发布后，该词条状态将变为「<span className="font-medium text-slate-900">已启用</span>」。由于当前 SPU 词库仍为「草稿」，词条
+          <span className="font-medium text-amber-600">暂不会参与前台搜索</span>。
+        </p>
+        <p className="text-slate-500">后续需要启用 SPU 词库后，该词条才会正式参与搜索。</p>
+      </>
+    );
+  } else {
+    // 已停用
+    body = (
+      <>
+        <p>
+          发布后，该词条状态将变为「<span className="font-medium text-slate-900">已启用</span>」。但当前 SPU 词库处于「停用」状态，该词条
+          <span className="font-medium text-amber-600">暂不会参与前台搜索</span>。
+        </p>
+        <p className="text-slate-500">
+          词条发布不会自动启用 SPU 词库。只有后续重新启用 SPU 词库后，该词条才会正式参与搜索。
+        </p>
+      </>
+    );
+  }
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && !loading && onCancel()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>确认发布词条？</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 text-sm text-slate-700 py-1">{body}</div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onCancel} disabled={loading}>
+            取消
+          </Button>
+          <Button
+            onClick={onConfirm}
+            disabled={loading}
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            {loading ? "发布中..." : "确认发布"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
