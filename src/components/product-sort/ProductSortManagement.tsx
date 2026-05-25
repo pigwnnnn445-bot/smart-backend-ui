@@ -24,13 +24,15 @@ type RecallSource = {
   weight: number;
   stage: "一期启用" | "二期预留" | "暂不启用";
   desc: string;
+  updatedBy: string;
+  updatedAt: string;
 };
 
 const DEFAULT_RECALL: RecallSource[] = [
-  { name: "SPU词条召回", code: "SPU_TERM", enabled: true, weight: 100, stage: "一期启用", desc: "用户输入命中后台配置的 SPU 词条" },
-  { name: "商品名前缀匹配兜底", code: "SPU_NAME_PREFIX", enabled: true, weight: 70, stage: "一期启用", desc: "未命中词条时，使用商品名前缀匹配兜底召回" },
-  { name: "场景词召回", code: "SCENE_TERM", enabled: false, weight: 60, stage: "二期预留", desc: "用户输入场景词后召回一组关联 SPU" },
-  { name: "商品属性词召回", code: "ATTRIBUTE_TERM", enabled: false, weight: 50, stage: "二期预留", desc: "用户输入 4K、Family、礼品码等属性词" },
+  { name: "SPU词条召回", code: "SPU_TERM", enabled: true, weight: 100, stage: "一期启用", desc: "用户输入命中后台配置的 SPU 词条", updatedBy: "—", updatedAt: "—" },
+  { name: "商品名前缀匹配兜底", code: "SPU_NAME_PREFIX", enabled: true, weight: 70, stage: "一期启用", desc: "未命中词条时，使用商品名前缀匹配兜底召回", updatedBy: "—", updatedAt: "—" },
+  { name: "场景词召回", code: "SCENE_TERM", enabled: false, weight: 60, stage: "二期预留", desc: "用户输入场景词后召回一组关联 SPU", updatedBy: "—", updatedAt: "—" },
+  { name: "商品属性词召回", code: "ATTRIBUTE_TERM", enabled: false, weight: 50, stage: "二期预留", desc: "用户输入 4K、Family、礼品码等属性词", updatedBy: "—", updatedAt: "—" },
 ];
 
 type TermType = {
@@ -39,21 +41,23 @@ type TermType = {
   weight: number;
   match: string;
   desc: string;
+  updatedBy: string;
+  updatedAt: string;
 };
 
 const DEFAULT_TERM_TYPES: TermType[] = [
-  { name: "商品词", code: "PRODUCT_TERM", weight: 100, match: "精准匹配 / 前缀匹配", desc: "商品正式名称或核心商品名" },
-  { name: "品牌词", code: "BRAND_TERM", weight: 90, match: "精准匹配 / 前缀匹配", desc: "品牌、服务名、公司名" },
-  { name: "别名词", code: "ALIAS_TERM", weight: 85, match: "精准匹配", desc: "用户常见叫法或变体写法" },
-  { name: "错词", code: "TYPO_TERM", weight: 75, match: "精准匹配", desc: "用户常见拼写错误" },
-  { name: "短词", code: "SHORT_TERM", weight: 60, match: "精准匹配", desc: "用户常用简称或缩写" },
+  { name: "商品词", code: "PRODUCT_TERM", weight: 100, match: "精准匹配 / 前缀匹配", desc: "商品正式名称或核心商品名", updatedBy: "—", updatedAt: "—" },
+  { name: "品牌词", code: "BRAND_TERM", weight: 90, match: "精准匹配 / 前缀匹配", desc: "品牌、服务名、公司名", updatedBy: "—", updatedAt: "—" },
+  { name: "别名词", code: "ALIAS_TERM", weight: 85, match: "精准匹配", desc: "用户常见叫法或变体写法", updatedBy: "—", updatedAt: "—" },
+  { name: "错词", code: "TYPO_TERM", weight: 75, match: "精准匹配", desc: "用户常见拼写错误", updatedBy: "—", updatedAt: "—" },
+  { name: "短词", code: "SHORT_TERM", weight: 60, match: "精准匹配", desc: "用户常用简称或缩写", updatedBy: "—", updatedAt: "—" },
 ];
 
-type MatchType = { name: string; code: string; weight: number; desc: string };
+type MatchType = { name: string; code: string; weight: number; desc: string; updatedBy: string; updatedAt: string };
 
 const DEFAULT_MATCH: MatchType[] = [
-  { name: "精准匹配", code: "EXACT", weight: 100, desc: "用户输入标准化词与后台标准化词完全一致" },
-  { name: "前缀匹配", code: "PREFIX", weight: 70, desc: "用户输入标准化词是后台标准化词的前缀" },
+  { name: "精准匹配", code: "EXACT", weight: 100, desc: "用户输入标准化词与后台标准化词完全一致", updatedBy: "—", updatedAt: "—" },
+  { name: "前缀匹配", code: "PREFIX", weight: 70, desc: "用户输入标准化词是后台标准化词的前缀", updatedBy: "—", updatedAt: "—" },
 ];
 
 type ExtraFactors = {
@@ -122,6 +126,17 @@ export function ProductSortManagement() {
   const [matchTypes, setMatchTypes] = useState<MatchType[]>(clone(DEFAULT_MATCH));
   const [extra, setExtra] = useState<ExtraFactors>(clone(DEFAULT_EXTRA));
   const [quota, setQuota] = useState<Quota>(clone(DEFAULT_QUOTA));
+
+  type Meta = { updatedBy: string; updatedAt: string };
+  const EMPTY_META: Meta = { updatedBy: "—", updatedAt: "—" };
+  const [extraMeta, setExtraMeta] = useState<Record<string, Meta>>({});
+  const [quotaMeta, setQuotaMeta] = useState<Record<string, Meta>>({});
+  const getExtraMeta = (k: string) => extraMeta[k] ?? EMPTY_META;
+  const getQuotaMeta = (k: string) => quotaMeta[k] ?? EMPTY_META;
+  const stampExtra = (k: string) =>
+    setExtraMeta((p) => ({ ...p, [k]: { updatedBy: "admin", updatedAt: nowStr() } }));
+  const stampQuota = (k: string) =>
+    setQuotaMeta((p) => ({ ...p, [k]: { updatedBy: "admin", updatedAt: nowStr() } }));
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [warnings, setWarnings] = useState<Record<string, string>>({});
@@ -445,7 +460,7 @@ export function ProductSortManagement() {
                     {errors["recall_enabled"] && (
                       <p className="mb-3 text-xs text-red-500">{errors["recall_enabled"]}</p>
                     )}
-                    <FlatTable headers={["召回来源", "是否启用", "权重分", "说明", "操作"]}>
+                    <FlatTable headers={["召回来源", "是否启用", "权重分", "说明", "变更人", "变更时间", "操作"]}>
                       {recall.map((r, i) => (
                         <FlatRow key={r.code}>
                           <FlatCell>{r.name}</FlatCell>
@@ -454,7 +469,7 @@ export function ProductSortManagement() {
                               checked={r.enabled}
                               onCheckedChange={(v) => {
                                 const next = [...recall];
-                                next[i] = { ...r, enabled: !!v };
+                                next[i] = { ...r, enabled: !!v, updatedBy: "admin", updatedAt: nowStr() };
                                 setRecall(next);
                                 setDirty(true);
                               }}
@@ -464,6 +479,8 @@ export function ProductSortManagement() {
                             <span className="text-sm text-slate-700">{r.weight}</span>
                           </FlatCell>
                           <FlatCell className="text-slate-500">{r.desc}</FlatCell>
+                          <FlatCell className="text-slate-500">{r.updatedBy}</FlatCell>
+                          <FlatCell className="text-slate-500">{r.updatedAt}</FlatCell>
                           <FlatCell>
                             <button
                               className="text-xs text-blue-600 hover:text-blue-700"
@@ -486,7 +503,7 @@ export function ProductSortManagement() {
                     {warnings["term_short"] && (
                       <p className="mb-3 text-xs text-amber-600">{warnings["term_short"]}</p>
                     )}
-                    <FlatTable headers={["词条类型", "类型编码", "权重分", "推荐匹配方式", "说明"]}>
+                    <FlatTable headers={["词条类型", "类型编码", "权重分", "推荐匹配方式", "说明", "变更人", "变更时间"]}>
                       {termTypes.map((t, i) => (
                         <FlatRow key={t.code}>
                           <FlatCell>{t.name}</FlatCell>
@@ -497,13 +514,16 @@ export function ProductSortManagement() {
                               error={errors[`term_${i}`]}
                               onChange={(v) => {
                                 const next = [...termTypes];
-                                next[i] = { ...t, weight: v };
+                                next[i] = { ...t, weight: v, updatedBy: "admin", updatedAt: nowStr() };
                                 setTermTypes(next);
+                                setDirty(true);
                               }}
                             />
                           </FlatCell>
                           <FlatCell className="text-slate-500">{t.match}</FlatCell>
                           <FlatCell className="text-slate-500">{t.desc}</FlatCell>
+                          <FlatCell className="text-slate-500">{t.updatedBy}</FlatCell>
+                          <FlatCell className="text-slate-500">{t.updatedAt}</FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
@@ -515,7 +535,7 @@ export function ProductSortManagement() {
                     {errors["match_order"] && (
                       <p className="mb-3 text-xs text-red-500">{errors["match_order"]}</p>
                     )}
-                    <FlatTable headers={["匹配方式", "匹配编码", "权重分", "说明"]}>
+                    <FlatTable headers={["匹配方式", "匹配编码", "权重分", "说明", "变更人", "变更时间"]}>
                       {matchTypes.map((m, i) => (
                         <FlatRow key={m.code}>
                           <FlatCell>{m.name}</FlatCell>
@@ -526,12 +546,15 @@ export function ProductSortManagement() {
                               error={errors[`match_${i}`]}
                               onChange={(v) => {
                                 const next = [...matchTypes];
-                                next[i] = { ...m, weight: v };
+                                next[i] = { ...m, weight: v, updatedBy: "admin", updatedAt: nowStr() };
                                 setMatchTypes(next);
+                                setDirty(true);
                               }}
                             />
                           </FlatCell>
                           <FlatCell className="text-slate-500">{m.desc}</FlatCell>
+                          <FlatCell className="text-slate-500">{m.updatedBy}</FlatCell>
+                          <FlatCell className="text-slate-500">{m.updatedAt}</FlatCell>
                         </FlatRow>
                       ))}
                     </FlatTable>
@@ -540,17 +563,19 @@ export function ProductSortManagement() {
 
                 {tab === "extra" && (
                   <div>
-                    <FlatTable headers={["配置项", "数值 / 开关", "说明"]}>
+                    <FlatTable headers={["配置项", "数值 / 开关", "说明", "变更人", "变更时间"]}>
                       <FlatRow>
                         <FlatCell>明确指向当前SPU加权</FlatCell>
                         <FlatCell>
                           <NumberField
                             value={extra.exactSpuBoost}
                             error={errors["extra_exactSpuBoost"]}
-                            onChange={(v) => setExtra({ ...extra, exactSpuBoost: v })}
+                            onChange={(v) => { setExtra({ ...extra, exactSpuBoost: v }); stampExtra("exactSpuBoost"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">词条「是否明确指向当前SPU = 是」时增加的分数</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("exactSpuBoost").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("exactSpuBoost").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>商品热度分单位</FlatCell>
@@ -558,10 +583,12 @@ export function ProductSortManagement() {
                           <NumberField
                             value={extra.hotnessUnit}
                             error={errors["extra_hotnessUnit"]}
-                            onChange={(v) => setExtra({ ...extra, hotnessUnit: v })}
+                            onChange={(v) => { setExtra({ ...extra, hotnessUnit: v }); stampExtra("hotnessUnit"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">商品热度等级每提升 1 级增加的分数</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("hotnessUnit").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("hotnessUnit").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>商品热度分上限</FlatCell>
@@ -569,10 +596,12 @@ export function ProductSortManagement() {
                           <NumberField
                             value={extra.hotnessCap}
                             error={errors["extra_hotnessCap"]}
-                            onChange={(v) => setExtra({ ...extra, hotnessCap: v })}
+                            onChange={(v) => { setExtra({ ...extra, hotnessCap: v }); stampExtra("hotnessCap"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">商品热度最多可增加的分数</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("hotnessCap").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("hotnessCap").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>GamsGo自营加权</FlatCell>
@@ -580,20 +609,24 @@ export function ProductSortManagement() {
                           <NumberField
                             value={extra.gamsgoBoost}
                             error={errors["extra_gamsgoBoost"]}
-                            onChange={(v) => setExtra({ ...extra, gamsgoBoost: v })}
+                            onChange={(v) => { setExtra({ ...extra, gamsgoBoost: v }); stampExtra("gamsgoBoost"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">明确商品意图下，自营商品当前区域可购买时增加的分数</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("gamsgoBoost").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("gamsgoBoost").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>是否启用多命中奖励</FlatCell>
                         <FlatCell>
                           <Switch
                             checked={extra.multiHitEnabled}
-                            onCheckedChange={(v) => setExtra({ ...extra, multiHitEnabled: !!v })}
+                            onCheckedChange={(v) => { setExtra({ ...extra, multiHitEnabled: !!v }); stampExtra("multiHitEnabled"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">同一 SPU 被多个来源命中时是否增加少量奖励</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("multiHitEnabled").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("multiHitEnabled").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>单个额外命中奖励分</FlatCell>
@@ -601,10 +634,12 @@ export function ProductSortManagement() {
                           <NumberField
                             value={extra.multiHitPer}
                             error={errors["extra_multiHitPer"]}
-                            onChange={(v) => setExtra({ ...extra, multiHitPer: v })}
+                            onChange={(v) => { setExtra({ ...extra, multiHitPer: v }); stampExtra("multiHitPer"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">每个额外命中来源增加的分数</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("multiHitPer").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("multiHitPer").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>多命中奖励上限次数</FlatCell>
@@ -612,10 +647,12 @@ export function ProductSortManagement() {
                           <NumberField
                             value={extra.multiHitMax}
                             error={errors["extra_multiHitMax"]}
-                            onChange={(v) => setExtra({ ...extra, multiHitMax: v })}
+                            onChange={(v) => { setExtra({ ...extra, multiHitMax: v }); stampExtra("multiHitMax"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">最多计算几个额外命中来源（0-10）</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("multiHitMax").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getExtraMeta("multiHitMax").updatedAt}</FlatCell>
                       </FlatRow>
                     </FlatTable>
                     <div className="mt-4 rounded-md border border-slate-200 bg-slate-50/60 p-3 text-xs leading-6 text-slate-600">
@@ -634,17 +671,19 @@ export function ProductSortManagement() {
                     {errors["quota_zero"] && (
                       <p className="mb-2 text-xs text-red-500">{errors["quota_zero"]}</p>
                     )}
-                    <FlatTable headers={["配置项", "数值 / 开关", "说明"]}>
+                    <FlatTable headers={["配置项", "数值 / 开关", "说明", "变更人", "变更时间"]}>
                       <FlatRow>
                         <FlatCell>搜索面板最多商品数</FlatCell>
                         <FlatCell>
                           <NumberField
                             value={quota.panelMax}
                             error={errors["quota_panelMax"]}
-                            onChange={(v) => setQuota({ ...quota, panelMax: v })}
+                            onChange={(v) => { setQuota({ ...quota, panelMax: v }); stampQuota("panelMax"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">1-20，正常商品结果最多返回数量</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("panelMax").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("panelMax").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>GamsGo默认展示数</FlatCell>
@@ -652,10 +691,12 @@ export function ProductSortManagement() {
                           <NumberField
                             value={quota.gamsgoDefault}
                             error={errors["quota_gamsgo"]}
-                            onChange={(v) => setQuota({ ...quota, gamsgoDefault: v })}
+                            onChange={(v) => { setQuota({ ...quota, gamsgoDefault: v }); stampQuota("gamsgoDefault"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">0-20，GamsGo 自营默认最多展示数量</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("gamsgoDefault").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("gamsgoDefault").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>C2C默认展示数</FlatCell>
@@ -663,30 +704,36 @@ export function ProductSortManagement() {
                           <NumberField
                             value={quota.c2cDefault}
                             error={errors["quota_c2c"]}
-                            onChange={(v) => setQuota({ ...quota, c2cDefault: v })}
+                            onChange={(v) => { setQuota({ ...quota, c2cDefault: v }); stampQuota("c2cDefault"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">0-20，C2C 默认最多展示数量</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("c2cDefault").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("c2cDefault").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>一方不足是否允许补位</FlatCell>
                         <FlatCell>
                           <Switch
                             checked={quota.allowBackfill}
-                            onCheckedChange={(v) => setQuota({ ...quota, allowBackfill: !!v })}
+                            onCheckedChange={(v) => { setQuota({ ...quota, allowBackfill: !!v }); stampQuota("allowBackfill"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">某一来源不足时，由另一来源补满</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("allowBackfill").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("allowBackfill").updatedAt}</FlatCell>
                       </FlatRow>
                       <FlatRow>
                         <FlatCell>是否按最终分重新排序</FlatCell>
                         <FlatCell>
                           <Switch
                             checked={quota.rerankByScore}
-                            onCheckedChange={(v) => setQuota({ ...quota, rerankByScore: !!v })}
+                            onCheckedChange={(v) => { setQuota({ ...quota, rerankByScore: !!v }); stampQuota("rerankByScore"); setDirty(true); }}
                           />
                         </FlatCell>
                         <FlatCell className="text-slate-500">分桶后是否再按分数整体重排</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("rerankByScore").updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{getQuotaMeta("rerankByScore").updatedAt}</FlatCell>
                       </FlatRow>
                     </FlatTable>
                     <div className="mt-4 rounded-md border border-slate-200 bg-slate-50/60 p-3 text-xs leading-6 text-slate-600">
@@ -807,7 +854,7 @@ export function ProductSortManagement() {
               onClick={() => {
                 if (editIdx === null || !editDraft) return;
                 const next = [...recall];
-                next[editIdx] = { ...editDraft };
+                next[editIdx] = { ...editDraft, updatedBy: "admin", updatedAt: nowStr() };
                 setRecall(next);
                 setDirty(true);
                 setEditIdx(null);
