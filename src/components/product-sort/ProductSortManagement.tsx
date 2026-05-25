@@ -1052,6 +1052,7 @@ export function ProductSortManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
