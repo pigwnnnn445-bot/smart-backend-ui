@@ -419,6 +419,7 @@ export function ProductSortManagement() {
   const [warnings, setWarnings] = useState<Record<string, string>>({});
 
   const [saveOpen, setSaveOpen] = useState(false);
+  const [saveSuccessOpen, setSaveSuccessOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
