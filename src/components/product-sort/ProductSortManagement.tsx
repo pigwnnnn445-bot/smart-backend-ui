@@ -955,6 +955,84 @@ export function ProductSortManagement() {
       </Dialog>
 
       {/* Logs dialog */}
+      {/* Edit exact-spu dialog */}
+      <Dialog
+        open={exactEditOpen}
+        onOpenChange={(o) => {
+          if (!o) {
+            setExactEditOpen(false);
+            setExactEditDraft(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑明确指向当前SPU</DialogTitle>
+            <DialogDescription>修改当用户输入命中商品自身词条时的额外加权和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+          </DialogHeader>
+          {exactEditDraft && (
+            <div className="space-y-4 text-sm">
+              <div className="rounded-md bg-slate-50 p-3">
+                <div className="mb-1 text-xs text-slate-500">配置项</div>
+                <div className="font-medium text-slate-800">明确指向当前SPU加权</div>
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">加权分（0-999）</div>
+                <Input
+                  type="number"
+                  className="h-8 w-32"
+                  value={Number.isNaN(exactEditDraft.weight) ? "" : exactEditDraft.weight}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    setExactEditDraft({ ...exactEditDraft, weight: Number.isNaN(n) ? 0 : n });
+                  }}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">说明</div>
+                <Input
+                  value={exactEditDraft.desc}
+                  onChange={(e) => setExactEditDraft({ ...exactEditDraft, desc: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setExactEditOpen(false);
+                setExactEditDraft(null);
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setExactEditDraft({ ...DEFAULT_EXACT_SPU });
+                toast.info("已恢复默认值，点击保存后生效。");
+              }}
+            >
+              恢复默认值
+            </Button>
+            <Button
+              onClick={() => {
+                if (!exactEditDraft) return;
+                setExactSpu({ ...exactEditDraft, updatedBy: "admin", updatedAt: nowStr() });
+                setDirty(true);
+                setExactEditOpen(false);
+                setExactEditDraft(null);
+                toast.success("已更新明确指向当前SPU配置，请点击「保存配置」正式生效。");
+              }}
+            >
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Logs dialog */}
       <Dialog open={logOpen} onOpenChange={setLogOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
