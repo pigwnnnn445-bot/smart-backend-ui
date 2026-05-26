@@ -1196,34 +1196,48 @@ export function ProductSortManagement() {
           }
         }}
       >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>编辑排序因子</DialogTitle>
+        <DialogContent className="max-w-xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="text-lg font-semibold">编辑排序因子</DialogTitle>
           </DialogHeader>
           {sortEditDraft && (
-            <div className="space-y-5 text-sm">
-              <div className="rounded-lg bg-muted/40 p-3">
-                <div className="mb-1 text-xs text-muted-foreground">排序因子</div>
-                <div className="font-semibold text-foreground">{sortEditDraft.name}</div>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="text-sm font-medium">是否参与排序</div>
-                <Switch
-                  checked={sortEditDraft.enabled}
-                  onCheckedChange={(v) => setSortEditDraft({ ...sortEditDraft, enabled: !!v })}
-                />
+            <div className="px-6 pb-2 space-y-5 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-sm">
+                    <span className="text-red-500 mr-1">*</span>排序因子
+                  </label>
+                  <div className="h-10 px-3 flex items-center rounded-md border bg-muted/40 text-foreground">
+                    {sortEditDraft.name}
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm">
+                    <span className="text-red-500 mr-1">*</span>是否参与排序
+                  </label>
+                  <div className="h-10 px-3 flex items-center justify-between rounded-md border">
+                    <span className="text-muted-foreground">
+                      {sortEditDraft.enabled ? "已启用" : "已停用"}
+                    </span>
+                    <Switch
+                      checked={sortEditDraft.enabled}
+                      onCheckedChange={(v) => setSortEditDraft({ ...sortEditDraft, enabled: !!v })}
+                    />
+                  </div>
+                </div>
               </div>
               <div>
-                <div className="mb-1.5 text-sm font-medium">说明</div>
+                <label className="mb-1.5 block text-sm">说明</label>
                 <Textarea
                   value={sortEditDraft.desc}
                   onChange={(e) => setSortEditDraft({ ...sortEditDraft, desc: e.target.value })}
-                  rows={3}
+                  rows={4}
+                  placeholder="请输入说明"
                 />
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="px-6 py-4 border-t bg-muted/20">
             <Button
               variant="outline"
               onClick={() => {
