@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { RefreshCw, Search, History, Menu, ChevronDown, Maximize2, Bell, User } from "lucide-react";
+import { Search, History, Menu, ChevronDown, Maximize2, Bell, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
