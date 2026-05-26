@@ -80,21 +80,6 @@ const DEFAULT_EXTRA: ExtraFactors = {
   multiHitMax: 3,
 };
 
-type Quota = {
-  panelMax: number;
-  gamsgoDefault: number;
-  c2cDefault: number;
-  allowBackfill: boolean;
-  rerankByScore: boolean;
-};
-
-const DEFAULT_QUOTA: Quota = {
-  panelMax: 10,
-  gamsgoDefault: 5,
-  c2cDefault: 5,
-  allowBackfill: true,
-  rerankByScore: true,
-};
 
 type LogEntry = {
   time: string;
@@ -125,18 +110,13 @@ export function ProductSortManagement() {
   const [termTypes, setTermTypes] = useState<TermType[]>(clone(DEFAULT_TERM_TYPES));
   const [matchTypes, setMatchTypes] = useState<MatchType[]>(clone(DEFAULT_MATCH));
   const [extra, setExtra] = useState<ExtraFactors>(clone(DEFAULT_EXTRA));
-  const [quota, setQuota] = useState<Quota>(clone(DEFAULT_QUOTA));
 
   type Meta = { updatedBy: string; updatedAt: string };
   const EMPTY_META: Meta = { updatedBy: "—", updatedAt: "—" };
   const [extraMeta, setExtraMeta] = useState<Record<string, Meta>>({});
-  const [quotaMeta, setQuotaMeta] = useState<Record<string, Meta>>({});
   const getExtraMeta = (k: string) => extraMeta[k] ?? EMPTY_META;
-  const getQuotaMeta = (k: string) => quotaMeta[k] ?? EMPTY_META;
   const stampExtra = (k: string) =>
     setExtraMeta((p) => ({ ...p, [k]: { updatedBy: "admin", updatedAt: nowStr() } }));
-  const stampQuota = (k: string) =>
-    setQuotaMeta((p) => ({ ...p, [k]: { updatedBy: "admin", updatedAt: nowStr() } }));
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [warnings, setWarnings] = useState<Record<string, string>>({});
@@ -147,7 +127,7 @@ export function ProductSortManagement() {
   const [testOpen, setTestOpen] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [tab, setTab] = useState<
-    "intro" | "recall" | "term" | "match" | "quota"
+    "intro" | "recall" | "term" | "match"
   >("intro");
   const [dirty, setDirty] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
@@ -249,27 +229,6 @@ export function ProductSortManagement() {
       errs["extra_multiHitPer"] = "单个额外命中奖励分不能高于精准匹配权重";
     }
 
-    // quota
-    if (!isInt(quota.panelMax) || quota.panelMax < 1 || quota.panelMax > 20) {
-      errs["quota_panelMax"] = "搜索面板最多商品数只能输入 1-20 的整数";
-    }
-    if (!isInt(quota.gamsgoDefault) || quota.gamsgoDefault < 0 || quota.gamsgoDefault > 20) {
-      errs["quota_gamsgo"] = "GamsGo默认展示数只能输入 0-20 的整数";
-    }
-    if (!isInt(quota.c2cDefault) || quota.c2cDefault < 0 || quota.c2cDefault > 20) {
-      errs["quota_c2c"] = "C2C默认展示数只能输入 0-20 的整数";
-    }
-    if (
-      isInt(quota.panelMax) &&
-      isInt(quota.gamsgoDefault) &&
-      isInt(quota.c2cDefault) &&
-      quota.gamsgoDefault + quota.c2cDefault > quota.panelMax
-    ) {
-      errs["quota_sum"] = "GamsGo 和 C2C 默认展示数之和不能大于搜索面板最多商品数";
-    }
-    if (quota.gamsgoDefault === 0 && quota.c2cDefault === 0) {
-      errs["quota_zero"] = "至少需要配置一种商品来源的展示数量";
-    }
 
     return { errs, warns };
   }
@@ -308,7 +267,6 @@ export function ProductSortManagement() {
     setTermTypes(clone(DEFAULT_TERM_TYPES));
     setMatchTypes(clone(DEFAULT_MATCH));
     setExtra(clone(DEFAULT_EXTRA));
-    setQuota(clone(DEFAULT_QUOTA));
     setSortFactors(clone(DEFAULT_SORT_FACTORS));
     setErrors({});
     setWarnings({});
@@ -395,7 +353,6 @@ export function ProductSortManagement() {
                   { k: "recall", label: "词条类型权重" },
                   { k: "term", label: "词条来源权重" },
                   { k: "match", label: "匹配方式权重" },
-                  { k: "quota", label: "展示配额" },
                 ].map((t) => {
                   const active = tab === t.k;
                   return (
@@ -589,84 +546,6 @@ export function ProductSortManagement() {
                 )}
 
 
-                {tab === "quota" && (
-                  <div>
-                    {errors["quota_sum"] && (
-                      <p className="mb-2 text-xs text-red-500">{errors["quota_sum"]}</p>
-                    )}
-                    {errors["quota_zero"] && (
-                      <p className="mb-2 text-xs text-red-500">{errors["quota_zero"]}</p>
-                    )}
-                    <FlatTable headers={["配置项", "数值 / 开关", "说明", "变更人", "变更时间"]}>
-                      <FlatRow>
-                        <FlatCell>搜索面板最多商品数</FlatCell>
-                        <FlatCell>
-                          <NumberField
-                            value={quota.panelMax}
-                            error={errors["quota_panelMax"]}
-                            onChange={(v) => { setQuota({ ...quota, panelMax: v }); stampQuota("panelMax"); setDirty(true); }}
-                          />
-                        </FlatCell>
-                        <FlatCell className="text-slate-500">1-20，正常商品结果最多返回数量</FlatCell>
-                        <FlatCell className="text-slate-500">{getQuotaMeta("panelMax").updatedBy}</FlatCell>
-                        <FlatCell className="text-slate-500">{getQuotaMeta("panelMax").updatedAt}</FlatCell>
-                      </FlatRow>
-                      <FlatRow>
-                        <FlatCell>GamsGo默认展示数</FlatCell>
-                        <FlatCell>
-                          <NumberField
-                            value={quota.gamsgoDefault}
-                            error={errors["quota_gamsgo"]}
-                            onChange={(v) => { setQuota({ ...quota, gamsgoDefault: v }); stampQuota("gamsgoDefault"); setDirty(true); }}
-                          />
-                        </FlatCell>
-                        <FlatCell className="text-slate-500">0-20，GamsGo 自营默认最多展示数量</FlatCell>
-                        <FlatCell className="text-slate-500">{getQuotaMeta("gamsgoDefault").updatedBy}</FlatCell>
-                        <FlatCell className="text-slate-500">{getQuotaMeta("gamsgoDefault").updatedAt}</FlatCell>
-                      </FlatRow>
-                      <FlatRow>
-                        <FlatCell>C2C默认展示数</FlatCell>
-                        <FlatCell>
-                          <NumberField
-                            value={quota.c2cDefault}
-                            error={errors["quota_c2c"]}
-                            onChange={(v) => { setQuota({ ...quota, c2cDefault: v }); stampQuota("c2cDefault"); setDirty(true); }}
-                          />
-                        </FlatCell>
-                        <FlatCell className="text-slate-500">0-20，C2C 默认最多展示数量</FlatCell>
-                        <FlatCell className="text-slate-500">{getQuotaMeta("c2cDefault").updatedBy}</FlatCell>
-                        <FlatCell className="text-slate-500">{getQuotaMeta("c2cDefault").updatedAt}</FlatCell>
-                      </FlatRow>
-                      <FlatRow>
-                        <FlatCell>一方不足是否允许补位</FlatCell>
-                        <FlatCell>
-                          <Switch
-                            checked={quota.allowBackfill}
-                            onCheckedChange={(v) => { setQuota({ ...quota, allowBackfill: !!v }); stampQuota("allowBackfill"); setDirty(true); }}
-                          />
-                        </FlatCell>
-                        <FlatCell className="text-slate-500">某一来源不足时，由另一来源补满</FlatCell>
-                        <FlatCell className="text-slate-500">{getQuotaMeta("allowBackfill").updatedBy}</FlatCell>
-                        <FlatCell className="text-slate-500">{getQuotaMeta("allowBackfill").updatedAt}</FlatCell>
-                      </FlatRow>
-                      <FlatRow>
-                        <FlatCell>是否按最终分重新排序</FlatCell>
-                        <FlatCell>
-                          <Switch
-                            checked={quota.rerankByScore}
-                            onCheckedChange={(v) => { setQuota({ ...quota, rerankByScore: !!v }); stampQuota("rerankByScore"); setDirty(true); }}
-                          />
-                        </FlatCell>
-                        <FlatCell className="text-slate-500">分桶后是否再按分数整体重排</FlatCell>
-                        <FlatCell className="text-slate-500">{getQuotaMeta("rerankByScore").updatedBy}</FlatCell>
-                        <FlatCell className="text-slate-500">{getQuotaMeta("rerankByScore").updatedAt}</FlatCell>
-                      </FlatRow>
-                    </FlatTable>
-                    <div className="mt-4 rounded-md border border-slate-200 bg-slate-50/60 p-3 text-xs leading-6 text-slate-600">
-                      示例：GamsGo 可展示 3 个、C2C 可展示 8 个，允许补位时最终展示 3 + 7 = 10 个。顶部预约卡不参与该数量计算。
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
