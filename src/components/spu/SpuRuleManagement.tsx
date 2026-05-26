@@ -1041,6 +1041,21 @@ export function SpuRuleManagement() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-slate-50">
+                        <TableHead className="w-8">
+                          <Checkbox
+                            checked={
+                              filtered.length > 0 &&
+                              filtered.every((r) => selectedIds.includes(r.id))
+                            }
+                            onCheckedChange={(v) => {
+                              if (v) {
+                                setSelectedIds(filtered.map((r) => r.id));
+                              } else {
+                                setSelectedIds([]);
+                              }
+                            }}
+                          />
+                        </TableHead>
                         <TableHead>词条内容</TableHead>
                         <TableHead>标准化词</TableHead>
                         <TableHead>词条类型</TableHead>
@@ -1057,13 +1072,25 @@ export function SpuRuleManagement() {
                     <TableBody>
                       {filtered.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={11} className="py-10 text-center text-slate-400">
+                          <TableCell colSpan={12} className="py-10 text-center text-slate-400">
                             暂无数据
                           </TableCell>
                         </TableRow>
                       ) : (
                         filtered.map((r) => (
                           <TableRow key={r.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedIds.includes(r.id)}
+                                onCheckedChange={(v) => {
+                                  setSelectedIds((prev) =>
+                                    v
+                                      ? [...prev, r.id]
+                                      : prev.filter((id) => id !== r.id),
+                                  );
+                                }}
+                              />
+                            </TableCell>
                             <TableCell>{r.content}</TableCell>
                             <TableCell>{r.standard}</TableCell>
                             <TableCell>
