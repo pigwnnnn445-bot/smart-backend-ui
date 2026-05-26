@@ -284,6 +284,7 @@ export function ProductSortManagement() {
     setMatchTypes(clone(DEFAULT_MATCH));
     setExtra(clone(DEFAULT_EXTRA));
     setSortFactors(clone(DEFAULT_SORT_FACTORS));
+    setExactSpu(clone(DEFAULT_EXACT_SPU));
     setErrors({});
     setWarnings({});
     setLogs((p) => [
