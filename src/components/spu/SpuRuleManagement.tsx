@@ -360,6 +360,21 @@ export function SpuRuleManagement() {
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
+  // 批量选择
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [activeSpu]);
+
+  // 复制其他词库配置
+  const [copyOpen, setCopyOpen] = useState(false);
+  const [copyProductType, setCopyProductType] = useState<"" | ProductType>("");
+  const [copySourceSpu, setCopySourceSpu] = useState("");
+  const [copySpuSearch, setCopySpuSearch] = useState("");
+  const [copySpuOpen, setCopySpuOpen] = useState(false);
+  const [copyConfirmOpen, setCopyConfirmOpen] = useState(false);
+  const [copyError, setCopyError] = useState<{ type?: string; spu?: string }>({});
+
   const filtered = useMemo(() => {
     return rows.filter((r) => {
       if (filters.content && !r.content.toLowerCase().includes(filters.content.toLowerCase()))
