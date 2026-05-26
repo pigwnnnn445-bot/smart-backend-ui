@@ -918,6 +918,21 @@ export function ProductSortManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* Save success confirmation dialog */}
+      <Dialog open={saveSuccessOpen} onOpenChange={setSaveSuccessOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>保存成功</DialogTitle>
+            <DialogDescription>
+              搜索排序规则已更新并生效。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setSaveSuccessOpen(false)}>知道了</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Reset confirm dialog */}
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>
         <DialogContent>
