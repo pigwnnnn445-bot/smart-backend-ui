@@ -553,59 +553,12 @@ export function ProductSortManagement() {
     return { errs, warns };
   }
 
-  function handleSaveClick() {
+  // 校验单行（按 tab 范围）后调用；保留 validate 以便表单内显示标红
+  function runValidate() {
     const { errs, warns } = validate();
     setErrors(errs);
     setWarnings(warns);
-    if (Object.keys(errs).length > 0) {
-      toast.error("配置校验未通过，请检查标红字段");
-      return;
-    }
-    setSaveOpen(true);
-  }
-
-  function confirmSave() {
-    setLogs((p) => [
-      {
-        time: nowStr(),
-        operator: "admin",
-        module: "全部模块",
-        type: "保存配置",
-        before: "—",
-        after: "已更新",
-        remark: "保存搜索排序规则",
-      },
-      ...p,
-    ]);
-    setSaveOpen(false);
-    setDirty(false);
-    setSaveSuccessOpen(true);
-  }
-
-  function confirmReset() {
-    setRecall(clone(DEFAULT_RECALL));
-    setTermTypes(clone(DEFAULT_TERM_TYPES));
-    setMatchTypes(clone(DEFAULT_MATCH));
-    setExtra(clone(DEFAULT_EXTRA));
-    setSortFactors(clone(DEFAULT_SORT_FACTORS));
-    setExactSpu(clone(DEFAULT_EXACT_SPU));
-    setErrors({});
-    setWarnings({});
-    setLogs((p) => [
-      {
-        time: nowStr(),
-        operator: "admin",
-        module: "全部模块",
-        type: "恢复默认",
-        before: "自定义配置",
-        after: "系统默认配置",
-        remark: "需点击保存配置后正式生效",
-      },
-      ...p,
-    ]);
-    setResetOpen(false);
-    setDirty(false);
-    toast.message("已恢复默认值，需点击「保存配置」后正式生效。");
+    return Object.keys(errs).length === 0;
   }
 
   return (
