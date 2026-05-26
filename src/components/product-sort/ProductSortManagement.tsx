@@ -127,7 +127,7 @@ export function ProductSortManagement() {
   const [testOpen, setTestOpen] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [tab, setTab] = useState<
-    "intro" | "recall" | "term" | "match"
+    "intro" | "recall" | "term" | "match" | "exact"
   >("intro");
   const [dirty, setDirty] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
@@ -136,6 +136,23 @@ export function ProductSortManagement() {
   const [termEditDraft, setTermEditDraft] = useState<TermType | null>(null);
   const [matchEditIdx, setMatchEditIdx] = useState<number | null>(null);
   const [matchEditDraft, setMatchEditDraft] = useState<MatchType | null>(null);
+
+  // 明确指向当前SPU 配置
+  type ExactSpuConfig = {
+    weight: number;
+    desc: string;
+    updatedBy: string;
+    updatedAt: string;
+  };
+  const DEFAULT_EXACT_SPU: ExactSpuConfig = {
+    weight: 20,
+    desc: "用户输入命中商品自身词条时，对当前SPU额外加权，确保明确指向的商品排序靠前",
+    updatedBy: "—",
+    updatedAt: "—",
+  };
+  const [exactSpu, setExactSpu] = useState<ExactSpuConfig>(clone(DEFAULT_EXACT_SPU));
+  const [exactEditOpen, setExactEditOpen] = useState(false);
+  const [exactEditDraft, setExactEditDraft] = useState<ExactSpuConfig | null>(null);
 
   // 排序开关：控制各排序因子是否参与最终排序计算
   type SortFactorKey = "termType" | "termSource" | "matchType" | "exactSpu";
