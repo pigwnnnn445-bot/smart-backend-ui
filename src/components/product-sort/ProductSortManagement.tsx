@@ -138,7 +138,7 @@ export function ProductSortManagement() {
   const [matchEditDraft, setMatchEditDraft] = useState<MatchType | null>(null);
 
   // 排序开关：控制各排序因子是否参与最终排序计算
-  type SortFactorKey = "termType" | "termSource" | "matchType" | "exactSpu" | "hotness";
+  type SortFactorKey = "termType" | "termSource" | "matchType" | "exactSpu";
 
   type SortFactor = {
     key: SortFactorKey;
@@ -154,7 +154,6 @@ export function ProductSortManagement() {
     { key: "termSource", name: "词条来源", enabled: true, desc: "SPU词条 / 商品名前缀兜底 / 场景词 / 属性词 等召回来源权重参与排序", updatedBy: "—", updatedAt: "—" },
     { key: "matchType", name: "匹配方式", enabled: true, desc: "精准匹配 / 前缀匹配 的权重参与排序", updatedBy: "—", updatedAt: "—" },
     { key: "exactSpu", name: "明确指向当前SPU", enabled: true, desc: "用户输入命中商品自身词条时的额外加权参与排序", updatedBy: "—", updatedAt: "—" },
-    { key: "hotness", name: "商品热度分", enabled: true, desc: "近 7 天搜索点击、收藏、订单等综合热度分参与排序", updatedBy: "—", updatedAt: "—" },
   ];
 
   const [sortFactors, setSortFactors] = useState<SortFactor[]>(clone(DEFAULT_SORT_FACTORS));
