@@ -369,6 +369,7 @@ export function ProductSortManagement() {
                   { k: "recall", label: "词条类型权重" },
                   { k: "term", label: "词条来源权重" },
                   { k: "match", label: "匹配方式权重" },
+                  { k: "exact", label: "明确指向当前SPU" },
                 ].map((t) => {
                   const active = tab === t.k;
                   return (
