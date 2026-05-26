@@ -526,6 +526,108 @@ export function SpuRuleManagement() {
     });
   }
 
+  function bulkSetStatus(next: Extract<Status, "已启用" | "已停用">) {
+    if (selectedIds.length === 0) return;
+    const now = nowStr();
+    setRows((prev) =>
+      prev.map((p) =>
+        selectedIds.includes(p.id) ? { ...p, status: next, updatedAt: now } : p,
+      ),
+    );
+    pushLog({
+      spu: activeSpu,
+      action: next === "已启用" ? "批量启用词条" : "批量停用词条",
+      target: `${selectedIds.length} 条词条`,
+    });
+    toast.success(
+      `已${next === "已启用" ? "启用" : "停用"} ${selectedIds.length} 条词条`,
+    );
+    setSelectedIds([]);
+  }
+
+  function openCopy() {
+    setCopyProductType("");
+    setCopySourceSpu("");
+    setCopySpuSearch("");
+    setCopyError({});
+    setCopyOpen(true);
+  }
+
+  function submitCopy() {
+    const errs: { type?: string; spu?: string } = {};
+    if (!copyProductType) errs.type = "请选择商品类型";
+    if (!copySourceSpu) errs.spu = "请选择源SPU";
+    setCopyError(errs);
+    if (Object.keys(errs).length > 0) return;
+    setCopyConfirmOpen(true);
+  }
+
+  function commitCopy(action: "enable" | "draft") {
+    // 模拟从源SPU克隆若干词条到当前SPU
+    const now = nowStr();
+    const status: Status = action === "enable" ? "已启用" : "草稿";
+    const samples: RuleRow[] = [
+      {
+        ...blank,
+        id: crypto.randomUUID(),
+        content: `${copySourceSpu}-品牌词`,
+        standard: normalizeTerm(`${copySourceSpu}brand`),
+        termType: ["品牌词"],
+        matchType: "精准匹配",
+        direct: "是",
+        status,
+        scope: "全部IP生效",
+        regions: [],
+        updater: "Alex",
+        updatedAt: now,
+        remark: `从「${copySourceSpu}」复制`,
+      },
+      {
+        ...blank,
+        id: crypto.randomUUID(),
+        content: `${copySourceSpu}-别名词`,
+        standard: normalizeTerm(`${copySourceSpu}alias`),
+        termType: ["别名词"],
+        matchType: "模糊匹配",
+        direct: "否",
+        status,
+        scope: "全部IP生效",
+        regions: [],
+        updater: "Alex",
+        updatedAt: now,
+        remark: `从「${copySourceSpu}」复制`,
+      },
+      {
+        ...blank,
+        id: crypto.randomUUID(),
+        content: `${copySourceSpu}-场景词`,
+        standard: normalizeTerm(`${copySourceSpu}scene`),
+        termType: ["场景词"],
+        matchType: "前缀匹配",
+        direct: "否",
+        status,
+        scope: "全部IP生效",
+        regions: [],
+        updater: "Alex",
+        updatedAt: now,
+        remark: `从「${copySourceSpu}」复制`,
+      },
+    ];
+    setRows((prev) => [...samples, ...prev]);
+    pushLog({
+      spu: activeSpu,
+      action: `复制词库配置（${action === "enable" ? "立即启用" : "保存到草稿"}）`,
+      target: `${copyProductType?.toUpperCase()} / ${copySourceSpu}`,
+    });
+    toast.success(
+      action === "enable"
+        ? `已从「${copySourceSpu}」复制并启用 ${samples.length} 条词条`
+        : `已从「${copySourceSpu}」复制为草稿 ${samples.length} 条词条`,
+    );
+    setCopyConfirmOpen(false);
+    setCopyOpen(false);
+  }
+
   // 词库展示状态派生：未配置 / 草稿 / 已启用 / 已停用
   function computeLibStatus(spu: string): LibStatus {
     const rs = rowsBySpu[spu] ?? [];
