@@ -553,13 +553,6 @@ export function ProductSortManagement() {
     return { errs, warns };
   }
 
-  // 校验单行（按 tab 范围）后调用；保留 validate 以便表单内显示标红
-  function runValidate() {
-    const { errs, warns } = validate();
-    setErrors(errs);
-    setWarnings(warns);
-    return Object.keys(errs).length === 0;
-  }
 
   return (
     <div className="flex min-h-screen bg-slate-100 text-sm text-slate-800">
