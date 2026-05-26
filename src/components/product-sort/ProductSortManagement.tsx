@@ -422,6 +422,12 @@ export function ProductSortManagement() {
   const [logOpen, setLogOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  // 搜索测试输入与结果
+  const [testTerm, setTestTerm] = useState("");
+  const [testRegion, setTestRegion] = useState("US");
+  const [testUserStatus, setTestUserStatus] = useState<"login" | "guest">("guest");
+  const [testSite, setTestSite] = useState("gamsgo.com");
+  const [testResult, setTestResult] = useState<SearchTestResult | null>(null);
   const [tab, setTab] = useState<
     "intro" | "recall" | "term" | "match" | "exact"
   >("intro");
