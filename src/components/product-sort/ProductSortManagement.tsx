@@ -872,7 +872,7 @@ export function ProductSortManagement() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>编辑词条类型</DialogTitle>
-            <DialogDescription>修改该词条类型的启用状态、权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+            <DialogDescription>修改该词条类型的启用状态、权重和说明。</DialogDescription>
           </DialogHeader>
           {editDraft && (
             <div className="space-y-4 text-sm">
@@ -933,13 +933,20 @@ export function ProductSortManagement() {
             <Button
               onClick={() => {
                 if (editIdx === null || !editDraft) return;
-                const next = [...recall];
-                next[editIdx] = { ...editDraft, updatedBy: "admin", updatedAt: nowStr() };
-                setRecall(next);
-                setDirty(true);
-                setEditIdx(null);
-                setEditDraft(null);
-                toast.success("已更新该词条类型，请点击「保存配置」正式生效。");
+                const idx = editIdx;
+                const draft = editDraft;
+                setPendingConfirm({
+                  title: "确认保存该词条类型修改？",
+                  description: "保存后立即生效，影响前台搜索排序。",
+                  run: () => {
+                    const next = [...recall];
+                    next[idx] = { ...draft, updatedBy: "admin", updatedAt: nowStr() };
+                    setRecall(next);
+                    setEditIdx(null);
+                    setEditDraft(null);
+                    toast.success("已保存并生效");
+                  },
+                });
               }}
             >
               保存
@@ -961,7 +968,7 @@ export function ProductSortManagement() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>编辑词条来源</DialogTitle>
-            <DialogDescription>修改该词条来源的权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+            <DialogDescription>修改该词条来源的权重和说明。</DialogDescription>
           </DialogHeader>
           {termEditDraft && (
             <div className="space-y-4 text-sm">
@@ -1015,13 +1022,20 @@ export function ProductSortManagement() {
             <Button
               onClick={() => {
                 if (termEditIdx === null || !termEditDraft) return;
-                const next = [...termTypes];
-                next[termEditIdx] = { ...termEditDraft, updatedBy: "admin", updatedAt: nowStr() };
-                setTermTypes(next);
-                setDirty(true);
-                setTermEditIdx(null);
-                setTermEditDraft(null);
-                toast.success("已更新该词条来源，请点击「保存配置」正式生效。");
+                const idx = termEditIdx;
+                const draft = termEditDraft;
+                setPendingConfirm({
+                  title: "确认保存该词条来源修改？",
+                  description: "保存后立即生效，影响前台搜索排序。",
+                  run: () => {
+                    const next = [...termTypes];
+                    next[idx] = { ...draft, updatedBy: "admin", updatedAt: nowStr() };
+                    setTermTypes(next);
+                    setTermEditIdx(null);
+                    setTermEditDraft(null);
+                    toast.success("已保存并生效");
+                  },
+                });
               }}
             >
               保存
@@ -1043,7 +1057,7 @@ export function ProductSortManagement() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>编辑匹配方式</DialogTitle>
-            <DialogDescription>修改该匹配方式的权重和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+            <DialogDescription>修改该匹配方式的权重和说明。</DialogDescription>
           </DialogHeader>
           {matchEditDraft && (
             <div className="space-y-4 text-sm">
@@ -1097,13 +1111,20 @@ export function ProductSortManagement() {
             <Button
               onClick={() => {
                 if (matchEditIdx === null || !matchEditDraft) return;
-                const next = [...matchTypes];
-                next[matchEditIdx] = { ...matchEditDraft, updatedBy: "admin", updatedAt: nowStr() };
-                setMatchTypes(next);
-                setDirty(true);
-                setMatchEditIdx(null);
-                setMatchEditDraft(null);
-                toast.success("已更新该匹配方式，请点击「保存配置」正式生效。");
+                const idx = matchEditIdx;
+                const draft = matchEditDraft;
+                setPendingConfirm({
+                  title: "确认保存该匹配方式修改？",
+                  description: "保存后立即生效，影响前台搜索排序。",
+                  run: () => {
+                    const next = [...matchTypes];
+                    next[idx] = { ...draft, updatedBy: "admin", updatedAt: nowStr() };
+                    setMatchTypes(next);
+                    setMatchEditIdx(null);
+                    setMatchEditDraft(null);
+                    toast.success("已保存并生效");
+                  },
+                });
               }}
             >
               保存
@@ -1176,17 +1197,20 @@ export function ProductSortManagement() {
             <Button
               onClick={() => {
                 if (sortEditIdx === null || !sortEditDraft) return;
-                const next = [...sortFactors];
-                next[sortEditIdx] = {
-                  ...sortEditDraft,
-                  updatedBy: "admin",
-                  updatedAt: nowStr(),
-                };
-                setSortFactors(next);
-                setDirty(true);
-                setSortEditIdx(null);
-                setSortEditDraft(null);
-                toast.success("已更新该排序因子，请点击「保存配置」正式生效。");
+                const idx = sortEditIdx;
+                const draft = sortEditDraft;
+                setPendingConfirm({
+                  title: "确认保存该排序因子修改？",
+                  description: "保存后立即生效，影响前台搜索排序计算。",
+                  run: () => {
+                    const next = [...sortFactors];
+                    next[idx] = { ...draft, updatedBy: "admin", updatedAt: nowStr() };
+                    setSortFactors(next);
+                    setSortEditIdx(null);
+                    setSortEditDraft(null);
+                    toast.success("已保存并生效");
+                  },
+                });
               }}
             >
               保存
@@ -1209,7 +1233,7 @@ export function ProductSortManagement() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>编辑明确指向当前SPU</DialogTitle>
-            <DialogDescription>修改当用户输入命中商品自身词条时的额外加权和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+            <DialogDescription>修改当用户输入命中商品自身词条时的额外加权和说明。</DialogDescription>
           </DialogHeader>
           {exactEditDraft && (
             <div className="space-y-4 text-sm">
@@ -1260,11 +1284,17 @@ export function ProductSortManagement() {
             <Button
               onClick={() => {
                 if (!exactEditDraft) return;
-                setExactSpu({ ...exactEditDraft, updatedBy: "admin", updatedAt: nowStr() });
-                setDirty(true);
-                setExactEditOpen(false);
-                setExactEditDraft(null);
-                toast.success("已更新明确指向当前SPU配置，请点击「保存配置」正式生效。");
+                const draft = exactEditDraft;
+                setPendingConfirm({
+                  title: "确认保存该配置修改？",
+                  description: "保存后立即生效，影响前台搜索排序。",
+                  run: () => {
+                    setExactSpu({ ...draft, updatedBy: "admin", updatedAt: nowStr() });
+                    setExactEditOpen(false);
+                    setExactEditDraft(null);
+                    toast.success("已保存并生效");
+                  },
+                });
               }}
             >
               保存
