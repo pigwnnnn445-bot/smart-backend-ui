@@ -419,6 +419,7 @@ export function ProductSortManagement() {
   const [warnings, setWarnings] = useState<Record<string, string>>({});
 
   const [saveOpen, setSaveOpen] = useState(false);
+  const [saveSuccessOpen, setSaveSuccessOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
@@ -578,7 +579,7 @@ export function ProductSortManagement() {
     ]);
     setSaveOpen(false);
     setDirty(false);
-    toast.success("保存成功，搜索排序规则已更新。");
+    setSaveSuccessOpen(true);
   }
 
   function confirmReset() {
@@ -913,6 +914,21 @@ export function ProductSortManagement() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setSaveOpen(false)}>取消</Button>
             <Button onClick={confirmSave}>确认保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save success confirmation dialog */}
+      <Dialog open={saveSuccessOpen} onOpenChange={setSaveSuccessOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>保存成功</DialogTitle>
+            <DialogDescription>
+              搜索排序规则已更新并生效。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setSaveSuccessOpen(false)}>知道了</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
