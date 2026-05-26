@@ -995,13 +995,46 @@ export function SpuRuleManagement() {
                       );
                     })()}
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={openCreate}
-                    className="h-8 bg-blue-500 hover:bg-blue-600"
-                  >
-                    <Plus className="h-3.5 w-3.5" /> 新增词条
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {selectedIds.length > 0 && (
+                      <span className="text-xs text-slate-500">
+                        已选 {selectedIds.length} 项
+                      </span>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      disabled={selectedIds.length === 0}
+                      onClick={() => bulkSetStatus("已启用")}
+                    >
+                      <Power className="h-3.5 w-3.5" /> 批量启用
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      disabled={selectedIds.length === 0}
+                      onClick={() => bulkSetStatus("已停用")}
+                    >
+                      <Power className="h-3.5 w-3.5" /> 批量停用
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      onClick={openCopy}
+                    >
+                      <Copy className="h-3.5 w-3.5" /> 复制其他词库配置
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={openCreate}
+                      className="h-8 bg-blue-500 hover:bg-blue-600"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> 新增词条
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="mt-3 overflow-x-auto rounded border border-slate-200">
