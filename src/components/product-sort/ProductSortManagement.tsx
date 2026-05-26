@@ -127,7 +127,7 @@ export function ProductSortManagement() {
   const [testOpen, setTestOpen] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [tab, setTab] = useState<
-    "intro" | "recall" | "term" | "match"
+    "intro" | "recall" | "term" | "match" | "exact"
   >("intro");
   const [dirty, setDirty] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
@@ -136,6 +136,23 @@ export function ProductSortManagement() {
   const [termEditDraft, setTermEditDraft] = useState<TermType | null>(null);
   const [matchEditIdx, setMatchEditIdx] = useState<number | null>(null);
   const [matchEditDraft, setMatchEditDraft] = useState<MatchType | null>(null);
+
+  // 明确指向当前SPU 配置
+  type ExactSpuConfig = {
+    weight: number;
+    desc: string;
+    updatedBy: string;
+    updatedAt: string;
+  };
+  const DEFAULT_EXACT_SPU: ExactSpuConfig = {
+    weight: 20,
+    desc: "用户输入命中商品自身词条时，对当前SPU额外加权，确保明确指向的商品排序靠前",
+    updatedBy: "—",
+    updatedAt: "—",
+  };
+  const [exactSpu, setExactSpu] = useState<ExactSpuConfig>(clone(DEFAULT_EXACT_SPU));
+  const [exactEditOpen, setExactEditOpen] = useState(false);
+  const [exactEditDraft, setExactEditDraft] = useState<ExactSpuConfig | null>(null);
 
   // 排序开关：控制各排序因子是否参与最终排序计算
   type SortFactorKey = "termType" | "termSource" | "matchType" | "exactSpu";
@@ -267,6 +284,7 @@ export function ProductSortManagement() {
     setMatchTypes(clone(DEFAULT_MATCH));
     setExtra(clone(DEFAULT_EXTRA));
     setSortFactors(clone(DEFAULT_SORT_FACTORS));
+    setExactSpu(clone(DEFAULT_EXACT_SPU));
     setErrors({});
     setWarnings({});
     setLogs((p) => [
@@ -352,6 +370,7 @@ export function ProductSortManagement() {
                   { k: "recall", label: "词条类型权重" },
                   { k: "term", label: "词条来源权重" },
                   { k: "match", label: "匹配方式权重" },
+                  { k: "exact", label: "明确指向当前SPU" },
                 ].map((t) => {
                   const active = tab === t.k;
                   return (
@@ -540,6 +559,36 @@ export function ProductSortManagement() {
                           </FlatCell>
                         </FlatRow>
                       ))}
+                    </FlatTable>
+                  </div>
+                )}
+
+                {tab === "exact" && (
+                  <div>
+                    <p className="mb-3 text-xs text-slate-500">
+                      当用户输入命中商品自身词条时，对该 SPU 在最终排序分中额外加权，确保明确指向当前商品的搜索请求能将该 SPU 排在最前。
+                    </p>
+                    <FlatTable headers={["配置项", "加权分", "说明", "变更人", "变更时间", "操作"]}>
+                      <FlatRow>
+                        <FlatCell>明确指向当前SPU加权</FlatCell>
+                        <FlatCell>
+                          <span className="text-sm text-slate-700">{exactSpu.weight}</span>
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">{exactSpu.desc}</FlatCell>
+                        <FlatCell className="text-slate-500">{exactSpu.updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{exactSpu.updatedAt}</FlatCell>
+                        <FlatCell>
+                          <button
+                            className="text-xs text-blue-600 hover:text-blue-700"
+                            onClick={() => {
+                              setExactEditDraft({ ...exactSpu });
+                              setExactEditOpen(true);
+                            }}
+                          >
+                            编辑
+                          </button>
+                        </FlatCell>
+                      </FlatRow>
                     </FlatTable>
                   </div>
                 )}
@@ -897,6 +946,84 @@ export function ProductSortManagement() {
                 setSortEditIdx(null);
                 setSortEditDraft(null);
                 toast.success("已更新该排序因子，请点击「保存配置」正式生效。");
+              }}
+            >
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Logs dialog */}
+      {/* Edit exact-spu dialog */}
+      <Dialog
+        open={exactEditOpen}
+        onOpenChange={(o) => {
+          if (!o) {
+            setExactEditOpen(false);
+            setExactEditDraft(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑明确指向当前SPU</DialogTitle>
+            <DialogDescription>修改当用户输入命中商品自身词条时的额外加权和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
+          </DialogHeader>
+          {exactEditDraft && (
+            <div className="space-y-4 text-sm">
+              <div className="rounded-md bg-slate-50 p-3">
+                <div className="mb-1 text-xs text-slate-500">配置项</div>
+                <div className="font-medium text-slate-800">明确指向当前SPU加权</div>
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">加权分（0-999）</div>
+                <Input
+                  type="number"
+                  className="h-8 w-32"
+                  value={Number.isNaN(exactEditDraft.weight) ? "" : exactEditDraft.weight}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    setExactEditDraft({ ...exactEditDraft, weight: Number.isNaN(n) ? 0 : n });
+                  }}
+                />
+              </div>
+              <div>
+                <div className="mb-1 text-xs text-slate-600">说明</div>
+                <Input
+                  value={exactEditDraft.desc}
+                  onChange={(e) => setExactEditDraft({ ...exactEditDraft, desc: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setExactEditOpen(false);
+                setExactEditDraft(null);
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setExactEditDraft({ ...DEFAULT_EXACT_SPU });
+                toast.info("已恢复默认值，点击保存后生效。");
+              }}
+            >
+              恢复默认值
+            </Button>
+            <Button
+              onClick={() => {
+                if (!exactEditDraft) return;
+                setExactSpu({ ...exactEditDraft, updatedBy: "admin", updatedAt: nowStr() });
+                setDirty(true);
+                setExactEditOpen(false);
+                setExactEditDraft(null);
+                toast.success("已更新明确指向当前SPU配置，请点击「保存配置」正式生效。");
               }}
             >
               保存
