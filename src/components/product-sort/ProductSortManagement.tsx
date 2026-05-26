@@ -471,8 +471,8 @@ export function ProductSortManagement() {
   };
 
   const DEFAULT_SORT_FACTORS: SortFactor[] = [
-    { key: "termType", name: "词条类型", enabled: true, desc: "SPU词条召回和SPU商品名前缀匹配兜底不同权重参与排序", updatedBy: "—", updatedAt: "—" },
-    { key: "termSource", name: "词条来源", enabled: true, desc: "SPU词条 / 商品名前缀兜底 / 场景词 / 属性词 等召回来源权重参与排序", updatedBy: "—", updatedAt: "—" },
+    { key: "termType", name: "召回方式", enabled: true, desc: "SPU词条召回和SPU商品名前缀匹配兜底不同权重参与排序", updatedBy: "—", updatedAt: "—" },
+    { key: "termSource", name: "词条类型", enabled: true, desc: "SPU词条 / 商品名前缀兜底 / 场景词 / 属性词 等召回来源权重参与排序", updatedBy: "—", updatedAt: "—" },
     { key: "matchType", name: "匹配方式", enabled: true, desc: "精准匹配 / 前缀匹配 的权重参与排序", updatedBy: "—", updatedAt: "—" },
     { key: "exactSpu", name: "明确指向当前SPU", enabled: true, desc: "用户输入命中商品自身词条时的额外加权参与排序", updatedBy: "—", updatedAt: "—" },
   ];
@@ -494,11 +494,11 @@ export function ProductSortManagement() {
       if (!isInt(r.weight) || r.weight < 0 || r.weight > 999) {
         errs[`recall_${i}`] = "请输入 0-999 之间的整数权重";
       } else if (r.enabled && r.weight < 1) {
-        errs[`recall_${i}`] = "已启用的词条类型权重不能小于 1";
+        errs[`recall_${i}`] = "已启用的召回方式权重不能小于 1";
       }
     });
     if (recall.every((r) => !r.enabled)) {
-      errs["recall_enabled"] = "至少需要启用 1 个词条类型";
+      errs["recall_enabled"] = "至少需要启用 1 个召回方式";
     }
 
     // term types
@@ -617,8 +617,8 @@ export function ProductSortManagement() {
               <div className="flex items-center border-b border-slate-200 px-6">
                 {[
                   { k: "intro", label: "排序开关" },
-                  { k: "recall", label: "词条类型权重" },
-                  { k: "term", label: "词条来源权重" },
+                  { k: "recall", label: "召回方式权重" },
+                  { k: "term", label: "词条类型权重" },
                   { k: "match", label: "匹配方式权重" },
                   { k: "exact", label: "明确指向当前SPU" },
                 ].map((t) => {
@@ -698,7 +698,7 @@ export function ProductSortManagement() {
                     {errors["recall_enabled"] && (
                       <p className="mb-3 text-xs text-red-500">{errors["recall_enabled"]}</p>
                     )}
-                    <FlatTable headers={["词条类型", "是否启用", "权重分", "说明", "变更人", "变更时间", "操作"]}>
+                    <FlatTable headers={["召回方式", "是否启用", "权重分", "说明", "变更人", "变更时间", "操作"]}>
                       {recall.map((r, i) => (
                         <FlatRow key={r.code}>
                           <FlatCell>{r.name}</FlatCell>
@@ -733,7 +733,7 @@ export function ProductSortManagement() {
                     {warnings["term_short"] && (
                       <p className="mb-3 text-xs text-amber-600">{warnings["term_short"]}</p>
                     )}
-                    <FlatTable headers={["词条来源", "权重分", "说明", "变更人", "变更时间", "操作"]}>
+                    <FlatTable headers={["词条类型", "权重分", "说明", "变更人", "变更时间", "操作"]}>
                       {termTypes.map((t, i) => (
                         <FlatRow key={t.code}>
                           <FlatCell>{t.name}</FlatCell>
@@ -864,14 +864,14 @@ export function ProductSortManagement() {
       >
         <DialogContent className="max-w-xl p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle className="text-lg font-semibold">编辑词条类型</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">编辑召回方式</DialogTitle>
           </DialogHeader>
           {editDraft && (
             <div className="px-6 pb-2 space-y-5 text-sm">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1.5 block text-sm">
-                    <span className="text-red-500 mr-1">*</span>词条类型
+                    <span className="text-red-500 mr-1">*</span>召回方式
                   </label>
                   <div className="h-10 px-3 flex items-center rounded-md border bg-muted/40 text-foreground">
                     {editDraft.name}
@@ -934,7 +934,7 @@ export function ProductSortManagement() {
                 const orig = DEFAULT_RECALL[editIdx];
                 if (!orig) return;
                 setEditDraft({ ...orig });
-                toast.info("已恢复该词条类型默认值，点击保存后生效。");
+                toast.info("已恢复该召回方式默认值，点击保存后生效。");
               }}
             >
               恢复默认值
@@ -945,7 +945,7 @@ export function ProductSortManagement() {
                 const idx = editIdx;
                 const draft = editDraft;
                 setPendingConfirm({
-                  title: "确认保存该词条类型修改？",
+                  title: "确认保存该召回方式修改？",
                   description: "保存后立即生效，影响前台搜索排序。",
                   run: () => {
                     const next = [...recall];
@@ -976,13 +976,13 @@ export function ProductSortManagement() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>编辑词条来源</DialogTitle>
-            <DialogDescription>修改该词条来源的权重和说明。</DialogDescription>
+            <DialogTitle>编辑词条类型</DialogTitle>
+            <DialogDescription>修改该词条类型的权重和说明。</DialogDescription>
           </DialogHeader>
           {termEditDraft && (
             <div className="space-y-4 text-sm">
               <div className="rounded-md bg-slate-50 p-3">
-                <div className="mb-1 text-xs text-slate-500">词条来源</div>
+                <div className="mb-1 text-xs text-slate-500">词条类型</div>
                 <div className="font-medium text-slate-800">{termEditDraft.name}</div>
               </div>
               <div>
@@ -1023,7 +1023,7 @@ export function ProductSortManagement() {
                 const orig = DEFAULT_TERM_TYPES[termEditIdx];
                 if (!orig) return;
                 setTermEditDraft({ ...orig });
-                toast.info("已恢复该词条来源默认值，点击保存后生效。");
+                toast.info("已恢复该词条类型默认值，点击保存后生效。");
               }}
             >
               恢复默认值
@@ -1034,7 +1034,7 @@ export function ProductSortManagement() {
                 const idx = termEditIdx;
                 const draft = termEditDraft;
                 setPendingConfirm({
-                  title: "确认保存该词条来源修改？",
+                  title: "确认保存该词条类型修改？",
                   description: "保存后立即生效，影响前台搜索排序。",
                   run: () => {
                     const next = [...termTypes];
