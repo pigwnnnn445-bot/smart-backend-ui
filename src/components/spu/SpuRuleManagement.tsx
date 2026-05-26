@@ -13,6 +13,7 @@ import {
   User,
   Menu,
   FileText,
+  Copy,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
