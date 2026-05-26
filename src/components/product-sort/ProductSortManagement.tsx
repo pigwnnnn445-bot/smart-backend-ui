@@ -494,11 +494,11 @@ export function ProductSortManagement() {
       if (!isInt(r.weight) || r.weight < 0 || r.weight > 999) {
         errs[`recall_${i}`] = "请输入 0-999 之间的整数权重";
       } else if (r.enabled && r.weight < 1) {
-        errs[`recall_${i}`] = "已启用的词条类型权重不能小于 1";
+        errs[`recall_${i}`] = "已启用的召回方式权重不能小于 1";
       }
     });
     if (recall.every((r) => !r.enabled)) {
-      errs["recall_enabled"] = "至少需要启用 1 个词条类型";
+      errs["recall_enabled"] = "至少需要启用 1 个召回方式";
     }
 
     // term types
