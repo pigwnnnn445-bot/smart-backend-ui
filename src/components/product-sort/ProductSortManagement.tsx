@@ -562,6 +562,36 @@ export function ProductSortManagement() {
                   </div>
                 )}
 
+                {tab === "exact" && (
+                  <div>
+                    <p className="mb-3 text-xs text-slate-500">
+                      当用户输入命中商品自身词条时，对该 SPU 在最终排序分中额外加权，确保明确指向当前商品的搜索请求能将该 SPU 排在最前。
+                    </p>
+                    <FlatTable headers={["配置项", "加权分", "说明", "变更人", "变更时间", "操作"]}>
+                      <FlatRow>
+                        <FlatCell>明确指向当前SPU加权</FlatCell>
+                        <FlatCell>
+                          <span className="text-sm text-slate-700">{exactSpu.weight}</span>
+                        </FlatCell>
+                        <FlatCell className="text-slate-500">{exactSpu.desc}</FlatCell>
+                        <FlatCell className="text-slate-500">{exactSpu.updatedBy}</FlatCell>
+                        <FlatCell className="text-slate-500">{exactSpu.updatedAt}</FlatCell>
+                        <FlatCell>
+                          <button
+                            className="text-xs text-blue-600 hover:text-blue-700"
+                            onClick={() => {
+                              setExactEditDraft({ ...exactSpu });
+                              setExactEditOpen(true);
+                            }}
+                          >
+                            编辑
+                          </button>
+                        </FlatCell>
+                      </FlatRow>
+                    </FlatTable>
+                  </div>
+                )}
+
 
               </div>
             </div>
