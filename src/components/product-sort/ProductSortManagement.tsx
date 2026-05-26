@@ -648,26 +648,7 @@ export function ProductSortManagement() {
               </div>
 
               {/* Action toolbar */}
-              <div className="flex items-center justify-between px-6 pt-5">
-                <div className="flex items-center gap-2">
-                  {dirty && tab !== "intro" && (
-                    <>
-                      <Button
-                        onClick={handleSaveClick}
-                        className="h-9 bg-blue-500 hover:bg-blue-600 text-white shadow-none"
-                      >
-                        保存配置
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setResetOpen(true)}
-                        className="h-9 border-slate-300 text-slate-700"
-                      >
-                        恢复默认值
-                      </Button>
-                    </>
-                  )}
-                </div>
+              <div className="flex items-center justify-end px-6 pt-5">
                 <div className="flex items-center gap-3 text-slate-500">
                   <button
                     onClick={() => setTestOpen(true)}
@@ -855,49 +836,25 @@ export function ProductSortManagement() {
         </div>
       </main>
 
-      {/* Save confirm dialog */}
-      <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
-        <DialogContent>
+      {/* Per-row save confirmation */}
+      <Dialog open={!!pendingConfirm} onOpenChange={(o) => !o && setPendingConfirm(null)}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>确认保存搜索排序规则？</DialogTitle>
+            <DialogTitle>{pendingConfirm?.title ?? "确认保存修改？"}</DialogTitle>
             <DialogDescription>
-              保存后，新的排序规则将影响前台搜索正常商品结果的展示顺序。顶部预约卡、库存判断、区域可售判断不受本页面排序分影响。请确认配置无误。
+              {pendingConfirm?.description ?? "保存后该配置立即生效，影响前台搜索排序结果。请确认无误。"}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSaveOpen(false)}>取消</Button>
-            <Button onClick={confirmSave}>确认保存</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Save success confirmation dialog */}
-      <Dialog open={saveSuccessOpen} onOpenChange={setSaveSuccessOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>保存成功</DialogTitle>
-            <DialogDescription>
-              搜索排序规则已更新并生效。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setSaveSuccessOpen(false)}>知道了</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Reset confirm dialog */}
-      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>确认恢复默认排序规则？</DialogTitle>
-            <DialogDescription>
-              恢复后，当前页面所有排序权重和展示配额将恢复为系统默认值。该操作不会删除 SPU 词条和商品配置。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResetOpen(false)}>取消</Button>
-            <Button onClick={confirmReset}>确认恢复</Button>
+            <Button variant="outline" onClick={() => setPendingConfirm(null)}>取消</Button>
+            <Button
+              onClick={() => {
+                pendingConfirm?.run();
+                setPendingConfirm(null);
+              }}
+            >
+              确认保存
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
