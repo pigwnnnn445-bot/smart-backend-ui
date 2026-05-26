@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { RefreshCw, Search, History, Menu, ChevronDown, Maximize2, Bell, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1195,29 +1196,29 @@ export function ProductSortManagement() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>编辑排序因子</DialogTitle>
-            <DialogDescription>修改该排序因子的启用状态和说明，保存后可在顶部「保存配置」中正式提交。</DialogDescription>
           </DialogHeader>
           {sortEditDraft && (
-            <div className="space-y-4 text-sm">
-              <div className="rounded-md bg-slate-50 p-3">
-                <div className="mb-1 text-xs text-slate-500">排序因子</div>
-                <div className="font-medium text-slate-800">{sortEditDraft.name}</div>
+            <div className="space-y-5 text-sm">
+              <div className="rounded-lg bg-muted/40 p-3">
+                <div className="mb-1 text-xs text-muted-foreground">排序因子</div>
+                <div className="font-semibold text-foreground">{sortEditDraft.name}</div>
               </div>
-              <div className="flex items-center justify-between rounded-md border border-slate-200 p-3">
-                <div className="text-sm text-slate-700">是否参与排序</div>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="text-sm font-medium">是否参与排序</div>
                 <Switch
                   checked={sortEditDraft.enabled}
                   onCheckedChange={(v) => setSortEditDraft({ ...sortEditDraft, enabled: !!v })}
                 />
               </div>
               <div>
-                <div className="mb-1 text-xs text-slate-600">说明</div>
-                <Input
+                <div className="mb-1.5 text-sm font-medium">说明</div>
+                <Textarea
                   value={sortEditDraft.desc}
                   onChange={(e) => setSortEditDraft({ ...sortEditDraft, desc: e.target.value })}
+                  rows={3}
                 />
               </div>
             </div>
