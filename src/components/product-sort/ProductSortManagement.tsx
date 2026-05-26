@@ -728,8 +728,6 @@ export function ProductSortManagement() {
                   >
                     <History className="h-4 w-4" /> 操作日志
                   </button>
-                  <RefreshCw className="h-4 w-4 cursor-pointer hover:text-blue-600" />
-                  <Settings className="h-4 w-4 cursor-pointer hover:text-blue-600" />
                 </div>
               </div>
 
