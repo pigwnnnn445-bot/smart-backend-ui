@@ -89,6 +89,30 @@ interface RuleRow {
 
 const SPU_LIST = ["Netflix", "Spotify", "Tidal", "ChatGPT"];
 
+type ProductType = "b2c" | "c2c";
+
+// 复制词库配置 - 不同商品类型下可选的源SPU列表
+const COPY_SOURCE_SPUS: Record<ProductType, string[]> = {
+  b2c: [
+    "Netflix B2C",
+    "Spotify B2C",
+    "Tidal B2C",
+    "Disney+ B2C",
+    "YouTube Premium B2C",
+    "HBO Max B2C",
+    "Apple Music B2C",
+    "Amazon Prime B2C",
+  ],
+  c2c: [
+    "Steam C2C",
+    "Game Top-up C2C",
+    "Gift Card C2C",
+    "Account Trade C2C",
+    "PSN Card C2C",
+    "Xbox Card C2C",
+  ],
+};
+
 interface SpuInfo {
   id: string;
   name: string;
