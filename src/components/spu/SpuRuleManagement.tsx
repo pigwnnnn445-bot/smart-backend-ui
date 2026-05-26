@@ -13,6 +13,7 @@ import {
   User,
   Menu,
   FileText,
+  Copy,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
@@ -87,6 +88,30 @@ interface RuleRow {
 }
 
 const SPU_LIST = ["Netflix", "Spotify", "Tidal", "ChatGPT"];
+
+type ProductType = "b2c" | "c2c";
+
+// 复制词库配置 - 不同商品类型下可选的源SPU列表
+const COPY_SOURCE_SPUS: Record<ProductType, string[]> = {
+  b2c: [
+    "Netflix B2C",
+    "Spotify B2C",
+    "Tidal B2C",
+    "Disney+ B2C",
+    "YouTube Premium B2C",
+    "HBO Max B2C",
+    "Apple Music B2C",
+    "Amazon Prime B2C",
+  ],
+  c2c: [
+    "Steam C2C",
+    "Game Top-up C2C",
+    "Gift Card C2C",
+    "Account Trade C2C",
+    "PSN Card C2C",
+    "Xbox Card C2C",
+  ],
+};
 
 interface SpuInfo {
   id: string;
@@ -335,6 +360,21 @@ export function SpuRuleManagement() {
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
+  // 批量选择
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [activeSpu]);
+
+  // 复制其他词库配置
+  const [copyOpen, setCopyOpen] = useState(false);
+  const [copyProductType, setCopyProductType] = useState<"" | ProductType>("");
+  const [copySourceSpu, setCopySourceSpu] = useState("");
+  const [copySpuSearch, setCopySpuSearch] = useState("");
+  const [copySpuOpen, setCopySpuOpen] = useState(false);
+  const [copyConfirmOpen, setCopyConfirmOpen] = useState(false);
+  const [copyError, setCopyError] = useState<{ type?: string; spu?: string }>({});
+
   const filtered = useMemo(() => {
     return rows.filter((r) => {
       if (filters.content && !r.content.toLowerCase().includes(filters.content.toLowerCase()))
@@ -484,6 +524,108 @@ export function SpuRuleManagement() {
       action: next === "已启用" ? "启用词条" : "停用词条",
       target: row.content,
     });
+  }
+
+  function bulkSetStatus(next: Extract<Status, "已启用" | "已停用">) {
+    if (selectedIds.length === 0) return;
+    const now = nowStr();
+    setRows((prev) =>
+      prev.map((p) =>
+        selectedIds.includes(p.id) ? { ...p, status: next, updatedAt: now } : p,
+      ),
+    );
+    pushLog({
+      spu: activeSpu,
+      action: next === "已启用" ? "批量启用词条" : "批量停用词条",
+      target: `${selectedIds.length} 条词条`,
+    });
+    toast.success(
+      `已${next === "已启用" ? "启用" : "停用"} ${selectedIds.length} 条词条`,
+    );
+    setSelectedIds([]);
+  }
+
+  function openCopy() {
+    setCopyProductType("");
+    setCopySourceSpu("");
+    setCopySpuSearch("");
+    setCopyError({});
+    setCopyOpen(true);
+  }
+
+  function submitCopy() {
+    const errs: { type?: string; spu?: string } = {};
+    if (!copyProductType) errs.type = "请选择商品类型";
+    if (!copySourceSpu) errs.spu = "请选择源SPU";
+    setCopyError(errs);
+    if (Object.keys(errs).length > 0) return;
+    setCopyConfirmOpen(true);
+  }
+
+  function commitCopy(action: "enable" | "draft") {
+    // 模拟从源SPU克隆若干词条到当前SPU
+    const now = nowStr();
+    const status: Status = action === "enable" ? "已启用" : "草稿";
+    const samples: RuleRow[] = [
+      {
+        ...blank,
+        id: crypto.randomUUID(),
+        content: `${copySourceSpu}-品牌词`,
+        standard: normalizeTerm(`${copySourceSpu}brand`),
+        termType: ["品牌词"],
+        matchType: "精准匹配",
+        direct: "是",
+        status,
+        scope: "全部IP生效",
+        regions: [],
+        updater: "Alex",
+        updatedAt: now,
+        remark: `从「${copySourceSpu}」复制`,
+      },
+      {
+        ...blank,
+        id: crypto.randomUUID(),
+        content: `${copySourceSpu}-别名词`,
+        standard: normalizeTerm(`${copySourceSpu}alias`),
+        termType: ["别名词"],
+        matchType: "模糊匹配",
+        direct: "否",
+        status,
+        scope: "全部IP生效",
+        regions: [],
+        updater: "Alex",
+        updatedAt: now,
+        remark: `从「${copySourceSpu}」复制`,
+      },
+      {
+        ...blank,
+        id: crypto.randomUUID(),
+        content: `${copySourceSpu}-场景词`,
+        standard: normalizeTerm(`${copySourceSpu}scene`),
+        termType: ["场景词"],
+        matchType: "前缀匹配",
+        direct: "否",
+        status,
+        scope: "全部IP生效",
+        regions: [],
+        updater: "Alex",
+        updatedAt: now,
+        remark: `从「${copySourceSpu}」复制`,
+      },
+    ];
+    setRows((prev) => [...samples, ...prev]);
+    pushLog({
+      spu: activeSpu,
+      action: `复制词库配置（${action === "enable" ? "立即启用" : "保存到草稿"}）`,
+      target: `${copyProductType?.toUpperCase()} / ${copySourceSpu}`,
+    });
+    toast.success(
+      action === "enable"
+        ? `已从「${copySourceSpu}」复制并启用 ${samples.length} 条词条`
+        : `已从「${copySourceSpu}」复制为草稿 ${samples.length} 条词条`,
+    );
+    setCopyConfirmOpen(false);
+    setCopyOpen(false);
   }
 
   // 词库展示状态派生：未配置 / 草稿 / 已启用 / 已停用
@@ -853,19 +995,67 @@ export function SpuRuleManagement() {
                       );
                     })()}
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={openCreate}
-                    className="h-8 bg-blue-500 hover:bg-blue-600"
-                  >
-                    <Plus className="h-3.5 w-3.5" /> 新增词条
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {selectedIds.length > 0 && (
+                      <span className="text-xs text-slate-500">
+                        已选 {selectedIds.length} 项
+                      </span>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      disabled={selectedIds.length === 0}
+                      onClick={() => bulkSetStatus("已启用")}
+                    >
+                      <Power className="h-3.5 w-3.5" /> 批量启用
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      disabled={selectedIds.length === 0}
+                      onClick={() => bulkSetStatus("已停用")}
+                    >
+                      <Power className="h-3.5 w-3.5" /> 批量停用
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      onClick={openCopy}
+                    >
+                      <Copy className="h-3.5 w-3.5" /> 复制其他词库配置
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={openCreate}
+                      className="h-8 bg-blue-500 hover:bg-blue-600"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> 新增词条
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="mt-3 overflow-x-auto rounded border border-slate-200">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-slate-50">
+                        <TableHead className="w-8">
+                          <Checkbox
+                            checked={
+                              filtered.length > 0 &&
+                              filtered.every((r) => selectedIds.includes(r.id))
+                            }
+                            onCheckedChange={(v) => {
+                              if (v) {
+                                setSelectedIds(filtered.map((r) => r.id));
+                              } else {
+                                setSelectedIds([]);
+                              }
+                            }}
+                          />
+                        </TableHead>
                         <TableHead>词条内容</TableHead>
                         <TableHead>标准化词</TableHead>
                         <TableHead>词条类型</TableHead>
@@ -882,13 +1072,25 @@ export function SpuRuleManagement() {
                     <TableBody>
                       {filtered.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={11} className="py-10 text-center text-slate-400">
+                          <TableCell colSpan={12} className="py-10 text-center text-slate-400">
                             暂无数据
                           </TableCell>
                         </TableRow>
                       ) : (
                         filtered.map((r) => (
                           <TableRow key={r.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedIds.includes(r.id)}
+                                onCheckedChange={(v) => {
+                                  setSelectedIds((prev) =>
+                                    v
+                                      ? [...prev, r.id]
+                                      : prev.filter((id) => id !== r.id),
+                                  );
+                                }}
+                              />
+                            </TableCell>
                             <TableCell>{r.content}</TableCell>
                             <TableCell>{r.standard}</TableCell>
                             <TableCell>
@@ -1233,6 +1435,160 @@ export function SpuRuleManagement() {
             </Button>
             <Button className="bg-blue-500 hover:bg-blue-600" onClick={confirmToggleLib}>
               确认
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 复制其他词库配置 */}
+      <Dialog
+        open={copyOpen}
+        onOpenChange={(o) => {
+          setCopyOpen(o);
+          if (!o) setCopySpuOpen(false);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>复制其他词库配置</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Field label="商品类型" required>
+              <Select
+                value={copyProductType || undefined}
+                onValueChange={(v) => {
+                  setCopyProductType(v as ProductType);
+                  setCopySourceSpu("");
+                  setCopySpuSearch("");
+                  if (copyError.type) setCopyError((e) => ({ ...e, type: undefined }));
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="请选择商品类型" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="b2c">B2C</SelectItem>
+                  <SelectItem value="c2c">C2C</SelectItem>
+                </SelectContent>
+              </Select>
+              {copyError.type && (
+                <p className="text-xs text-rose-500 mt-1">{copyError.type}</p>
+              )}
+            </Field>
+            <Field label="SPU名称" required>
+              <Popover open={copySpuOpen} onOpenChange={setCopySpuOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={!copyProductType}
+                    className={cn(
+                      "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm",
+                      !copyProductType && "opacity-50 cursor-not-allowed",
+                      copyProductType && "cursor-pointer",
+                    )}
+                  >
+                    <span className={cn(!copySourceSpu && "text-slate-400")}>
+                      {copySourceSpu || (copyProductType ? "请选择SPU" : "请先选择商品类型")}
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  className="w-[var(--radix-popover-trigger-width)] p-0"
+                >
+                  <div className="p-2 border-b border-slate-100">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                      <Input
+                        autoFocus
+                        placeholder="搜索SPU"
+                        value={copySpuSearch}
+                        onChange={(e) => setCopySpuSearch(e.target.value)}
+                        className="h-8 pl-7"
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto py-1">
+                    {copyProductType &&
+                      (() => {
+                        const list = COPY_SOURCE_SPUS[copyProductType].filter((s) =>
+                          s.toLowerCase().includes(copySpuSearch.toLowerCase()),
+                        );
+                        if (list.length === 0) {
+                          return (
+                            <p className="px-3 py-4 text-center text-xs text-slate-400">
+                              无匹配结果
+                            </p>
+                          );
+                        }
+                        return list.map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => {
+                              setCopySourceSpu(s);
+                              setCopySpuOpen(false);
+                              if (copyError.spu)
+                                setCopyError((e) => ({ ...e, spu: undefined }));
+                            }}
+                            className={cn(
+                              "block w-full text-left px-3 py-1.5 text-sm hover:bg-slate-100",
+                              copySourceSpu === s && "bg-blue-50 text-blue-600",
+                            )}
+                          >
+                            {s}
+                          </button>
+                        ));
+                      })()}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {copyError.spu && (
+                <p className="text-xs text-rose-500 mt-1">{copyError.spu}</p>
+              )}
+            </Field>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              保存后将把所选SPU的词库配置复制到当前SPU「{activeSpu}」下，已有词条不会被覆盖。
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCopyOpen(false)}>
+              取消
+            </Button>
+            <Button className="bg-blue-500 hover:bg-blue-600" onClick={submitCopy}>
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 复制后 启用方式确认 */}
+      <Dialog
+        open={copyConfirmOpen}
+        onOpenChange={setCopyConfirmOpen}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>启用方式确认</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-600">
+            已成功从「{copySourceSpu}」复制词库配置。请选择处理方式：
+            <br />
+            <span className="text-xs text-slate-500">
+              · 立即启用：复制的词条立即参与前台搜索召回
+              <br />· 保存到草稿：复制的词条状态为草稿，不参与召回
+            </span>
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => commitCopy("draft")}>
+              保存到草稿
+            </Button>
+            <Button
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={() => commitCopy("enable")}
+            >
+              立即启用
             </Button>
           </DialogFooter>
         </DialogContent>
