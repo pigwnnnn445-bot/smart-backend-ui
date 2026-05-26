@@ -1380,33 +1380,264 @@ export function ProductSortManagement() {
 
       {/* Search test dialog (placeholder) */}
       <Dialog open={testOpen} onOpenChange={setTestOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>搜索测试</DialogTitle>
-            <DialogDescription>输入搜索词与访问区域，预览排序结果</DialogDescription>
+            <DialogDescription>
+              输入搜索词与访问条件，预览该搜索词在当前配置下的命中、过滤、排序和最终展示结果。该工具仅做后台调试，不影响线上数据。
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <div className="mb-1 text-xs text-slate-600">搜索词</div>
-                <Input placeholder="如 Netflix" />
+          <div className="space-y-4">
+            {/* 1. 测试条件区 */}
+            <div className="rounded-md border border-slate-200 p-3">
+              <div className="mb-2 text-xs font-medium text-slate-700">测试条件</div>
+              <div className="grid grid-cols-4 gap-3">
+                <div>
+                  <div className="mb-1 text-xs text-slate-600">搜索词 *</div>
+                  <Input
+                    value={testTerm}
+                    onChange={(e) => setTestTerm(e.target.value)}
+                    placeholder="如 Netflix、yt、ai、vpn"
+                  />
+                </div>
+                <div>
+                  <div className="mb-1 text-xs text-slate-600">访问站点</div>
+                  <Select value={testSite} onValueChange={setTestSite}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gamsgo.com">gamsgo.com</SelectItem>
+                      <SelectItem value="gamsgo.it">gamsgo.it</SelectItem>
+                      <SelectItem value="gamsgo.jp">gamsgo.jp</SelectItem>
+                      <SelectItem value="gamsgo.kr">gamsgo.kr</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <div className="mb-1 text-xs text-slate-600">访问区域</div>
+                  <Select value={testRegion} onValueChange={setTestRegion}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="US">US</SelectItem>
+                      <SelectItem value="IT">IT</SelectItem>
+                      <SelectItem value="JP">JP</SelectItem>
+                      <SelectItem value="KR">KR</SelectItem>
+                      <SelectItem value="DE">DE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <div className="mb-1 text-xs text-slate-600">用户状态</div>
+                  <Select
+                    value={testUserStatus}
+                    onValueChange={(v) => setTestUserStatus(v as "login" | "guest")}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="guest">未登录</SelectItem>
+                      <SelectItem value="login">已登录</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div>
-                <div className="mb-1 text-xs text-slate-600">访问区域</div>
-                <Input placeholder="如 US" />
-              </div>
-              <div>
-                <div className="mb-1 text-xs text-slate-600">用户状态</div>
-                <Input placeholder="如 已登录" />
+              <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                <Badge variant="outline" className="font-normal">基于已发布配置</Badge>
+                <span>后台调试不计入用户搜索埋点</span>
               </div>
             </div>
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-              测试结果将展示：标准化词、命中来源、候选 SPU、展示类型、排序分明细、GamsGo / C2C 分桶结果、最终展示结果。
-            </div>
+
+            {testResult && (
+              <>
+                {/* 2. 命中摘要区 */}
+                <div className="rounded-md border border-slate-200 p-3">
+                  <div className="mb-2 text-xs font-medium text-slate-700">命中摘要</div>
+                  {testResult.mainSource === "无结果" ? (
+                    <div className="rounded bg-amber-50 p-3 text-xs text-amber-700">
+                      当前搜索词未命中人工词库、场景搜索配置、商品标题或模糊匹配。
+                      {testResult.finalCount > 0
+                        ? " 已展示默认补位商品。"
+                        : " 当前无可用补位商品。"}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-x-6 gap-y-2 text-xs">
+                      <div><span className="text-slate-500">原始搜索词：</span>{testResult.rawTerm}</div>
+                      <div><span className="text-slate-500">标准化搜索词：</span>{testResult.normTerm}</div>
+                      <div><span className="text-slate-500">主要命中来源：</span><span className="text-blue-600">{testResult.mainSource}</span></div>
+                      <div><span className="text-slate-500">命中词条：</span>{testResult.matchedTerm}</div>
+                      <div><span className="text-slate-500">命中 SPU 数：</span>{testResult.hitCount}</div>
+                      <div><span className="text-slate-500">过滤 SPU 数：</span>{testResult.filteredCount}</div>
+                      <div><span className="text-slate-500">是否触发补位：</span>{testResult.triggeredFill ? "是" : "否"}</div>
+                      <div><span className="text-slate-500">最终展示数量：</span>{testResult.finalCount}</div>
+                    </div>
+                  )}
+                  {testResult.hitCount > 0 && testResult.filteredCount === testResult.hitCount && (
+                    <div className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-700">
+                      当前搜索词已命中候选商品，但候选商品因库存、区域、状态等原因未进入最终展示。
+                    </div>
+                  )}
+                  {testResult.finalCount > 0 && testResult.finalCount < FINAL_LIMIT && (
+                    <div className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-700">
+                      命中结果不足，且当前条件下可用补位商品不足，最终展示数量少于 {FINAL_LIMIT} 个。
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. 候选 SPU 明细区 */}
+                <div className="rounded-md border border-slate-200">
+                  <div className="border-b border-slate-200 px-3 py-2 text-xs font-medium text-slate-700">
+                    候选 SPU 明细（{testResult.candidates.length}）
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-slate-50 text-slate-600">
+                        <tr>
+                          <th className="px-2 py-2 text-left">#</th>
+                          <th className="px-2 py-2 text-left">SPU ID</th>
+                          <th className="px-2 py-2 text-left">SPU 名称</th>
+                          <th className="px-2 py-2 text-left">来源</th>
+                          <th className="px-2 py-2 text-left">命中来源</th>
+                          <th className="px-2 py-2 text-left">命中词条</th>
+                          <th className="px-2 py-2 text-left">词条标签</th>
+                          <th className="px-2 py-2 text-left">匹配方式</th>
+                          <th className="px-2 py-2 text-left">排序分</th>
+                          <th className="px-2 py-2 text-left">最终展示</th>
+                          <th className="px-2 py-2 text-left">过滤/降级原因</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {testResult.candidates.length === 0 ? (
+                          <tr>
+                            <td colSpan={11} className="px-2 py-4 text-center text-slate-500">
+                              无候选 SPU
+                            </td>
+                          </tr>
+                        ) : (
+                          testResult.candidates.map((c, i) => {
+                            const finalPos =
+                              testResult.finalList.findIndex((d) => d.spu.id === c.spu.id) + 1;
+                            return (
+                              <tr key={c.spu.id} className="border-t border-slate-100">
+                                <td className="px-2 py-2">{i + 1}</td>
+                                <td className="px-2 py-2 text-slate-500">{c.spu.id}</td>
+                                <td className="px-2 py-2">{c.spu.name}</td>
+                                <td className="px-2 py-2">
+                                  <Badge variant="outline" className="font-normal">
+                                    {c.spu.source === "official" ? "GamsGo官方" : "C2C"}
+                                  </Badge>
+                                </td>
+                                <td className="px-2 py-2 text-blue-600">{c.source}</td>
+                                <td className="px-2 py-2">{c.matchedTerm}</td>
+                                <td className="px-2 py-2 text-slate-500">{c.termLabel}</td>
+                                <td className="px-2 py-2">{c.match}</td>
+                                <td className="px-2 py-2">{c.score}</td>
+                                <td className="px-2 py-2">
+                                  {finalPos > 0 ? (
+                                    <span className="text-green-600">是 · 第 {finalPos} 位</span>
+                                  ) : (
+                                    <span className="text-slate-400">否</span>
+                                  )}
+                                </td>
+                                <td className="px-2 py-2 text-amber-600">
+                                  {c.filterReason ?? "—"}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* 4. 最终展示结果区 */}
+                <div className="rounded-md border border-slate-200">
+                  <div className="border-b border-slate-200 px-3 py-2 text-xs font-medium text-slate-700">
+                    最终展示结果（{testResult.finalCount}）
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-slate-50 text-slate-600">
+                        <tr>
+                          <th className="px-2 py-2 text-left">展示位</th>
+                          <th className="px-2 py-2 text-left">SPU ID</th>
+                          <th className="px-2 py-2 text-left">商品名称</th>
+                          <th className="px-2 py-2 text-left">商品来源</th>
+                          <th className="px-2 py-2 text-left">展示来源</th>
+                          <th className="px-2 py-2 text-left">命中来源</th>
+                          <th className="px-2 py-2 text-left">展示类型</th>
+                          <th className="px-2 py-2 text-left">排序分</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {testResult.finalList.length === 0 ? (
+                          <tr>
+                            <td colSpan={8} className="px-2 py-4 text-center text-slate-500">
+                              无最终展示结果
+                            </td>
+                          </tr>
+                        ) : (
+                          testResult.finalList.map((d, i) => (
+                            <tr key={d.spu.id} className="border-t border-slate-100">
+                              <td className="px-2 py-2">{i + 1}</td>
+                              <td className="px-2 py-2 text-slate-500">{d.spu.id}</td>
+                              <td className="px-2 py-2">{d.spu.name}</td>
+                              <td className="px-2 py-2">
+                                <Badge variant="outline" className="font-normal">
+                                  {d.spu.source === "official" ? "GamsGo官方" : "C2C"}
+                                </Badge>
+                              </td>
+                              <td className="px-2 py-2">
+                                <span
+                                  className={
+                                    d.displaySource === "命中结果"
+                                      ? "text-green-600"
+                                      : d.displaySource === "官方补位"
+                                        ? "text-blue-600"
+                                        : "text-purple-600"
+                                  }
+                                >
+                                  {d.displaySource}
+                                </span>
+                              </td>
+                              <td className="px-2 py-2 text-slate-500">{d.hitSource}</td>
+                              <td className="px-2 py-2">{d.displayType}</td>
+                              <td className="px-2 py-2">{d.score}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setTestOpen(false)}>关闭</Button>
-            <Button onClick={() => toast.message("搜索测试结果占位，待后端接口接入后展示。")}>执行测试</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setTestOpen(false);
+                setTestResult(null);
+              }}
+            >
+              关闭
+            </Button>
+            <Button
+              onClick={() => {
+                if (!testTerm.trim()) {
+                  toast.error("请输入搜索词后再执行测试。");
+                  return;
+                }
+                const r = runSearchTest({
+                  term: testTerm,
+                  region: testRegion,
+                  userStatus: testUserStatus,
+                  site: testSite,
+                });
+                setTestResult(r);
+              }}
+            >
+              执行测试
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
