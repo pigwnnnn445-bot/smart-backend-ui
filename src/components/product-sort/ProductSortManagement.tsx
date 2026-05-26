@@ -418,10 +418,11 @@ export function ProductSortManagement() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [warnings, setWarnings] = useState<Record<string, string>>({});
 
-  const [saveOpen, setSaveOpen] = useState(false);
-  const [saveSuccessOpen, setSaveSuccessOpen] = useState(false);
-  const [resetOpen, setResetOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState<
+    | { title: string; description?: string; run: () => void }
+    | null
+  >(null);
   const [testOpen, setTestOpen] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   // 搜索测试输入与结果
@@ -433,7 +434,6 @@ export function ProductSortManagement() {
   const [tab, setTab] = useState<
     "intro" | "recall" | "term" | "match" | "exact"
   >("intro");
-  const [dirty, setDirty] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState<RecallSource | null>(null);
   const [termEditIdx, setTermEditIdx] = useState<number | null>(null);
