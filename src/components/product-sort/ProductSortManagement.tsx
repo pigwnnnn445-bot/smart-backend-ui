@@ -579,7 +579,7 @@ export function ProductSortManagement() {
     ]);
     setSaveOpen(false);
     setDirty(false);
-    toast.success("保存成功，搜索排序规则已更新。");
+    setSaveSuccessOpen(true);
   }
 
   function confirmReset() {
