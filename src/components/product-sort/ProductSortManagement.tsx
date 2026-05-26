@@ -110,6 +110,295 @@ function nowStr() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
+// ============ Search test mock data & simulator ============
+
+type MockSpu = {
+  id: string;
+  name: string;
+  source: "official" | "c2c";
+  title: string;
+  stock: boolean;
+  spuEnabled: boolean;
+  skuEnabled: boolean;
+  regions: string[]; // 可售区域，"*" = 全球
+  baseScore: number; // 商品排序分
+  loginOnly?: boolean;
+};
+
+const MOCK_SPUS: MockSpu[] = [
+  { id: "S001", name: "Netflix", source: "official", title: "Netflix Premium", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 90 },
+  { id: "S002", name: "Netflix Recharge", source: "official", title: "Netflix Recharge Card", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 70 },
+  { id: "S003", name: "Old Netflix Plan", source: "official", title: "Netflix Basic", stock: false, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 60 },
+  { id: "S004", name: "Netflix C2C Account", source: "c2c", title: "Netflix Shared C2C", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 55 },
+  { id: "S010", name: "YouTube Premium", source: "official", title: "YouTube Premium", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 88 },
+  { id: "S011", name: "YouTube Music", source: "official", title: "YouTube Music", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 75 },
+  { id: "S020", name: "Spotify", source: "official", title: "Spotify Premium", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 86 },
+  { id: "S021", name: "Spotify Family", source: "official", title: "Spotify Family", stock: true, spuEnabled: true, skuEnabled: true, regions: ["US", "IT"], baseScore: 70 },
+  { id: "S030", name: "ChatGPT Plus", source: "official", title: "ChatGPT Plus", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 92 },
+  { id: "S031", name: "Gemini Advanced", source: "official", title: "Gemini Advanced", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 82 },
+  { id: "S032", name: "Claude Pro", source: "official", title: "Claude Pro", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 80 },
+  { id: "S040", name: "NordVPN", source: "official", title: "NordVPN Subscription", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 84 },
+  { id: "S041", name: "ExpressVPN", source: "official", title: "ExpressVPN", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 78 },
+  { id: "S042", name: "Surfshark VPN", source: "c2c", title: "Surfshark C2C", stock: true, spuEnabled: true, skuEnabled: true, regions: ["US"], baseScore: 60 },
+  { id: "S050", name: "Disney+", source: "official", title: "Disney Plus", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 76 },
+  { id: "S051", name: "Apple Music", source: "official", title: "Apple Music", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 74 },
+  { id: "S052", name: "Tidal HiFi", source: "c2c", title: "Tidal HiFi C2C", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 50 },
+  { id: "S060", name: "IPTV Account", source: "c2c", title: "IPTV Premium Account", stock: true, spuEnabled: true, skuEnabled: true, regions: ["*"], baseScore: 45 },
+];
+
+// 人工词条库：term → 命中的 SPU
+type TermEntry = {
+  term: string;
+  spuIds: string[];
+  match: "exact" | "prefix";
+  label: "商品词" | "品牌词" | "别名词" | "错词" | "短词";
+  enabled: boolean;
+};
+
+const MOCK_TERMS: TermEntry[] = [
+  { term: "netflix", spuIds: ["S001", "S002"], match: "exact", label: "品牌词", enabled: true },
+  { term: "nf", spuIds: ["S001"], match: "exact", label: "短词", enabled: true },
+  { term: "netflex", spuIds: ["S001"], match: "exact", label: "错词", enabled: true },
+  { term: "youtube", spuIds: ["S010", "S011"], match: "exact", label: "品牌词", enabled: true },
+  { term: "yt", spuIds: ["S010"], match: "prefix", label: "短词", enabled: true },
+  { term: "spotify", spuIds: ["S020", "S021"], match: "exact", label: "品牌词", enabled: true },
+  { term: "spotfy", spuIds: ["S020"], match: "exact", label: "错词", enabled: true },
+  { term: "chatgpt", spuIds: ["S030"], match: "exact", label: "商品词", enabled: true },
+  { term: "gpt", spuIds: ["S030"], match: "prefix", label: "短词", enabled: true },
+  { term: "claude", spuIds: ["S032"], match: "exact", label: "商品词", enabled: true },
+  { term: "gemini", spuIds: ["S031"], match: "exact", label: "商品词", enabled: true },
+  { term: "vpn", spuIds: ["S040", "S041", "S042"], match: "prefix", label: "商品词", enabled: true },
+  { term: "nord", spuIds: ["S040"], match: "prefix", label: "品牌词", enabled: true },
+];
+
+// 场景词配置：场景关键词 → SPU 列表
+const MOCK_SCENES: { term: string; spuIds: string[] }[] = [
+  { term: "music", spuIds: ["S020", "S011", "S051", "S052"] },
+  { term: "ai", spuIds: ["S030", "S031", "S032"] },
+  { term: "video", spuIds: ["S001", "S010", "S050"] },
+];
+
+const SOURCE_WEIGHT: Record<HitSource, number> = {
+  人工词库精准命中: 100,
+  人工词库前缀命中: 80,
+  场景词精准命中: 70,
+  商品标题前缀命中: 50,
+  商品标题模糊命中: 30,
+  官方商品补位: 10,
+  "C2C商品补位": 5,
+};
+
+type HitSource =
+  | "人工词库精准命中"
+  | "人工词库前缀命中"
+  | "场景词精准命中"
+  | "商品标题前缀命中"
+  | "商品标题模糊命中"
+  | "官方商品补位"
+  | "C2C商品补位";
+
+type Candidate = {
+  spu: MockSpu;
+  source: HitSource;
+  matchedTerm: string;
+  termLabel: string;
+  match: "精准匹配" | "前缀匹配" | "模糊匹配" | "—";
+  filterReason: string | null;
+  score: number;
+};
+
+type SearchTestInput = {
+  term: string;
+  region: string;
+  userStatus: "login" | "guest";
+  site: string;
+};
+
+type SearchTestResult = {
+  rawTerm: string;
+  normTerm: string;
+  mainSource: HitSource | "无结果";
+  matchedTerm: string;
+  hitCount: number;
+  filteredCount: number;
+  triggeredFill: boolean;
+  finalCount: number;
+  candidates: Candidate[];
+  finalList: {
+    spu: MockSpu;
+    displaySource: "命中结果" | "官方补位" | "C2C补位";
+    hitSource: HitSource | "—";
+    displayType: "正常可购买" | "缺货展示" | "补位展示";
+    score: number;
+  }[];
+};
+
+const FINAL_LIMIT = 10;
+
+function normalize(s: string) {
+  return s.toLowerCase().replace(/\s+/g, "");
+}
+
+function checkFilter(spu: MockSpu, region: string, userStatus: "login" | "guest"): string | null {
+  if (!spu.spuEnabled) return "SPU 不可展示";
+  if (!spu.skuEnabled) return "SKU 未启用";
+  if (!spu.regions.includes("*") && !spu.regions.includes(region)) return "区域不可售";
+  if (spu.loginOnly && userStatus !== "login") return "用户状态不满足";
+  return null;
+}
+
+function runSearchTest(input: SearchTestInput): SearchTestResult {
+  const raw = input.term;
+  const norm = normalize(raw);
+  const result: SearchTestResult = {
+    rawTerm: raw,
+    normTerm: norm,
+    mainSource: "无结果",
+    matchedTerm: "—",
+    hitCount: 0,
+    filteredCount: 0,
+    triggeredFill: false,
+    finalCount: 0,
+    candidates: [],
+    finalList: [],
+  };
+
+  if (!norm) return result;
+
+  const seen = new Set<string>();
+  const pickSpus = (ids: string[], source: HitSource, term: string, label: string, match: Candidate["match"]) => {
+    ids.forEach((id) => {
+      if (seen.has(id)) return;
+      const spu = MOCK_SPUS.find((s) => s.id === id);
+      if (!spu) return;
+      seen.add(id);
+      const filterReason = checkFilter(spu, input.region, input.userStatus);
+      // 库存：人工词库精准命中保留为候选(缺货展示)，其他来源若无库存直接过滤
+      let reason = filterReason;
+      if (!reason && !spu.stock) {
+        if (source === "人工词库精准命中") {
+          reason = null; // 保留，但标记为缺货展示
+        } else {
+          reason = "无库存";
+        }
+      }
+      const score =
+        SOURCE_WEIGHT[source] +
+        spu.baseScore +
+        (spu.source === "official" ? 5 : 0);
+      result.candidates.push({ spu, source, matchedTerm: term, termLabel: label, match, filterReason: reason, score });
+    });
+  };
+
+  // 1. 人工词库精准命中
+  const exactTerm = MOCK_TERMS.find((t) => t.enabled && t.match === "exact" && t.term === norm);
+  if (exactTerm) pickSpus(exactTerm.spuIds, "人工词库精准命中", exactTerm.term, exactTerm.label, "精准匹配");
+
+  // 2. 人工词库前缀命中
+  if (result.candidates.length === 0) {
+    const prefixTerm = MOCK_TERMS.find((t) => t.enabled && t.match === "prefix" && norm.startsWith(t.term));
+    if (prefixTerm) pickSpus(prefixTerm.spuIds, "人工词库前缀命中", prefixTerm.term, prefixTerm.label, "前缀匹配");
+  }
+
+  // 3. 场景词精准命中
+  if (result.candidates.length === 0) {
+    const scene = MOCK_SCENES.find((s) => s.term === norm);
+    if (scene) pickSpus(scene.spuIds, "场景词精准命中", scene.term, "场景词", "精准匹配");
+  }
+
+  // 4. 商品标题前缀命中
+  if (result.candidates.length === 0) {
+    const ids = MOCK_SPUS.filter((s) => normalize(s.title).startsWith(norm)).map((s) => s.id);
+    if (ids.length > 0) pickSpus(ids, "商品标题前缀命中", norm, "商品标题", "前缀匹配");
+  }
+
+  // 5. 商品标题模糊命中
+  if (result.candidates.length === 0) {
+    const ids = MOCK_SPUS.filter((s) => normalize(s.title).includes(norm)).map((s) => s.id);
+    if (ids.length > 0) pickSpus(ids, "商品标题模糊命中", norm, "商品标题", "模糊匹配");
+  }
+
+  // 主命中来源
+  if (result.candidates.length > 0) {
+    result.mainSource = result.candidates[0].source;
+    result.matchedTerm = result.candidates[0].matchedTerm;
+  }
+
+  // 排序
+  result.candidates.sort((a, b) => b.score - a.score);
+
+  // 命中数 / 过滤数
+  result.hitCount = result.candidates.length;
+  result.filteredCount = result.candidates.filter((c) => c.filterReason).length;
+
+  // 最终展示：未被过滤的候选
+  const displayed: SearchTestResult["finalList"] = result.candidates
+    .filter((c) => !c.filterReason)
+    .map((c) => ({
+      spu: c.spu,
+      displaySource: "命中结果" as const,
+      hitSource: c.source,
+      displayType: (c.spu.stock ? "正常可购买" : "缺货展示") as "正常可购买" | "缺货展示",
+      score: c.score,
+    }));
+
+  // 补位：官方
+  if (displayed.length < FINAL_LIMIT) {
+    const usedIds = new Set(displayed.map((d) => d.spu.id));
+    const officialFill = MOCK_SPUS.filter(
+      (s) =>
+        !usedIds.has(s.id) &&
+        s.source === "official" &&
+        s.stock &&
+        !checkFilter(s, input.region, input.userStatus),
+    )
+      .sort((a, b) => b.baseScore - a.baseScore)
+      .slice(0, FINAL_LIMIT - displayed.length);
+    if (officialFill.length > 0) {
+      result.triggeredFill = true;
+      officialFill.forEach((s) =>
+        displayed.push({
+          spu: s,
+          displaySource: "官方补位",
+          hitSource: "—",
+          displayType: "补位展示",
+          score: s.baseScore,
+        }),
+      );
+    }
+  }
+
+  // 补位：C2C
+  if (displayed.length < FINAL_LIMIT) {
+    const usedIds = new Set(displayed.map((d) => d.spu.id));
+    const c2cFill = MOCK_SPUS.filter(
+      (s) =>
+        !usedIds.has(s.id) &&
+        s.source === "c2c" &&
+        s.stock &&
+        !checkFilter(s, input.region, input.userStatus),
+    )
+      .sort((a, b) => b.baseScore - a.baseScore)
+      .slice(0, FINAL_LIMIT - displayed.length);
+    if (c2cFill.length > 0) {
+      result.triggeredFill = true;
+      c2cFill.forEach((s) =>
+        displayed.push({
+          spu: s,
+          displaySource: "C2C补位",
+          hitSource: "—",
+          displayType: "补位展示",
+          score: s.baseScore,
+        }),
+      );
+    }
+  }
+
+  result.finalList = displayed.slice(0, FINAL_LIMIT);
+  result.finalCount = result.finalList.length;
+  return result;
+}
+
 // ============ Component ============
 
 export function ProductSortManagement() {
