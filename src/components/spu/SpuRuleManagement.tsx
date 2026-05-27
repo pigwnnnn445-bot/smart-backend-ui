@@ -1643,11 +1643,11 @@ export function SpuRuleManagement() {
                     .map((l) => (
                       <TableRow key={l.id}>
                         <TableCell className="whitespace-nowrap">{l.at}</TableCell>
+                        <TableCell>{l.operator}</TableCell>
                         <TableCell>{l.action}</TableCell>
                         <TableCell>{l.target}</TableCell>
                         <TableCell className="text-slate-600">{l.field || "—"}</TableCell>
                         <TableCell className="text-slate-600">{l.detail || "—"}</TableCell>
-                        <TableCell>{l.operator}</TableCell>
                       </TableRow>
                     ))
                 )}
