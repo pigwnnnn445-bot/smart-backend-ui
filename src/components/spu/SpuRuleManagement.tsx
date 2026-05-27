@@ -1594,7 +1594,6 @@ export function SpuRuleManagement() {
         open={copyConfirmOpen}
         onOpenChange={setCopyConfirmOpen}
       >
-      </Dialog>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>启用方式确认</DialogTitle>
@@ -1616,6 +1615,52 @@ export function SpuRuleManagement() {
               onClick={() => commitCopy("enable")}
             >
               立即启用
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 查看词条信息 */}
+      <Dialog open={previewEntriesOpen} onOpenChange={setPreviewEntriesOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>词条信息 - {copySourceSpu}</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-auto rounded border border-slate-200">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>词条内容</TableHead>
+                  <TableHead>词条类型</TableHead>
+                  <TableHead>匹配方式</TableHead>
+                  <TableHead>直达</TableHead>
+                  <TableHead>状态</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[
+                  { content: `${copySourceSpu}-品牌词`, type: "品牌词", match: "精准匹配", direct: "是", status: "已启用" },
+                  { content: `${copySourceSpu}-别名词`, type: "别名词", match: "模糊匹配", direct: "否", status: "已启用" },
+                  { content: `${copySourceSpu}-场景词`, type: "场景词", match: "前缀匹配", direct: "否", status: "已启用" },
+                ].map((r, i) => (
+                  <TableRow key={i}>
+                    <TableCell>{r.content}</TableCell>
+                    <TableCell>{r.type}</TableCell>
+                    <TableCell>{r.match}</TableCell>
+                    <TableCell>{r.direct}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">
+                        {r.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewEntriesOpen(false)}>
+              关闭
             </Button>
           </DialogFooter>
         </DialogContent>
