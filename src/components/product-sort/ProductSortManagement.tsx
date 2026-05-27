@@ -1352,28 +1352,24 @@ export function ProductSortManagement() {
                 <tr>
                   <th className="p-2 text-left">操作时间</th>
                   <th className="p-2 text-left">操作人</th>
-                  <th className="p-2 text-left">操作模块</th>
                   <th className="p-2 text-left">操作类型</th>
                   <th className="p-2 text-left">变更前</th>
                   <th className="p-2 text-left">变更后</th>
-                  <th className="p-2 text-left">备注</th>
                 </tr>
               </thead>
               <tbody>
                 {logs.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-6 text-center text-slate-400">暂无日志</td>
+                    <td colSpan={5} className="p-6 text-center text-slate-400">暂无日志</td>
                   </tr>
                 ) : (
                   logs.map((l, i) => (
                     <tr key={i} className="border-t border-slate-100">
                       <td className="p-2 text-slate-700">{l.time}</td>
                       <td className="p-2 text-slate-700">{l.operator}</td>
-                      <td className="p-2 text-slate-700">{l.module}</td>
                       <td className="p-2 text-slate-700">{l.type}</td>
                       <td className="p-2 text-slate-500">{l.before}</td>
                       <td className="p-2 text-slate-500">{l.after}</td>
-                      <td className="p-2 text-slate-500">{l.remark}</td>
                     </tr>
                   ))
                 )}
