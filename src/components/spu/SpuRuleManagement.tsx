@@ -312,6 +312,8 @@ export function SpuRuleManagement() {
         spu: entry.spu,
         action: entry.action,
         target: entry.target,
+        field: entry.field,
+        detail: entry.detail,
       },
       ...prev,
     ]);
