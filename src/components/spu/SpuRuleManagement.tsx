@@ -1183,144 +1183,160 @@ export function SpuRuleManagement() {
 
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>{mode === "create" ? "新增词条" : "编辑词条"}</DialogTitle>
+        <DialogContent className="max-w-xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="text-lg font-semibold">{mode === "create" ? "新增词条" : "编辑词条"}</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-2">
-            <Field label="词条内容" required>
-              <Input
-                value={draft.content}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setDraft({ ...draft, content: v, standard: normalizeTerm(v) });
-                  if (duplicateError) setDuplicateError("");
-                  if (fieldErrors.content || fieldErrors.standard)
-                    setFieldErrors({ ...fieldErrors, content: undefined, standard: undefined });
-                  if (crossSpuWarning) setCrossSpuWarning("");
-                }}
-                placeholder="请输入词条内容"
-              />
-              {fieldErrors.content && (
-                <p className="text-xs text-rose-500 mt-1">{fieldErrors.content}</p>
-              )}
-              {duplicateError && (
-                <p className="text-xs text-rose-500 mt-1">{duplicateError}</p>
-              )}
-            </Field>
-            <Field label="标准化词" required>
-              <Input
-                value={draft.standard}
-                readOnly
-                placeholder="根据词条内容自动生成"
-                className="bg-slate-50 cursor-not-allowed"
-              />
-              {fieldErrors.standard && (
-                <p className="text-xs text-rose-500 mt-1">{fieldErrors.standard}</p>
-              )}
-              {crossSpuWarning && (
-                <p className="text-xs text-amber-600 mt-1">{crossSpuWarning}</p>
-              )}
-            </Field>
-            <Field label="词条类型" required>
-              <MultiSelect
-                options={TERM_TYPES}
-                value={draft.termType}
-                onChange={(v) => {
-                  setDraft({ ...draft, termType: v as TermType[] });
-                  if (fieldErrors.termType)
-                    setFieldErrors({ ...fieldErrors, termType: undefined });
-                }}
-              />
-              {fieldErrors.termType && (
-                <p className="text-xs text-rose-500 mt-1">{fieldErrors.termType}</p>
-              )}
-            </Field>
-            <Field label="匹配方式" required>
-              <Select
-                value={draft.matchType}
-                onValueChange={(v) => setDraft({ ...draft, matchType: v as MatchType })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {MATCH_TYPES.map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {m}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="是否明确指向当前SPU" required>
-              <Select
-                value={draft.direct}
-                onValueChange={(v) => setDraft({ ...draft, direct: v as DirectFlag })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="是">是</SelectItem>
-                  <SelectItem value="否">否</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="生效范围" required>
-              <div className="flex items-center gap-2">
+          <div className="px-6 pb-2 space-y-5 text-sm">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1.5 block text-sm">
+                  <span className="text-red-500 mr-1">*</span>词条内容
+                </label>
+                <Input
+                  value={draft.content}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setDraft({ ...draft, content: v, standard: normalizeTerm(v) });
+                    if (duplicateError) setDuplicateError("");
+                    if (fieldErrors.content || fieldErrors.standard)
+                      setFieldErrors({ ...fieldErrors, content: undefined, standard: undefined });
+                    if (crossSpuWarning) setCrossSpuWarning("");
+                  }}
+                  placeholder="请输入词条内容"
+                />
+                {fieldErrors.content && (
+                  <p className="text-xs text-rose-500 mt-1">{fieldErrors.content}</p>
+                )}
+                {duplicateError && (
+                  <p className="text-xs text-rose-500 mt-1">{duplicateError}</p>
+                )}
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm">
+                  <span className="text-red-500 mr-1">*</span>标准化词
+                </label>
+                <div className="h-10 px-3 flex items-center rounded-md border bg-muted/40 text-foreground">
+                  {draft.standard}
+                </div>
+                {fieldErrors.standard && (
+                  <p className="text-xs text-rose-500 mt-1">{fieldErrors.standard}</p>
+                )}
+                {crossSpuWarning && (
+                  <p className="text-xs text-amber-600 mt-1">{crossSpuWarning}</p>
+                )}
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm">
+                  <span className="text-red-500 mr-1">*</span>词条类型
+                </label>
+                <MultiSelect
+                  options={TERM_TYPES}
+                  value={draft.termType}
+                  onChange={(v) => {
+                    setDraft({ ...draft, termType: v as TermType[] });
+                    if (fieldErrors.termType)
+                      setFieldErrors({ ...fieldErrors, termType: undefined });
+                  }}
+                />
+                {fieldErrors.termType && (
+                  <p className="text-xs text-rose-500 mt-1">{fieldErrors.termType}</p>
+                )}
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm">
+                  <span className="text-red-500 mr-1">*</span>匹配方式
+                </label>
                 <Select
-                  value={draft.scope}
-                  onValueChange={(v) =>
-                    setDraft({ ...draft, scope: v as Scope, regions: [] })
-                  }
+                  value={draft.matchType}
+                  onValueChange={(v) => setDraft({ ...draft, matchType: v as MatchType })}
                 >
-                  <SelectTrigger className="flex-1">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SCOPES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
+                    {MATCH_TYPES.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {(draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="h-9 shrink-0 bg-blue-500 hover:bg-blue-600 text-white"
-                    onClick={() => setRegionSheetOpen(true)}
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm">
+                  <span className="text-red-500 mr-1">*</span>是否明确指向当前SPU
+                </label>
+                <Select
+                  value={draft.direct}
+                  onValueChange={(v) => setDraft({ ...draft, direct: v as DirectFlag })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="是">是</SelectItem>
+                    <SelectItem value="否">否</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm">
+                  <span className="text-red-500 mr-1">*</span>生效范围
+                </label>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={draft.scope}
+                    onValueChange={(v) =>
+                      setDraft({ ...draft, scope: v as Scope, regions: [] })
+                    }
                   >
-                    <Pencil className="h-3.5 w-3.5" />
-                    编辑{draft.regions.length > 0 ? ` (${draft.regions.length})` : ""}
-                  </Button>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SCOPES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {(draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-9 shrink-0 bg-blue-500 hover:bg-blue-600 text-white"
+                      onClick={() => setRegionSheetOpen(true)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      编辑{draft.regions.length > 0 ? ` (${draft.regions.length})` : ""}
+                    </Button>
+                  )}
+                </div>
+                {scopeError && (
+                  <p className="text-xs text-rose-500 mt-1">{scopeError}</p>
                 )}
               </div>
-              {scopeError && (
-                <p className="text-xs text-rose-500 mt-1">{scopeError}</p>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm">备注</label>
+              <Textarea
+                rows={4}
+                value={draft.remark}
+                onChange={(e) => {
+                  setDraft({ ...draft, remark: e.target.value });
+                  if (fieldErrors.remark)
+                    setFieldErrors({ ...fieldErrors, remark: undefined });
+                }}
+                placeholder="请输入备注"
+              />
+              {fieldErrors.remark && (
+                <p className="text-xs text-rose-500 mt-1">{fieldErrors.remark}</p>
               )}
-            </Field>
-            <div className="col-span-2">
-              <Field label="备注">
-                <Textarea
-                  rows={3}
-                  value={draft.remark}
-                  onChange={(e) => {
-                    setDraft({ ...draft, remark: e.target.value });
-                    if (fieldErrors.remark)
-                      setFieldErrors({ ...fieldErrors, remark: undefined });
-                  }}
-                  placeholder="请输入备注"
-                />
-                {fieldErrors.remark && (
-                  <p className="text-xs text-rose-500 mt-1">{fieldErrors.remark}</p>
-                )}
-              </Field>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="px-6 py-4 border-t bg-muted/20">
             <Button variant="outline" onClick={() => setEditOpen(false)}>
               取消
             </Button>
@@ -1332,10 +1348,7 @@ export function SpuRuleManagement() {
                 保存草稿
               </Button>
             )}
-            <Button
-              onClick={() => saveDraft("publish")}
-              className="bg-blue-500 hover:bg-blue-600"
-            >
+            <Button onClick={() => saveDraft("publish")}>
               保存并发布
             </Button>
           </DialogFooter>
