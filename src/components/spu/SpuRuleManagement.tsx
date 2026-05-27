@@ -362,6 +362,7 @@ export function SpuRuleManagement() {
   const [crossSpuWarning, setCrossSpuWarning] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
   const [statusConfirm, setStatusConfirm] = useState<RuleRow | null>(null);
+  const [batchConfirm, setBatchConfirm] = useState<Extract<Status, "已启用" | "已停用"> | null>(null);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
@@ -1012,7 +1013,7 @@ export function SpuRuleManagement() {
                       variant="outline"
                       className="h-8"
                       disabled={selectedIds.length === 0}
-                      onClick={() => bulkSetStatus("已启用")}
+                      onClick={() => setBatchConfirm("已启用")}
                     >
                       <Power className="h-3.5 w-3.5" /> 批量启用
                     </Button>
@@ -1021,7 +1022,7 @@ export function SpuRuleManagement() {
                       variant="outline"
                       className="h-8"
                       disabled={selectedIds.length === 0}
-                      onClick={() => bulkSetStatus("已停用")}
+                      onClick={() => setBatchConfirm("已停用")}
                     >
                       <Power className="h-3.5 w-3.5" /> 批量停用
                     </Button>
@@ -1414,6 +1415,39 @@ export function SpuRuleManagement() {
               onClick={() => {
                 if (statusConfirm) toggleStatus(statusConfirm);
                 setStatusConfirm(null);
+              }}
+            >
+              确认
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 批量启用/停用 二次确认 */}
+      <Dialog
+        open={!!batchConfirm}
+        onOpenChange={(o) => !o && setBatchConfirm(null)}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {batchConfirm === "已启用" ? "确认批量启用" : "确认批量停用"}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-600">
+            {batchConfirm === "已启用"
+              ? `启用后，选中的 ${selectedIds.length} 条词条将参与前台搜索召回。是否确认启用？`
+              : `停用后，选中的 ${selectedIds.length} 条词条将不再参与前台搜索召回。是否确认停用？`}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBatchConfirm(null)}>
+              取消
+            </Button>
+            <Button
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={() => {
+                if (batchConfirm) bulkSetStatus(batchConfirm);
+                setBatchConfirm(null);
               }}
             >
               确认
