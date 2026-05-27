@@ -1360,18 +1360,16 @@ export function ProductSortManagement() {
               <tbody>
                 {logs.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-6 text-center text-slate-400">暂无日志</td>
+                    <td colSpan={5} className="p-6 text-center text-slate-400">暂无日志</td>
                   </tr>
                 ) : (
                   logs.map((l, i) => (
                     <tr key={i} className="border-t border-slate-100">
                       <td className="p-2 text-slate-700">{l.time}</td>
                       <td className="p-2 text-slate-700">{l.operator}</td>
-                      <td className="p-2 text-slate-700">{l.module}</td>
                       <td className="p-2 text-slate-700">{l.type}</td>
                       <td className="p-2 text-slate-500">{l.before}</td>
                       <td className="p-2 text-slate-500">{l.after}</td>
-                      <td className="p-2 text-slate-500">{l.remark}</td>
                     </tr>
                   ))
                 )}
