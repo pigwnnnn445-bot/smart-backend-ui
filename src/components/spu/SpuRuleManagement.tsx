@@ -1623,7 +1623,7 @@ export function SpuRuleManagement() {
                 <TableRow className="bg-slate-50">
                   <TableHead className="whitespace-nowrap">操作时间</TableHead>
                   <TableHead>操作类型</TableHead>
-                  <TableHead>对象</TableHead>
+                  <TableHead>操作对象</TableHead>
                   <TableHead>修改字段</TableHead>
                   <TableHead>操作内容</TableHead>
                   <TableHead>操作人</TableHead>
