@@ -1566,6 +1566,16 @@ export function SpuRuleManagement() {
               {copyError.spu && (
                 <p className="text-xs text-rose-500 mt-1">{copyError.spu}</p>
               )}
+              {copySourceSpu && (
+                <button
+                  type="button"
+                  onClick={() => setPreviewEntriesOpen(true)}
+                  className="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  查看词条信息
+                </button>
+              )}
             </Field>
           </div>
           <DialogFooter>
