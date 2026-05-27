@@ -94,6 +94,7 @@ type LogEntry = {
   operator: string;
   module: string;
   type: string;
+  object: string;
   before: string;
   after: string;
   remark: string;
@@ -1353,6 +1354,7 @@ export function ProductSortManagement() {
                   <th className="p-2 text-left">操作时间</th>
                   <th className="p-2 text-left">操作人</th>
                   <th className="p-2 text-left">操作模块</th>
+                  <th className="p-2 text-left">变更对象</th>
                   <th className="p-2 text-left">变更前</th>
                   <th className="p-2 text-left">变更后</th>
                 </tr>
@@ -1360,7 +1362,7 @@ export function ProductSortManagement() {
               <tbody>
                 {logs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-6 text-center text-slate-400">暂无日志</td>
+                    <td colSpan={6} className="p-6 text-center text-slate-400">暂无日志</td>
                   </tr>
                 ) : (
                   logs.map((l, i) => (
@@ -1368,6 +1370,7 @@ export function ProductSortManagement() {
                       <td className="p-2 text-slate-700">{l.time}</td>
                       <td className="p-2 text-slate-700">{l.operator}</td>
                       <td className="p-2 text-slate-700">{l.type}</td>
+                      <td className="p-2 text-slate-700">{l.object}</td>
                       <td className="p-2 text-slate-500">{l.before}</td>
                       <td className="p-2 text-slate-500">{l.after}</td>
                     </tr>
