@@ -1594,6 +1594,7 @@ export function SpuRuleManagement() {
         open={copyConfirmOpen}
         onOpenChange={setCopyConfirmOpen}
       >
+      </Dialog>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>启用方式确认</DialogTitle>
