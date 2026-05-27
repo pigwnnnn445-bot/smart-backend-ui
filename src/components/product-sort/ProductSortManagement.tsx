@@ -974,39 +974,48 @@ export function ProductSortManagement() {
           }
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>编辑词条类型</DialogTitle>
-            <DialogDescription>修改该词条类型的权重和说明。</DialogDescription>
+        <DialogContent className="max-w-xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="text-lg font-semibold">编辑词条类型</DialogTitle>
           </DialogHeader>
           {termEditDraft && (
-            <div className="space-y-4 text-sm">
-              <div className="rounded-md bg-slate-50 p-3">
-                <div className="mb-1 text-xs text-slate-500">词条类型</div>
-                <div className="font-medium text-slate-800">{termEditDraft.name}</div>
+            <div className="px-6 pb-2 space-y-5 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-sm">
+                    <span className="text-red-500 mr-1">*</span>词条类型
+                  </label>
+                  <div className="h-10 px-3 flex items-center rounded-md border bg-muted/40 text-foreground">
+                    {termEditDraft.name}
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm">
+                    <span className="text-red-500 mr-1">*</span>权重分（0-999）
+                  </label>
+                  <Input
+                    type="number"
+                    value={Number.isNaN(termEditDraft.weight) ? "" : termEditDraft.weight}
+                    onChange={(e) => {
+                      const n = parseInt(e.target.value, 10);
+                      setTermEditDraft({ ...termEditDraft, weight: Number.isNaN(n) ? 0 : n });
+                    }}
+                    placeholder="请输入权重分"
+                  />
+                </div>
               </div>
               <div>
-                <div className="mb-1 text-xs text-slate-600">权重分（0-999）</div>
-                <Input
-                  type="number"
-                  className="h-8 w-32"
-                  value={Number.isNaN(termEditDraft.weight) ? "" : termEditDraft.weight}
-                  onChange={(e) => {
-                    const n = parseInt(e.target.value, 10);
-                    setTermEditDraft({ ...termEditDraft, weight: Number.isNaN(n) ? 0 : n });
-                  }}
-                />
-              </div>
-              <div>
-                <div className="mb-1 text-xs text-slate-600">说明</div>
-                <Input
+                <label className="mb-1.5 block text-sm">说明</label>
+                <Textarea
                   value={termEditDraft.desc}
                   onChange={(e) => setTermEditDraft({ ...termEditDraft, desc: e.target.value })}
+                  rows={4}
+                  placeholder="请输入说明"
                 />
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="px-6 py-4 border-t bg-muted/20">
             <Button
               variant="outline"
               onClick={() => {
