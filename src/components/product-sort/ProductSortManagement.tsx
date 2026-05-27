@@ -1352,7 +1352,7 @@ export function ProductSortManagement() {
                 <tr>
                   <th className="p-2 text-left">操作时间</th>
                   <th className="p-2 text-left">操作人</th>
-                  <th className="p-2 text-left">操作类型</th>
+                  <th className="p-2 text-left">操作模块</th>
                   <th className="p-2 text-left">变更前</th>
                   <th className="p-2 text-left">变更后</th>
                 </tr>
