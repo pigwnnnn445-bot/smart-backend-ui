@@ -1622,11 +1622,11 @@ export function SpuRuleManagement() {
               <TableHeader>
                 <TableRow className="bg-slate-50">
                   <TableHead className="whitespace-nowrap">操作时间</TableHead>
-                  <TableHead>操作类型</TableHead>
-                  <TableHead>操作对象</TableHead>
-                  <TableHead>修改字段</TableHead>
-                  <TableHead>操作内容</TableHead>
                   <TableHead>操作人</TableHead>
+                  <TableHead>操作类型</TableHead>
+                  <TableHead>变更对象</TableHead>
+                  <TableHead>变更前</TableHead>
+                  <TableHead>变更后</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1643,11 +1643,11 @@ export function SpuRuleManagement() {
                     .map((l) => (
                       <TableRow key={l.id}>
                         <TableCell className="whitespace-nowrap">{l.at}</TableCell>
+                        <TableCell>{l.operator}</TableCell>
                         <TableCell>{l.action}</TableCell>
                         <TableCell>{l.target}</TableCell>
                         <TableCell className="text-slate-600">{l.field || "—"}</TableCell>
                         <TableCell className="text-slate-600">{l.detail || "—"}</TableCell>
-                        <TableCell>{l.operator}</TableCell>
                       </TableRow>
                     ))
                 )}
