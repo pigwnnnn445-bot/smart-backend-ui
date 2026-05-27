@@ -362,6 +362,7 @@ export function SpuRuleManagement() {
   const [crossSpuWarning, setCrossSpuWarning] = useState("");
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
   const [statusConfirm, setStatusConfirm] = useState<RuleRow | null>(null);
+  const [batchConfirm, setBatchConfirm] = useState<Extract<Status, "已启用" | "已停用"> | null>(null);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
