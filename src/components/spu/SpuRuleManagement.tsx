@@ -1565,9 +1565,6 @@ export function SpuRuleManagement() {
                 <p className="text-xs text-rose-500 mt-1">{copyError.spu}</p>
               )}
             </Field>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              保存后将把所选SPU的词库配置复制到当前SPU「{activeSpu}」下，已有词条不会被覆盖。
-            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCopyOpen(false)}>
