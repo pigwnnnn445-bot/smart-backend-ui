@@ -14,6 +14,7 @@ import {
   Menu,
   FileText,
   Copy,
+  Eye,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
@@ -378,6 +379,7 @@ export function SpuRuleManagement() {
   const [copySpuOpen, setCopySpuOpen] = useState(false);
   const [copyConfirmOpen, setCopyConfirmOpen] = useState(false);
   const [copyError, setCopyError] = useState<{ type?: string; spu?: string }>({});
+  const [previewEntriesOpen, setPreviewEntriesOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
