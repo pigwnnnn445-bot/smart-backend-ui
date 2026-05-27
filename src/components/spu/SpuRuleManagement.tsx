@@ -1423,6 +1423,39 @@ export function SpuRuleManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* 批量启用/停用 二次确认 */}
+      <Dialog
+        open={!!batchConfirm}
+        onOpenChange={(o) => !o && setBatchConfirm(null)}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {batchConfirm === "已启用" ? "确认批量启用" : "确认批量停用"}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-600">
+            {batchConfirm === "已启用"
+              ? `启用后，选中的 ${selectedIds.length} 条词条将参与前台搜索召回。是否确认启用？`
+              : `停用后，选中的 ${selectedIds.length} 条词条将不再参与前台搜索召回。是否确认停用？`}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBatchConfirm(null)}>
+              取消
+            </Button>
+            <Button
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={() => {
+                if (batchConfirm) bulkSetStatus(batchConfirm);
+                setBatchConfirm(null);
+              }}
+            >
+              确认
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* 词库停用/启用 二次确认 */}
       <Dialog
         open={!!libConfirm}
