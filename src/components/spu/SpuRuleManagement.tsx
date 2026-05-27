@@ -135,6 +135,8 @@ interface OpLog {
   target: string;
   operator: string;
   at: string;
+  field?: string;
+  detail?: string;
 }
 
 const TERM_TYPES: TermType[] = [
@@ -310,6 +312,8 @@ export function SpuRuleManagement() {
         spu: entry.spu,
         action: entry.action,
         target: entry.target,
+        field: entry.field,
+        detail: entry.detail,
       },
       ...prev,
     ]);
@@ -1620,13 +1624,15 @@ export function SpuRuleManagement() {
                   <TableHead className="whitespace-nowrap">操作时间</TableHead>
                   <TableHead>操作类型</TableHead>
                   <TableHead>对象</TableHead>
+                  <TableHead>修改字段</TableHead>
+                  <TableHead>操作内容</TableHead>
                   <TableHead>操作人</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {logs.filter((l) => l.spu === logSpu).length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="py-10 text-center text-slate-400">
+                    <TableCell colSpan={6} className="py-10 text-center text-slate-400">
                       暂无操作记录
                     </TableCell>
                   </TableRow>
@@ -1639,6 +1645,8 @@ export function SpuRuleManagement() {
                         <TableCell className="whitespace-nowrap">{l.at}</TableCell>
                         <TableCell>{l.action}</TableCell>
                         <TableCell>{l.target}</TableCell>
+                        <TableCell className="text-slate-600">{l.field || "—"}</TableCell>
+                        <TableCell className="text-slate-600">{l.detail || "—"}</TableCell>
                         <TableCell>{l.operator}</TableCell>
                       </TableRow>
                     ))
