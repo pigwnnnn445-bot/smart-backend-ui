@@ -1013,7 +1013,7 @@ export function SpuRuleManagement() {
                       variant="outline"
                       className="h-8"
                       disabled={selectedIds.length === 0}
-                      onClick={() => bulkSetStatus("已启用")}
+                      onClick={() => setBatchConfirm("已启用")}
                     >
                       <Power className="h-3.5 w-3.5" /> 批量启用
                     </Button>
@@ -1022,7 +1022,7 @@ export function SpuRuleManagement() {
                       variant="outline"
                       className="h-8"
                       disabled={selectedIds.length === 0}
-                      onClick={() => bulkSetStatus("已停用")}
+                      onClick={() => setBatchConfirm("已停用")}
                     >
                       <Power className="h-3.5 w-3.5" /> 批量停用
                     </Button>
