@@ -135,6 +135,8 @@ interface OpLog {
   target: string;
   operator: string;
   at: string;
+  field?: string;
+  detail?: string;
 }
 
 const TERM_TYPES: TermType[] = [
