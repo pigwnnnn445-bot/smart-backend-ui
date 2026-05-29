@@ -268,7 +268,7 @@ export function HotRankingManagement() {
           },
         ].sort((a, b) => a.position - b.position),
       };
-      recomputeStatus(currentIp, next[currentIp]);
+      bumpStatusAfterEdit(next);
       return next;
     });
     toast.success("已加入草稿，待提交发布后生效");
@@ -279,7 +279,7 @@ export function HotRankingManagement() {
   function handleRemove(spuId: string) {
     setPinnedMap((m) => {
       const next = { ...m, [currentIp]: m[currentIp].filter((p) => p.spuId !== spuId) };
-      recomputeStatus(currentIp, next[currentIp]);
+      bumpStatusAfterEdit(next);
       return next;
     });
     setRemoveId(null);
@@ -303,7 +303,7 @@ export function HotRankingManagement() {
           .map((p) => (p.spuId === spuId ? { ...p, position: newPos } : p))
           .sort((a, b) => a.position - b.position),
       };
-      recomputeStatus(currentIp, next[currentIp]);
+      bumpStatusAfterEdit(next);
       return next;
     });
   }
@@ -328,7 +328,7 @@ export function HotRankingManagement() {
         updatedAt: p.spuId === sourceId ? now : p.updatedAt,
       }));
       const next = { ...m, [currentIp]: reassigned };
-      recomputeStatus(currentIp, next[currentIp]);
+      bumpStatusAfterEdit(next);
       return next;
     });
     toast.success("草稿顺序已更新，提交发布后线上生效");
@@ -379,17 +379,10 @@ export function HotRankingManagement() {
       copyTargets.forEach((code) => {
         next[code] = snapshot.map((p) => ({ ...p }));
       });
-      // 复制只改草稿，每个目标 IP 重新计算状态
-      setStatusMap((s) => {
-        const ns = { ...s };
-        copyTargets.forEach((code) => {
-          ns[code] = isSameConfig(next[code], publishedMap[code]) ? "published" : "draft";
-        });
-        return ns;
-      });
+      bumpStatusAfterEdit(next);
       return next;
     });
-    toast.success(`已复制到 ${copyTargets.length} 个 IP 的草稿，需各自提交发布后生效`);
+    toast.success(`已复制到 ${copyTargets.length} 个 IP 的草稿，需统一提交发布后生效`);
     setCopyConfirmOpen(false);
     setCopyOpen(false);
   }
@@ -433,51 +426,58 @@ export function HotRankingManagement() {
       clearTargets.forEach((code) => {
         next[code] = [];
       });
-      setStatusMap((s) => {
-        const ns = { ...s };
-        clearTargets.forEach((code) => {
-          ns[code] = isSameConfig([], publishedMap[code]) ? "published" : "draft";
-        });
-        return ns;
-      });
+      bumpStatusAfterEdit(next);
       return next;
     });
-    toast.success(`已清空 ${clearTargets.length} 个 IP 的草稿配置，提交发布后线上生效`);
+    toast.success(`已清空 ${clearTargets.length} 个 IP 的草稿，需统一提交发布后生效`);
     setClearConfirmOpen(false);
     setClearOpen(false);
   }
 
-  // ====== 发布流程 ======
+  // ====== 发布流程（全局，对所有有 diff 的 IP 一起生效） ======
   function submitForReview() {
     if (!hasDraftDiff) {
       toast.info("当前无未发布的草稿变更");
       return;
     }
-    setStatusMap((s) => ({ ...s, [currentIp]: "reviewing" }));
+    setGlobalStatus("reviewing");
     setPublishOpen(false);
-    toast.success("已提交审核，审核通过后将覆盖线上");
+    toast.success(`已提交 ${dirtyIps.length} 个 IP 的草稿，审核通过后统一生效`);
   }
 
   function approvePublish() {
-    // 模拟"审核通过"动作：将草稿覆盖到已发布
-    setPublishedMap((pm) => ({ ...pm, [currentIp]: pinnedMap[currentIp].map((p) => ({ ...p })) }));
-    setStatusMap((s) => ({ ...s, [currentIp]: "published" }));
-    toast.success("审核通过，配置已发布到线上");
+    // 模拟"审核通过"动作：将所有 IP 的草稿覆盖到已发布
+    setPublishedMap(() => {
+      const np: Record<IpCode, PinnedItem[]> = {} as Record<IpCode, PinnedItem[]>;
+      IPS.forEach((ip) => {
+        np[ip.code] = pinnedMap[ip.code].map((p) => ({ ...p }));
+      });
+      return np;
+    });
+    setGlobalStatus("published");
+    toast.success("审核通过，全部 IP 配置已发布到线上");
   }
 
   function revertDraft() {
-    setPinnedMap((m) => ({ ...m, [currentIp]: publishedMap[currentIp].map((p) => ({ ...p })) }));
-    setStatusMap((s) => ({ ...s, [currentIp]: "published" }));
+    // 全局撤销：所有 IP 的草稿恢复为线上版本
+    setPinnedMap(() => {
+      const np: Record<IpCode, PinnedItem[]> = {} as Record<IpCode, PinnedItem[]>;
+      IPS.forEach((ip) => {
+        np[ip.code] = publishedMap[ip.code].map((p) => ({ ...p }));
+      });
+      return np;
+    });
+    setGlobalStatus("published");
     setRevertOpen(false);
-    toast.success("已撤销草稿变更，恢复为线上版本");
+    toast.success("已撤销全部 IP 的草稿，恢复为线上版本");
   }
 
   const statusBadge =
-    currentStatus === "published" ? (
+    globalStatus === "published" ? (
       <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
         <CheckCircle2 className="mr-1 h-3 w-3" />已发布
       </Badge>
-    ) : currentStatus === "reviewing" ? (
+    ) : globalStatus === "reviewing" ? (
       <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
         <Clock className="mr-1 h-3 w-3" />审核中
       </Badge>
