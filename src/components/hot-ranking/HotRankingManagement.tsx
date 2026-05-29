@@ -138,6 +138,7 @@ export function HotRankingManagement() {
   const [addOpen, setAddOpen] = useState(false);
   const [addSpuId, setAddSpuId] = useState("");
   const [addPosition, setAddPosition] = useState<number>(1);
+  const [addSource, setAddSource] = useState<SpuSource | "全部">("全部");
   const [addCategory, setAddCategory] = useState<SpuCategory | "全部">("全部");
 
   const [removeId, setRemoveId] = useState<string | null>(null);
@@ -176,8 +177,16 @@ export function HotRankingManagement() {
     (p) => !usedPositions.has(p),
   );
   const pinnedIdSet = new Set(pinnedList.map((p) => p.spuId));
+  // 商品来源决定可选分类
+  const availableCategories = useMemo(() => {
+    const pool = addSource === "全部" ? ALL_SPUS : ALL_SPUS.filter((s) => s.source === addSource);
+    return Array.from(new Set(pool.map((s) => s.category)));
+  }, [addSource]);
   const candidateSpus = ALL_SPUS.filter(
-    (s) => !pinnedIdSet.has(s.id) && (addCategory === "全部" || s.category === addCategory),
+    (s) =>
+      !pinnedIdSet.has(s.id) &&
+      (addSource === "全部" || s.source === addSource) &&
+      (addCategory === "全部" || s.category === addCategory),
   );
 
   function handleAdd() {
