@@ -17,6 +17,11 @@ import {
   ArrowDown,
   GripVertical,
   Copy,
+  Eraser,
+  Send,
+  Undo2,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,6 +138,15 @@ const NATURAL_ORDER: Record<IpCode, string[]> = {
 const MAX_SLOTS = 10;
 const MIN_DISPLAY = 5;
 
+type PublishStatus = "published" | "draft" | "reviewing";
+
+function isSameConfig(a: PinnedItem[], b: PinnedItem[]) {
+  if (a.length !== b.length) return false;
+  const sa = [...a].sort((x, y) => x.position - y.position);
+  const sb = [...b].sort((x, y) => x.position - y.position);
+  return sa.every((p, i) => p.spuId === sb[i].spuId && p.position === sb[i].position);
+}
+
 function spuById(id: string) {
   return ALL_SPUS.find((s) => s.id === id);
 }
@@ -142,6 +156,16 @@ function spuById(id: string) {
 export function HotRankingManagement() {
   const [currentIp, setCurrentIp] = useState<IpCode>("US");
   const [pinnedMap, setPinnedMap] = useState<Record<IpCode, PinnedItem[]>>(DEFAULT_PINNED);
+  // 已发布到线上的配置（实际生效的版本）；编辑只改 pinnedMap（草稿），需要发布才覆盖
+  const [publishedMap, setPublishedMap] = useState<Record<IpCode, PinnedItem[]>>(() =>
+    Object.fromEntries(
+      (Object.keys(DEFAULT_PINNED) as IpCode[]).map((k) => [k, DEFAULT_PINNED[k].map((p) => ({ ...p }))]),
+    ) as Record<IpCode, PinnedItem[]>,
+  );
+  // 每个 IP 的发布状态
+  const [statusMap, setStatusMap] = useState<Record<IpCode, PublishStatus>>(
+    () => Object.fromEntries((Object.keys(DEFAULT_PINNED) as IpCode[]).map((k) => [k, "published"])) as Record<IpCode, PublishStatus>,
+  );
 
   const [addOpen, setAddOpen] = useState(false);
   const [addSpuId, setAddSpuId] = useState("");
@@ -158,7 +182,28 @@ export function HotRankingManagement() {
   const [copyTargets, setCopyTargets] = useState<IpCode[]>([]);
   const [copyConfirmOpen, setCopyConfirmOpen] = useState(false);
 
+  // 一键清除配置
+  const [clearOpen, setClearOpen] = useState(false);
+  const [clearTargets, setClearTargets] = useState<IpCode[]>([]);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+
+  // 发布 / 撤销 / 审核通过
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [revertOpen, setRevertOpen] = useState(false);
+
   const pinnedList = pinnedMap[currentIp];
+  const publishedList = publishedMap[currentIp];
+  const currentStatus = statusMap[currentIp];
+  const hasDraftDiff = !isSameConfig(pinnedList, publishedList);
+
+  // 任何对草稿的改动都要根据与线上的 diff 重新计算状态
+  function recomputeStatus(code: IpCode, draftOverride?: PinnedItem[], publishedOverride?: PinnedItem[]) {
+    setStatusMap((s) => {
+      const draft = draftOverride ?? pinnedMap[code];
+      const published = publishedOverride ?? publishedMap[code];
+      return { ...s, [code]: isSameConfig(draft, published) ? "published" : "draft" };
+    });
+  }
 
   // Compose final ranking: pinned positions are locked; natural sort fills the rest in order, skipping pinned spuIds.
   const finalRanking = useMemo(() => {
@@ -211,30 +256,35 @@ export function HotRankingManagement() {
       toast.error("该位置已被占用");
       return;
     }
-    setPinnedMap((m) => ({
-      ...m,
-      [currentIp]: [
-        ...m[currentIp],
-        {
-          spuId: addSpuId,
-          position: addPosition,
-          operator: "当前用户",
-          updatedAt: new Date().toISOString().slice(0, 19).replace("T", " "),
-        },
-      ].sort((a, b) => a.position - b.position),
-    }));
-    toast.success("已配置榜单位置");
+    setPinnedMap((m) => {
+      const next = {
+        ...m,
+        [currentIp]: [
+          ...m[currentIp],
+          {
+            spuId: addSpuId,
+            position: addPosition,
+            operator: "当前用户",
+            updatedAt: new Date().toISOString().slice(0, 19).replace("T", " "),
+          },
+        ].sort((a, b) => a.position - b.position),
+      };
+      recomputeStatus(currentIp, next[currentIp]);
+      return next;
+    });
+    toast.success("已加入草稿，待提交发布后生效");
     setAddOpen(false);
     setAddSpuId("");
   }
 
   function handleRemove(spuId: string) {
-    setPinnedMap((m) => ({
-      ...m,
-      [currentIp]: m[currentIp].filter((p) => p.spuId !== spuId),
-    }));
+    setPinnedMap((m) => {
+      const next = { ...m, [currentIp]: m[currentIp].filter((p) => p.spuId !== spuId) };
+      recomputeStatus(currentIp, next[currentIp]);
+      return next;
+    });
     setRemoveId(null);
-    toast.success("已移除该位置配置，SPU 将重新参与热搜排序");
+    toast.success("已在草稿中移除，提交发布后线上生效");
   }
 
   function movePinned(spuId: string, delta: number) {
@@ -248,12 +298,14 @@ export function HotRankingManagement() {
         toast.error("目标位置已被占用");
         return m;
       }
-      return {
+      const next = {
         ...m,
         [currentIp]: list
           .map((p) => (p.spuId === spuId ? { ...p, position: newPos } : p))
           .sort((a, b) => a.position - b.position),
       };
+      recomputeStatus(currentIp, next[currentIp]);
+      return next;
     });
   }
 
@@ -276,9 +328,11 @@ export function HotRankingManagement() {
         operator: p.spuId === sourceId ? "当前用户" : p.operator,
         updatedAt: p.spuId === sourceId ? now : p.updatedAt,
       }));
-      return { ...m, [currentIp]: reassigned };
+      const next = { ...m, [currentIp]: reassigned };
+      recomputeStatus(currentIp, next[currentIp]);
+      return next;
     });
-    toast.success("已更新榜单顺序");
+    toast.success("草稿顺序已更新，提交发布后线上生效");
   }
 
   // 可复制的目标 IP（排除当前 IP）
@@ -326,12 +380,113 @@ export function HotRankingManagement() {
       copyTargets.forEach((code) => {
         next[code] = snapshot.map((p) => ({ ...p }));
       });
+      // 复制只改草稿，每个目标 IP 重新计算状态
+      setStatusMap((s) => {
+        const ns = { ...s };
+        copyTargets.forEach((code) => {
+          ns[code] = isSameConfig(next[code], publishedMap[code]) ? "published" : "draft";
+        });
+        return ns;
+      });
       return next;
     });
-    toast.success(`已将当前方案复制到 ${copyTargets.length} 个 IP`);
+    toast.success(`已复制到 ${copyTargets.length} 个 IP 的草稿，需各自提交发布后生效`);
     setCopyConfirmOpen(false);
     setCopyOpen(false);
   }
+
+  // ====== 一键清除配置 ======
+  const clearableIps = IPS; // 全部 IP 都允许选择（包含当前 IP）
+  const clearTargetsWithExisting = clearTargets.filter(
+    (code) => (pinnedMap[code] ?? []).length > 0,
+  );
+
+  function openClear() {
+    setClearTargets([]);
+    setClearOpen(true);
+  }
+
+  function toggleClearTarget(code: IpCode) {
+    setClearTargets((p) => (p.includes(code) ? p.filter((c) => c !== code) : [...p, code]));
+  }
+
+  function toggleAllClearTargets() {
+    const allCodes = clearableIps.map((i) => i.code);
+    const allSelected = allCodes.every((c) => clearTargets.includes(c));
+    setClearTargets(allSelected ? [] : allCodes);
+  }
+
+  function handleClearConfirm() {
+    if (clearTargets.length === 0) {
+      toast.error("请至少勾选一个目标 IP");
+      return;
+    }
+    if (clearTargetsWithExisting.length === 0) {
+      toast.info("所选 IP 当前草稿均为空，无需清除");
+      return;
+    }
+    setClearConfirmOpen(true);
+  }
+
+  function commitClear() {
+    setPinnedMap((m) => {
+      const next = { ...m };
+      clearTargets.forEach((code) => {
+        next[code] = [];
+      });
+      setStatusMap((s) => {
+        const ns = { ...s };
+        clearTargets.forEach((code) => {
+          ns[code] = isSameConfig([], publishedMap[code]) ? "published" : "draft";
+        });
+        return ns;
+      });
+      return next;
+    });
+    toast.success(`已清空 ${clearTargets.length} 个 IP 的草稿配置，提交发布后线上生效`);
+    setClearConfirmOpen(false);
+    setClearOpen(false);
+  }
+
+  // ====== 发布流程 ======
+  function submitForReview() {
+    if (!hasDraftDiff) {
+      toast.info("当前无未发布的草稿变更");
+      return;
+    }
+    setStatusMap((s) => ({ ...s, [currentIp]: "reviewing" }));
+    setPublishOpen(false);
+    toast.success("已提交审核，审核通过后将覆盖线上");
+  }
+
+  function approvePublish() {
+    // 模拟"审核通过"动作：将草稿覆盖到已发布
+    setPublishedMap((pm) => ({ ...pm, [currentIp]: pinnedMap[currentIp].map((p) => ({ ...p })) }));
+    setStatusMap((s) => ({ ...s, [currentIp]: "published" }));
+    toast.success("审核通过，配置已发布到线上");
+  }
+
+  function revertDraft() {
+    setPinnedMap((m) => ({ ...m, [currentIp]: publishedMap[currentIp].map((p) => ({ ...p })) }));
+    setStatusMap((s) => ({ ...s, [currentIp]: "published" }));
+    setRevertOpen(false);
+    toast.success("已撤销草稿变更，恢复为线上版本");
+  }
+
+  const statusBadge =
+    currentStatus === "published" ? (
+      <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+        <CheckCircle2 className="mr-1 h-3 w-3" />已发布
+      </Badge>
+    ) : currentStatus === "reviewing" ? (
+      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+        <Clock className="mr-1 h-3 w-3" />审核中
+      </Badge>
+    ) : (
+      <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+        <AlertCircle className="mr-1 h-3 w-3" />草稿待发布
+      </Badge>
+    );
 
   return (
     <div className="flex min-h-screen bg-slate-100 text-sm text-slate-800">
