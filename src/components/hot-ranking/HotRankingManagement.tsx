@@ -274,7 +274,6 @@ export function HotRankingManagement() {
           },
         ].sort((a, b) => a.position - b.position),
       };
-      bumpStatusAfterEdit(next);
       return next;
     });
     toast.success("已加入草稿，待提交发布后生效");
@@ -285,7 +284,6 @@ export function HotRankingManagement() {
   function handleRemove(spuId: string) {
     setPinnedMap((m) => {
       const next = { ...m, [currentIp]: m[currentIp].filter((p) => p.spuId !== spuId) };
-      bumpStatusAfterEdit(next);
       return next;
     });
     setRemoveId(null);
@@ -309,7 +307,6 @@ export function HotRankingManagement() {
           .map((p) => (p.spuId === spuId ? { ...p, position: newPos } : p))
           .sort((a, b) => a.position - b.position),
       };
-      bumpStatusAfterEdit(next);
       return next;
     });
   }
@@ -334,7 +331,6 @@ export function HotRankingManagement() {
         updatedAt: p.spuId === sourceId ? now : p.updatedAt,
       }));
       const next = { ...m, [currentIp]: reassigned };
-      bumpStatusAfterEdit(next);
       return next;
     });
     toast.success("草稿顺序已更新，提交发布后线上生效");
@@ -385,7 +381,6 @@ export function HotRankingManagement() {
       copyTargets.forEach((code) => {
         next[code] = snapshot.map((p) => ({ ...p }));
       });
-      bumpStatusAfterEdit(next);
       return next;
     });
     toast.success(`已复制到 ${copyTargets.length} 个 IP 的草稿，需统一提交发布后生效`);
@@ -432,7 +427,6 @@ export function HotRankingManagement() {
       clearTargets.forEach((code) => {
         next[code] = [];
       });
-      bumpStatusAfterEdit(next);
       return next;
     });
     toast.success(`已清空 ${clearTargets.length} 个 IP 的草稿，需统一提交发布后生效`);
@@ -446,7 +440,7 @@ export function HotRankingManagement() {
       toast.info("当前无未发布的草稿变更");
       return;
     }
-    setGlobalStatus("reviewing");
+    setReviewing(true);
     setPublishOpen(false);
     toast.success(`已提交 ${dirtyIps.length} 个 IP 的草稿，审核通过后统一生效`);
   }
@@ -460,7 +454,7 @@ export function HotRankingManagement() {
       });
       return np;
     });
-    setGlobalStatus("published");
+    setReviewing(false);
     toast.success("审核通过，全部 IP 配置已发布到线上");
   }
 
@@ -473,7 +467,7 @@ export function HotRankingManagement() {
       });
       return np;
     });
-    setGlobalStatus("published");
+    setReviewing(false);
     setRevertOpen(false);
     toast.success("已撤销全部 IP 的草稿，恢复为线上版本");
   }
@@ -590,7 +584,7 @@ export function HotRankingManagement() {
                       variant="outline"
                       className="mr-2"
                       onClick={() => setRevertOpen(true)}
-                      disabled={!hasDraftDiff || isReviewing}
+                      disabled={!hasDraftDiff || reviewing}
                       title={hasDraftDiff ? "撤销草稿，恢复线上版本" : "当前无草稿变更"}
                     >
                       <Undo2 className="h-4 w-4" />
@@ -601,9 +595,9 @@ export function HotRankingManagement() {
                       variant="outline"
                       className="mr-2"
                       onClick={() => setPublishOpen(true)}
-                      disabled={!hasDraftDiff || isReviewing}
+                      disabled={!hasDraftDiff || reviewing}
                       title={
-                        isReviewing
+                        reviewing
                           ? "审核中，等待审核结果"
                           : hasDraftDiff
                             ? "提交草稿进入审核"
@@ -613,7 +607,7 @@ export function HotRankingManagement() {
                       <Send className="h-4 w-4" />
                       提交发布
                     </Button>
-                    {isReviewing && (
+                    {reviewing && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -656,8 +650,8 @@ export function HotRankingManagement() {
                         setAddPosition(availablePositions[0]);
                         setAddOpen(true);
                       }}
-                      disabled={isReviewing}
-                      title={isReviewing ? "审核中，暂不可编辑草稿" : ""}
+                      disabled={reviewing}
+                      title={reviewing ? "审核中，暂不可编辑草稿" : ""}
                     >
                       <Plus className="h-4 w-4" />
                       新增榜单位置配置
