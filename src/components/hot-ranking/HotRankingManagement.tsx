@@ -473,17 +473,17 @@ export function HotRankingManagement() {
   }
 
   const statusBadge =
-    globalStatus === "published" ? (
+    phase === "published" ? (
       <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
         <CheckCircle2 className="mr-1 h-3 w-3" />已发布
       </Badge>
-    ) : globalStatus === "reviewing" ? (
+    ) : phase === "reviewing" ? (
       <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
         <Clock className="mr-1 h-3 w-3" />审核中
       </Badge>
     ) : (
       <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
-        <AlertCircle className="mr-1 h-3 w-3" />草稿待发布
+        <AlertCircle className="mr-1 h-3 w-3" />草稿待发布（{dirtyIps.length} 个 IP）
       </Badge>
     );
 
