@@ -162,10 +162,8 @@ export function HotRankingManagement() {
       (Object.keys(DEFAULT_PINNED) as IpCode[]).map((k) => [k, DEFAULT_PINNED[k].map((p) => ({ ...p }))]),
     ) as Record<IpCode, PinnedItem[]>,
   );
-  // 每个 IP 的发布状态
-  const [statusMap, setStatusMap] = useState<Record<IpCode, PublishStatus>>(
-    () => Object.fromEntries((Object.keys(DEFAULT_PINNED) as IpCode[]).map((k) => [k, "published"])) as Record<IpCode, PublishStatus>,
-  );
+  // 全局发布状态：所有 IP 的草稿统一提交、统一审核、统一生效
+  const [globalStatus, setGlobalStatus] = useState<PublishStatus>("published");
 
   const [addOpen, setAddOpen] = useState(false);
   const [addSpuId, setAddSpuId] = useState("");
@@ -193,16 +191,17 @@ export function HotRankingManagement() {
 
   const pinnedList = pinnedMap[currentIp];
   const publishedList = publishedMap[currentIp];
-  const currentStatus = statusMap[currentIp];
-  const hasDraftDiff = !isSameConfig(pinnedList, publishedList);
-
-  // 任何对草稿的改动都要根据与线上的 diff 重新计算状态
-  function recomputeStatus(code: IpCode, draftOverride?: PinnedItem[], publishedOverride?: PinnedItem[]) {
-    setStatusMap((s) => {
-      const draft = draftOverride ?? pinnedMap[code];
-      const published = publishedOverride ?? publishedMap[code];
-      return { ...s, [code]: isSameConfig(draft, published) ? "published" : "draft" };
-    });
+  // 有差异的 IP 列表（全局视角）
+  const dirtyIps = useMemo(
+    () => IPS.filter((ip) => !isSameConfig(pinnedMap[ip.code], publishedMap[ip.code])).map((ip) => ip.code),
+    [pinnedMap, publishedMap],
+  );
+  const hasDraftDiff = dirtyIps.length > 0;
+  const isReviewing = globalStatus === "reviewing";
+  // 任意草稿改动后：如果之前是 reviewing，保持 reviewing；否则按 diff 重置
+  function bumpStatusAfterEdit(nextPinned: Record<IpCode, PinnedItem[]>) {
+    const stillDirty = IPS.some((ip) => !isSameConfig(nextPinned[ip.code], publishedMap[ip.code]));
+    setGlobalStatus((s) => (s === "reviewing" ? s : stillDirty ? "draft" : "published"));
   }
 
   // Compose final ranking: pinned positions are locked; natural sort fills the rest in order, skipping pinned spuIds.
