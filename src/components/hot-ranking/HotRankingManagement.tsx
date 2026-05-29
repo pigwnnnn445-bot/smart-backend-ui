@@ -54,24 +54,28 @@ const IPS: Ip[] = [
   { code: "VN", name: "越南 (VN)" },
 ];
 
-type Spu = { id: string; name: string; brand: string; hotScore: number };
+type SpuCategory = "AI工具" | "影音娱乐" | "音乐" | "设计创作" | "办公效率" | "社交";
+
+const CATEGORIES: SpuCategory[] = ["AI工具", "影音娱乐", "音乐", "设计创作", "办公效率", "社交"];
+
+type Spu = { id: string; name: string; brand: string; category: SpuCategory; hotScore: number };
 
 const ALL_SPUS: Spu[] = [
-  { id: "SPU001", name: "ChatGPT", brand: "OpenAI", hotScore: 9821 },
-  { id: "SPU002", name: "Netflix", brand: "Netflix", hotScore: 9123 },
-  { id: "SPU003", name: "Spotify", brand: "Spotify", hotScore: 8754 },
-  { id: "SPU004", name: "YouTube Premium", brand: "Google", hotScore: 8210 },
-  { id: "SPU005", name: "Disney+", brand: "Disney", hotScore: 7890 },
-  { id: "SPU006", name: "Midjourney", brand: "Midjourney", hotScore: 7321 },
-  { id: "SPU007", name: "Canva Pro", brand: "Canva", hotScore: 6543 },
-  { id: "SPU008", name: "Notion AI", brand: "Notion", hotScore: 6210 },
-  { id: "SPU009", name: "Adobe Creative Cloud", brand: "Adobe", hotScore: 5980 },
-  { id: "SPU010", name: "Microsoft 365", brand: "Microsoft", hotScore: 5670 },
-  { id: "SPU011", name: "HBO Max", brand: "HBO", hotScore: 5320 },
-  { id: "SPU012", name: "Claude Pro", brand: "Anthropic", hotScore: 5104 },
-  { id: "SPU013", name: "Perplexity Pro", brand: "Perplexity", hotScore: 4890 },
-  { id: "SPU014", name: "Apple Music", brand: "Apple", hotScore: 4670 },
-  { id: "SPU015", name: "Tinder Gold", brand: "Tinder", hotScore: 4321 },
+  { id: "SPU001", name: "ChatGPT", brand: "OpenAI", category: "AI工具", hotScore: 9821 },
+  { id: "SPU002", name: "Netflix", brand: "Netflix", category: "影音娱乐", hotScore: 9123 },
+  { id: "SPU003", name: "Spotify", brand: "Spotify", category: "音乐", hotScore: 8754 },
+  { id: "SPU004", name: "YouTube Premium", brand: "Google", category: "影音娱乐", hotScore: 8210 },
+  { id: "SPU005", name: "Disney+", brand: "Disney", category: "影音娱乐", hotScore: 7890 },
+  { id: "SPU006", name: "Midjourney", brand: "Midjourney", category: "AI工具", hotScore: 7321 },
+  { id: "SPU007", name: "Canva Pro", brand: "Canva", category: "设计创作", hotScore: 6543 },
+  { id: "SPU008", name: "Notion AI", brand: "Notion", category: "办公效率", hotScore: 6210 },
+  { id: "SPU009", name: "Adobe Creative Cloud", brand: "Adobe", category: "设计创作", hotScore: 5980 },
+  { id: "SPU010", name: "Microsoft 365", brand: "Microsoft", category: "办公效率", hotScore: 5670 },
+  { id: "SPU011", name: "HBO Max", brand: "HBO", category: "影音娱乐", hotScore: 5320 },
+  { id: "SPU012", name: "Claude Pro", brand: "Anthropic", category: "AI工具", hotScore: 5104 },
+  { id: "SPU013", name: "Perplexity Pro", brand: "Perplexity", category: "AI工具", hotScore: 4890 },
+  { id: "SPU014", name: "Apple Music", brand: "Apple", category: "音乐", hotScore: 4670 },
+  { id: "SPU015", name: "Tinder Gold", brand: "Tinder", category: "社交", hotScore: 4321 },
 ];
 
 type PinnedItem = {
