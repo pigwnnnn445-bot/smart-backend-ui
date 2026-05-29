@@ -135,6 +135,7 @@ export function HotRankingManagement() {
   const [addOpen, setAddOpen] = useState(false);
   const [addSpuId, setAddSpuId] = useState("");
   const [addPosition, setAddPosition] = useState<number>(1);
+  const [addCategory, setAddCategory] = useState<SpuCategory | "全部">("全部");
 
   const [removeId, setRemoveId] = useState<string | null>(null);
 
@@ -170,7 +171,9 @@ export function HotRankingManagement() {
     (p) => !usedPositions.has(p),
   );
   const pinnedIdSet = new Set(pinnedList.map((p) => p.spuId));
-  const candidateSpus = ALL_SPUS.filter((s) => !pinnedIdSet.has(s.id));
+  const candidateSpus = ALL_SPUS.filter(
+    (s) => !pinnedIdSet.has(s.id) && (addCategory === "全部" || s.category === addCategory),
+  );
 
   function handleAdd() {
     if (!addSpuId) {
