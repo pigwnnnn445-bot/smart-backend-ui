@@ -494,12 +494,24 @@ export function HotRankingManagement() {
               </Select>
             </div>
             <div>
+              <div className="mb-1 text-slate-600">所属分类</div>
+              <Select value={addCategory} onValueChange={(v) => { setAddCategory(v as SpuCategory | "全部"); setAddSpuId(""); }}>
+                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="全部">全部分类</SelectItem>
+                  {CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <div className="mb-1 text-slate-600">SPU</div>
               <Select value={addSpuId} onValueChange={setAddSpuId}>
                 <SelectTrigger className="h-8"><SelectValue placeholder="请选择 SPU" /></SelectTrigger>
                 <SelectContent>
                   {candidateSpus.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}（{s.id}）</SelectItem>
+                    <SelectItem key={s.id} value={s.id}>{s.name}（{s.category} · {s.id}）</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
