@@ -388,6 +388,9 @@ export function HotRankingManagement() {
                                 {spu?.category ? <Badge variant="outline">{spu.category}</Badge> : "—"}
                               </td>
                               <td className="px-3 py-2">
+                                {spu?.source ? <Badge variant="outline">{spu.source}</Badge> : "—"}
+                              </td>
+                              <td className="px-3 py-2">
                                 {isPinned ? (
                                   <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
                                     <Pin className="mr-1 h-3 w-3" />
