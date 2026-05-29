@@ -381,7 +381,7 @@ export function HotRankingManagement() {
                           <th className="px-3 py-2 text-left">SPU</th>
                           <th className="w-24 px-3 py-2 text-left">所属分类</th>
                           <th className="w-24 px-3 py-2 text-left">商品来源</th>
-                          <th className="w-24 px-3 py-2 text-left">来源</th>
+                          <th className="w-24 px-3 py-2 text-left">榜单来源</th>
                           <th className="w-20 px-3 py-2 text-right">热度分</th>
                         </tr>
                       </thead>
