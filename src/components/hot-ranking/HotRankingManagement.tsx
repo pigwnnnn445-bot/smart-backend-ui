@@ -281,6 +281,58 @@ export function HotRankingManagement() {
     toast.success("已更新榜单顺序");
   }
 
+  // 可复制的目标 IP（排除当前 IP）
+  const otherIps = IPS.filter((ip) => ip.code !== currentIp);
+  const targetsWithExisting = copyTargets.filter(
+    (code) => (pinnedMap[code] ?? []).length > 0,
+  );
+
+  function openCopy() {
+    setCopyTargets([]);
+    setCopyOpen(true);
+  }
+
+  function toggleCopyTarget(code: IpCode) {
+    setCopyTargets((p) => (p.includes(code) ? p.filter((c) => c !== code) : [...p, code]));
+  }
+
+  function toggleAllCopyTargets() {
+    const allCodes = otherIps.map((i) => i.code);
+    const allSelected = allCodes.every((c) => copyTargets.includes(c));
+    setCopyTargets(allSelected ? [] : allCodes);
+  }
+
+  function handleCopyConfirm() {
+    if (copyTargets.length === 0) {
+      toast.error("请至少勾选一个目标 IP");
+      return;
+    }
+    if (targetsWithExisting.length > 0) {
+      setCopyConfirmOpen(true);
+      return;
+    }
+    commitCopy();
+  }
+
+  function commitCopy() {
+    const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+    const snapshot = pinnedList.map((p) => ({
+      ...p,
+      operator: "当前用户",
+      updatedAt: now,
+    }));
+    setPinnedMap((m) => {
+      const next = { ...m };
+      copyTargets.forEach((code) => {
+        next[code] = snapshot.map((p) => ({ ...p }));
+      });
+      return next;
+    });
+    toast.success(`已将当前方案复制到 ${copyTargets.length} 个 IP`);
+    setCopyConfirmOpen(false);
+    setCopyOpen(false);
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-100 text-sm text-slate-800">
       <aside className="flex w-56 shrink-0 flex-col bg-white border-r border-slate-200">
