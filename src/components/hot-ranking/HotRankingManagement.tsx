@@ -424,14 +424,15 @@ export function HotRankingManagement() {
                     ) : (
                       <table className="w-full text-sm">
                         <thead className="bg-slate-50 text-slate-600">
-                          <tr>
-                            <th className="w-14 px-3 py-2 text-left">位置</th>
-                            <th className="px-3 py-2 text-left">SPU</th>
-                            <th className="w-24 px-3 py-2 text-left">所属分类</th>
-                            <th className="px-3 py-2 text-left">操作人</th>
-                            <th className="px-3 py-2 text-left">更新时间</th>
-                            <th className="w-32 px-3 py-2 text-right">操作</th>
-                          </tr>
+                        <tr>
+                          <th className="w-14 px-3 py-2 text-left">位置</th>
+                          <th className="px-3 py-2 text-left">SPU</th>
+                          <th className="w-24 px-3 py-2 text-left">所属分类</th>
+                          <th className="w-24 px-3 py-2 text-left">商品来源</th>
+                          <th className="px-3 py-2 text-left">操作人</th>
+                          <th className="px-3 py-2 text-left">更新时间</th>
+                          <th className="w-32 px-3 py-2 text-right">操作</th>
+                        </tr>
                         </thead>
                         <tbody>
                           {pinnedList.map((p) => {
