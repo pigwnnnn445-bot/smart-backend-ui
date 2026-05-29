@@ -16,10 +16,18 @@ import {
   ArrowUp,
   ArrowDown,
   GripVertical,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -145,6 +153,11 @@ export function HotRankingManagement() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
+  // 复制配置到其他 IP
+  const [copyOpen, setCopyOpen] = useState(false);
+  const [copyTargets, setCopyTargets] = useState<IpCode[]>([]);
+  const [copyConfirmOpen, setCopyConfirmOpen] = useState(false);
+
   const pinnedList = pinnedMap[currentIp];
 
   // Compose final ranking: pinned positions are locked; natural sort fills the rest in order, skipping pinned spuIds.
@@ -268,6 +281,58 @@ export function HotRankingManagement() {
     toast.success("已更新榜单顺序");
   }
 
+  // 可复制的目标 IP（排除当前 IP）
+  const otherIps = IPS.filter((ip) => ip.code !== currentIp);
+  const targetsWithExisting = copyTargets.filter(
+    (code) => (pinnedMap[code] ?? []).length > 0,
+  );
+
+  function openCopy() {
+    setCopyTargets([]);
+    setCopyOpen(true);
+  }
+
+  function toggleCopyTarget(code: IpCode) {
+    setCopyTargets((p) => (p.includes(code) ? p.filter((c) => c !== code) : [...p, code]));
+  }
+
+  function toggleAllCopyTargets() {
+    const allCodes = otherIps.map((i) => i.code);
+    const allSelected = allCodes.every((c) => copyTargets.includes(c));
+    setCopyTargets(allSelected ? [] : allCodes);
+  }
+
+  function handleCopyConfirm() {
+    if (copyTargets.length === 0) {
+      toast.error("请至少勾选一个目标 IP");
+      return;
+    }
+    if (targetsWithExisting.length > 0) {
+      setCopyConfirmOpen(true);
+      return;
+    }
+    commitCopy();
+  }
+
+  function commitCopy() {
+    const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+    const snapshot = pinnedList.map((p) => ({
+      ...p,
+      operator: "当前用户",
+      updatedAt: now,
+    }));
+    setPinnedMap((m) => {
+      const next = { ...m };
+      copyTargets.forEach((code) => {
+        next[code] = snapshot.map((p) => ({ ...p }));
+      });
+      return next;
+    });
+    toast.success(`已将当前方案复制到 ${copyTargets.length} 个 IP`);
+    setCopyConfirmOpen(false);
+    setCopyOpen(false);
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-100 text-sm text-slate-800">
       <aside className="flex w-56 shrink-0 flex-col bg-white border-r border-slate-200">
@@ -359,6 +424,17 @@ export function HotRankingManagement() {
                     </Badge>
                   )}
                   <div className="ml-auto">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mr-2"
+                      onClick={openCopy}
+                      disabled={pinnedList.length === 0}
+                      title={pinnedList.length === 0 ? "当前 IP 无固定配置，无法复制" : "将当前方案复制到其他 IP"}
+                    >
+                      <Copy className="h-4 w-4" />
+                      复制到其他IP
+                    </Button>
                     <Button
                       size="sm"
                       onClick={() => {
@@ -637,6 +713,89 @@ export function HotRankingManagement() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setRemoveId(null)}>取消</Button>
             <Button variant="destructive" onClick={() => removeId && handleRemove(removeId)}>确认移除</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 复制方案到其他 IP - Sheet */}
+      <Sheet open={copyOpen} onOpenChange={setCopyOpen}>
+        <SheetContent side="right" className="!w-[420px] !max-w-none p-0 flex flex-col">
+          <SheetHeader className="px-6 py-4 border-b border-slate-200">
+            <SheetTitle className="text-base">
+              复制方案到其他 IP（来源：{IPS.find((i) => i.code === currentIp)?.name}）
+            </SheetTitle>
+          </SheetHeader>
+          <div className="px-6 py-3 border-b border-slate-200 text-xs text-slate-500">
+            勾选的目标 IP 将被覆盖为当前 IP 的 {pinnedList.length} 条固定配置（位置、SPU 完全一致），其余 IP 不变。
+          </div>
+          <div className="flex-1 overflow-auto px-6 py-4">
+            <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+              {otherIps.map((ip) => {
+                const existing = (pinnedMap[ip.code] ?? []).length;
+                return (
+                  <label
+                    key={ip.code}
+                    className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={copyTargets.includes(ip.code)}
+                      onCheckedChange={() => toggleCopyTarget(ip.code)}
+                    />
+                    <span className="truncate">
+                      {ip.name}
+                      {existing > 0 && (
+                        <span className="ml-1 text-xs text-amber-600">（已有 {existing} 条）</span>
+                      )}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t border-slate-200 px-6 py-3 bg-white">
+            <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+              <Checkbox
+                checked={
+                  otherIps.every((i) => copyTargets.includes(i.code))
+                    ? true
+                    : copyTargets.length > 0
+                      ? "indeterminate"
+                      : false
+                }
+                onCheckedChange={toggleAllCopyTargets}
+              />
+              全选
+              <span className="ml-3 text-slate-500">已选 IP：{copyTargets.length}</span>
+            </label>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setCopyOpen(false)}>
+                取消
+              </Button>
+              <Button size="sm" onClick={handleCopyConfirm}>
+                保存
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* 覆盖二次确认 */}
+      <Dialog open={copyConfirmOpen} onOpenChange={setCopyConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>确认覆盖已有配置</DialogTitle>
+            <DialogDescription>
+              以下 {targetsWithExisting.length} 个 IP 已存在固定配置，复制后将被完全覆盖且不可恢复：
+              <span className="mt-2 block text-slate-700">
+                {targetsWithExisting
+                  .map((c) => IPS.find((i) => i.code === c)?.name)
+                  .join("、")}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCopyConfirmOpen(false)}>取消</Button>
+            <Button variant="destructive" onClick={commitCopy}>确认覆盖</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
