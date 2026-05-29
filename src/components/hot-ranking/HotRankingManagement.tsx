@@ -141,6 +141,8 @@ export function HotRankingManagement() {
   const [addCategory, setAddCategory] = useState<SpuCategory | "全部">("全部");
 
   const [removeId, setRemoveId] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   const pinnedList = pinnedMap[currentIp];
 
@@ -231,6 +233,30 @@ export function HotRankingManagement() {
           .sort((a, b) => a.position - b.position),
       };
     });
+  }
+
+  // Reorder pinned list by drag: keep the original set of occupied positions,
+  // but assign them to items in their new visual order.
+  function reorderPinned(sourceId: string, targetId: string) {
+    if (sourceId === targetId) return;
+    setPinnedMap((m) => {
+      const list = [...m[currentIp]].sort((a, b) => a.position - b.position);
+      const srcIdx = list.findIndex((p) => p.spuId === sourceId);
+      const tgtIdx = list.findIndex((p) => p.spuId === targetId);
+      if (srcIdx < 0 || tgtIdx < 0) return m;
+      const positions = list.map((p) => p.position);
+      const [moved] = list.splice(srcIdx, 1);
+      list.splice(tgtIdx, 0, moved);
+      const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+      const reassigned = list.map((p, i) => ({
+        ...p,
+        position: positions[i],
+        operator: p.spuId === sourceId ? "当前用户" : p.operator,
+        updatedAt: p.spuId === sourceId ? now : p.updatedAt,
+      }));
+      return { ...m, [currentIp]: reassigned };
+    });
+    toast.success("已更新榜单顺序");
   }
 
   return (
