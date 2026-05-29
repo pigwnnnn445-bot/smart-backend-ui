@@ -584,7 +584,7 @@ export function HotRankingManagement() {
                       variant="outline"
                       className="mr-2"
                       onClick={() => setRevertOpen(true)}
-                      disabled={!hasDraftDiff || currentStatus === "reviewing"}
+                      disabled={!hasDraftDiff || isReviewing}
                       title={hasDraftDiff ? "撤销草稿，恢复线上版本" : "当前无草稿变更"}
                     >
                       <Undo2 className="h-4 w-4" />
@@ -595,9 +595,9 @@ export function HotRankingManagement() {
                       variant="outline"
                       className="mr-2"
                       onClick={() => setPublishOpen(true)}
-                      disabled={!hasDraftDiff || currentStatus === "reviewing"}
+                      disabled={!hasDraftDiff || isReviewing}
                       title={
-                        currentStatus === "reviewing"
+                        isReviewing
                           ? "审核中，等待审核结果"
                           : hasDraftDiff
                             ? "提交草稿进入审核"
@@ -607,7 +607,7 @@ export function HotRankingManagement() {
                       <Send className="h-4 w-4" />
                       提交发布
                     </Button>
-                    {currentStatus === "reviewing" && (
+                    {isReviewing && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -650,8 +650,8 @@ export function HotRankingManagement() {
                         setAddPosition(availablePositions[0]);
                         setAddOpen(true);
                       }}
-                      disabled={currentStatus === "reviewing"}
-                      title={currentStatus === "reviewing" ? "审核中，暂不可编辑草稿" : ""}
+                      disabled={isReviewing}
+                      title={isReviewing ? "审核中，暂不可编辑草稿" : ""}
                     >
                       <Plus className="h-4 w-4" />
                       新增榜单位置配置
@@ -1020,7 +1020,7 @@ export function HotRankingManagement() {
             <div className="grid grid-cols-2 gap-y-3 gap-x-4">
               {clearableIps.map((ip) => {
                 const existing = (pinnedMap[ip.code] ?? []).length;
-                const reviewing = statusMap[ip.code] === "reviewing";
+                const reviewing = false;
                 return (
                   <label
                     key={ip.code}
