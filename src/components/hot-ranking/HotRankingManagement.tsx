@@ -54,24 +54,28 @@ const IPS: Ip[] = [
   { code: "VN", name: "越南 (VN)" },
 ];
 
-type Spu = { id: string; name: string; brand: string; hotScore: number };
+type SpuCategory = "AI工具" | "影音娱乐" | "音乐" | "设计创作" | "办公效率" | "社交";
+
+const CATEGORIES: SpuCategory[] = ["AI工具", "影音娱乐", "音乐", "设计创作", "办公效率", "社交"];
+
+type Spu = { id: string; name: string; brand: string; category: SpuCategory; hotScore: number };
 
 const ALL_SPUS: Spu[] = [
-  { id: "SPU001", name: "ChatGPT", brand: "OpenAI", hotScore: 9821 },
-  { id: "SPU002", name: "Netflix", brand: "Netflix", hotScore: 9123 },
-  { id: "SPU003", name: "Spotify", brand: "Spotify", hotScore: 8754 },
-  { id: "SPU004", name: "YouTube Premium", brand: "Google", hotScore: 8210 },
-  { id: "SPU005", name: "Disney+", brand: "Disney", hotScore: 7890 },
-  { id: "SPU006", name: "Midjourney", brand: "Midjourney", hotScore: 7321 },
-  { id: "SPU007", name: "Canva Pro", brand: "Canva", hotScore: 6543 },
-  { id: "SPU008", name: "Notion AI", brand: "Notion", hotScore: 6210 },
-  { id: "SPU009", name: "Adobe Creative Cloud", brand: "Adobe", hotScore: 5980 },
-  { id: "SPU010", name: "Microsoft 365", brand: "Microsoft", hotScore: 5670 },
-  { id: "SPU011", name: "HBO Max", brand: "HBO", hotScore: 5320 },
-  { id: "SPU012", name: "Claude Pro", brand: "Anthropic", hotScore: 5104 },
-  { id: "SPU013", name: "Perplexity Pro", brand: "Perplexity", hotScore: 4890 },
-  { id: "SPU014", name: "Apple Music", brand: "Apple", hotScore: 4670 },
-  { id: "SPU015", name: "Tinder Gold", brand: "Tinder", hotScore: 4321 },
+  { id: "SPU001", name: "ChatGPT", brand: "OpenAI", category: "AI工具", hotScore: 9821 },
+  { id: "SPU002", name: "Netflix", brand: "Netflix", category: "影音娱乐", hotScore: 9123 },
+  { id: "SPU003", name: "Spotify", brand: "Spotify", category: "音乐", hotScore: 8754 },
+  { id: "SPU004", name: "YouTube Premium", brand: "Google", category: "影音娱乐", hotScore: 8210 },
+  { id: "SPU005", name: "Disney+", brand: "Disney", category: "影音娱乐", hotScore: 7890 },
+  { id: "SPU006", name: "Midjourney", brand: "Midjourney", category: "AI工具", hotScore: 7321 },
+  { id: "SPU007", name: "Canva Pro", brand: "Canva", category: "设计创作", hotScore: 6543 },
+  { id: "SPU008", name: "Notion AI", brand: "Notion", category: "办公效率", hotScore: 6210 },
+  { id: "SPU009", name: "Adobe Creative Cloud", brand: "Adobe", category: "设计创作", hotScore: 5980 },
+  { id: "SPU010", name: "Microsoft 365", brand: "Microsoft", category: "办公效率", hotScore: 5670 },
+  { id: "SPU011", name: "HBO Max", brand: "HBO", category: "影音娱乐", hotScore: 5320 },
+  { id: "SPU012", name: "Claude Pro", brand: "Anthropic", category: "AI工具", hotScore: 5104 },
+  { id: "SPU013", name: "Perplexity Pro", brand: "Perplexity", category: "AI工具", hotScore: 4890 },
+  { id: "SPU014", name: "Apple Music", brand: "Apple", category: "音乐", hotScore: 4670 },
+  { id: "SPU015", name: "Tinder Gold", brand: "Tinder", category: "社交", hotScore: 4321 },
 ];
 
 type PinnedItem = {
@@ -131,6 +135,7 @@ export function HotRankingManagement() {
   const [addOpen, setAddOpen] = useState(false);
   const [addSpuId, setAddSpuId] = useState("");
   const [addPosition, setAddPosition] = useState<number>(1);
+  const [addCategory, setAddCategory] = useState<SpuCategory | "全部">("全部");
 
   const [removeId, setRemoveId] = useState<string | null>(null);
 
@@ -166,7 +171,9 @@ export function HotRankingManagement() {
     (p) => !usedPositions.has(p),
   );
   const pinnedIdSet = new Set(pinnedList.map((p) => p.spuId));
-  const candidateSpus = ALL_SPUS.filter((s) => !pinnedIdSet.has(s.id));
+  const candidateSpus = ALL_SPUS.filter(
+    (s) => !pinnedIdSet.has(s.id) && (addCategory === "全部" || s.category === addCategory),
+  );
 
   function handleAdd() {
     if (!addSpuId) {
@@ -343,6 +350,7 @@ export function HotRankingManagement() {
                         <tr>
                           <th className="w-14 px-3 py-2 text-left">位置</th>
                           <th className="px-3 py-2 text-left">SPU</th>
+                          <th className="w-24 px-3 py-2 text-left">所属分类</th>
                           <th className="w-24 px-3 py-2 text-left">来源</th>
                           <th className="w-20 px-3 py-2 text-right">热度分</th>
                         </tr>
@@ -354,6 +362,7 @@ export function HotRankingManagement() {
                             return (
                               <tr key={pos} className="border-t border-slate-100">
                                 <td className="px-3 py-2 text-slate-400">#{pos}</td>
+                                <td className="px-3 py-2 text-slate-400">—</td>
                                 <td className="px-3 py-2 text-slate-400">—</td>
                                 <td className="px-3 py-2 text-slate-400">空缺</td>
                                 <td className="px-3 py-2 text-right text-slate-400">—</td>
@@ -370,6 +379,9 @@ export function HotRankingManagement() {
                               <td className="px-3 py-2">
                                 <div className="font-medium text-slate-800">{spu?.name ?? slot.spuId}</div>
                                 <div className="text-xs text-slate-500">{spu?.brand} · {slot.spuId}</div>
+                              </td>
+                              <td className="px-3 py-2">
+                                {spu?.category ? <Badge variant="outline">{spu.category}</Badge> : "—"}
                               </td>
                               <td className="px-3 py-2">
                                 {isPinned ? (
@@ -408,6 +420,7 @@ export function HotRankingManagement() {
                           <tr>
                             <th className="w-14 px-3 py-2 text-left">位置</th>
                             <th className="px-3 py-2 text-left">SPU</th>
+                            <th className="w-24 px-3 py-2 text-left">所属分类</th>
                             <th className="px-3 py-2 text-left">操作人</th>
                             <th className="px-3 py-2 text-left">更新时间</th>
                             <th className="w-32 px-3 py-2 text-right">操作</th>
@@ -422,6 +435,9 @@ export function HotRankingManagement() {
                                 <td className="px-3 py-2">
                                   <div className="font-medium text-slate-800">{spu?.name ?? p.spuId}</div>
                                   <div className="text-xs text-slate-500">{p.spuId}</div>
+                                </td>
+                                <td className="px-3 py-2">
+                                  {spu?.category ? <Badge variant="outline">{spu.category}</Badge> : "—"}
                                 </td>
                                 <td className="px-3 py-2 text-slate-600">{p.operator}</td>
                                 <td className="px-3 py-2 text-slate-500">{p.updatedAt}</td>
@@ -478,12 +494,24 @@ export function HotRankingManagement() {
               </Select>
             </div>
             <div>
+              <div className="mb-1 text-slate-600">所属分类</div>
+              <Select value={addCategory} onValueChange={(v) => { setAddCategory(v as SpuCategory | "全部"); setAddSpuId(""); }}>
+                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="全部">全部分类</SelectItem>
+                  {CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <div className="mb-1 text-slate-600">SPU</div>
               <Select value={addSpuId} onValueChange={setAddSpuId}>
                 <SelectTrigger className="h-8"><SelectValue placeholder="请选择 SPU" /></SelectTrigger>
                 <SelectContent>
                   {candidateSpus.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}（{s.id}）</SelectItem>
+                    <SelectItem key={s.id} value={s.id}>{s.name}（{s.category} · {s.id}）</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
