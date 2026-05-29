@@ -58,24 +58,26 @@ type SpuCategory = "AI工具" | "影音娱乐" | "音乐" | "设计创作" | "�
 
 const CATEGORIES: SpuCategory[] = ["AI工具", "影音娱乐", "音乐", "设计创作", "办公效率", "社交"];
 
-type Spu = { id: string; name: string; brand: string; category: SpuCategory; hotScore: number };
+type SpuSource = "b2c商品" | "c2c商品";
+
+type Spu = { id: string; name: string; brand: string; category: SpuCategory; source: SpuSource; hotScore: number };
 
 const ALL_SPUS: Spu[] = [
-  { id: "SPU001", name: "ChatGPT", brand: "OpenAI", category: "AI工具", hotScore: 9821 },
-  { id: "SPU002", name: "Netflix", brand: "Netflix", category: "影音娱乐", hotScore: 9123 },
-  { id: "SPU003", name: "Spotify", brand: "Spotify", category: "音乐", hotScore: 8754 },
-  { id: "SPU004", name: "YouTube Premium", brand: "Google", category: "影音娱乐", hotScore: 8210 },
-  { id: "SPU005", name: "Disney+", brand: "Disney", category: "影音娱乐", hotScore: 7890 },
-  { id: "SPU006", name: "Midjourney", brand: "Midjourney", category: "AI工具", hotScore: 7321 },
-  { id: "SPU007", name: "Canva Pro", brand: "Canva", category: "设计创作", hotScore: 6543 },
-  { id: "SPU008", name: "Notion AI", brand: "Notion", category: "办公效率", hotScore: 6210 },
-  { id: "SPU009", name: "Adobe Creative Cloud", brand: "Adobe", category: "设计创作", hotScore: 5980 },
-  { id: "SPU010", name: "Microsoft 365", brand: "Microsoft", category: "办公效率", hotScore: 5670 },
-  { id: "SPU011", name: "HBO Max", brand: "HBO", category: "影音娱乐", hotScore: 5320 },
-  { id: "SPU012", name: "Claude Pro", brand: "Anthropic", category: "AI工具", hotScore: 5104 },
-  { id: "SPU013", name: "Perplexity Pro", brand: "Perplexity", category: "AI工具", hotScore: 4890 },
-  { id: "SPU014", name: "Apple Music", brand: "Apple", category: "音乐", hotScore: 4670 },
-  { id: "SPU015", name: "Tinder Gold", brand: "Tinder", category: "社交", hotScore: 4321 },
+  { id: "SPU001", name: "ChatGPT", brand: "OpenAI", category: "AI工具", source: "b2c商品", hotScore: 9821 },
+  { id: "SPU002", name: "Netflix", brand: "Netflix", category: "影音娱乐", source: "b2c商品", hotScore: 9123 },
+  { id: "SPU003", name: "Spotify", brand: "Spotify", category: "音乐", source: "b2c商品", hotScore: 8754 },
+  { id: "SPU004", name: "YouTube Premium", brand: "Google", category: "影音娱乐", source: "b2c商品", hotScore: 8210 },
+  { id: "SPU005", name: "Disney+", brand: "Disney", category: "影音娱乐", source: "b2c商品", hotScore: 7890 },
+  { id: "SPU006", name: "Midjourney", brand: "Midjourney", category: "AI工具", source: "c2c商品", hotScore: 7321 },
+  { id: "SPU007", name: "Canva Pro", brand: "Canva", category: "设计创作", source: "b2c商品", hotScore: 6543 },
+  { id: "SPU008", name: "Notion AI", brand: "Notion", category: "办公效率", source: "c2c商品", hotScore: 6210 },
+  { id: "SPU009", name: "Adobe Creative Cloud", brand: "Adobe", category: "设计创作", source: "b2c商品", hotScore: 5980 },
+  { id: "SPU010", name: "Microsoft 365", brand: "Microsoft", category: "办公效率", source: "b2c商品", hotScore: 5670 },
+  { id: "SPU011", name: "HBO Max", brand: "HBO", category: "影音娱乐", source: "b2c商品", hotScore: 5320 },
+  { id: "SPU012", name: "Claude Pro", brand: "Anthropic", category: "AI工具", source: "c2c商品", hotScore: 5104 },
+  { id: "SPU013", name: "Perplexity Pro", brand: "Perplexity", category: "AI工具", source: "c2c商品", hotScore: 4890 },
+  { id: "SPU014", name: "Apple Music", brand: "Apple", category: "音乐", source: "b2c商品", hotScore: 4670 },
+  { id: "SPU015", name: "Tinder Gold", brand: "Tinder", category: "社交", source: "b2c商品", hotScore: 4321 },
 ];
 
 type PinnedItem = {
@@ -351,6 +353,7 @@ export function HotRankingManagement() {
                           <th className="w-14 px-3 py-2 text-left">位置</th>
                           <th className="px-3 py-2 text-left">SPU</th>
                           <th className="w-24 px-3 py-2 text-left">所属分类</th>
+                          <th className="w-24 px-3 py-2 text-left">商品来源</th>
                           <th className="w-24 px-3 py-2 text-left">来源</th>
                           <th className="w-20 px-3 py-2 text-right">热度分</th>
                         </tr>
@@ -362,6 +365,7 @@ export function HotRankingManagement() {
                             return (
                               <tr key={pos} className="border-t border-slate-100">
                                 <td className="px-3 py-2 text-slate-400">#{pos}</td>
+                                <td className="px-3 py-2 text-slate-400">—</td>
                                 <td className="px-3 py-2 text-slate-400">—</td>
                                 <td className="px-3 py-2 text-slate-400">—</td>
                                 <td className="px-3 py-2 text-slate-400">空缺</td>
@@ -382,6 +386,9 @@ export function HotRankingManagement() {
                               </td>
                               <td className="px-3 py-2">
                                 {spu?.category ? <Badge variant="outline">{spu.category}</Badge> : "—"}
+                              </td>
+                              <td className="px-3 py-2">
+                                {spu?.source ? <Badge variant="outline">{spu.source}</Badge> : "—"}
                               </td>
                               <td className="px-3 py-2">
                                 {isPinned ? (
@@ -417,14 +424,15 @@ export function HotRankingManagement() {
                     ) : (
                       <table className="w-full text-sm">
                         <thead className="bg-slate-50 text-slate-600">
-                          <tr>
-                            <th className="w-14 px-3 py-2 text-left">位置</th>
-                            <th className="px-3 py-2 text-left">SPU</th>
-                            <th className="w-24 px-3 py-2 text-left">所属分类</th>
-                            <th className="px-3 py-2 text-left">操作人</th>
-                            <th className="px-3 py-2 text-left">更新时间</th>
-                            <th className="w-32 px-3 py-2 text-right">操作</th>
-                          </tr>
+                        <tr>
+                          <th className="w-14 px-3 py-2 text-left">位置</th>
+                          <th className="px-3 py-2 text-left">SPU</th>
+                          <th className="w-24 px-3 py-2 text-left">所属分类</th>
+                          <th className="w-24 px-3 py-2 text-left">商品来源</th>
+                          <th className="px-3 py-2 text-left">操作人</th>
+                          <th className="px-3 py-2 text-left">更新时间</th>
+                          <th className="w-32 px-3 py-2 text-right">操作</th>
+                        </tr>
                         </thead>
                         <tbody>
                           {pinnedList.map((p) => {
@@ -438,6 +446,9 @@ export function HotRankingManagement() {
                                 </td>
                                 <td className="px-3 py-2">
                                   {spu?.category ? <Badge variant="outline">{spu.category}</Badge> : "—"}
+                                </td>
+                                <td className="px-3 py-2">
+                                  {spu?.source ? <Badge variant="outline">{spu.source}</Badge> : "—"}
                                 </td>
                                 <td className="px-3 py-2 text-slate-600">{p.operator}</td>
                                 <td className="px-3 py-2 text-slate-500">{p.updatedAt}</td>
@@ -511,7 +522,7 @@ export function HotRankingManagement() {
                 <SelectTrigger className="h-8"><SelectValue placeholder="请选择 SPU" /></SelectTrigger>
                 <SelectContent>
                   {candidateSpus.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}（{s.category} · {s.id}）</SelectItem>
+                    <SelectItem key={s.id} value={s.id}>{s.name}（{s.category} · {s.source} · {s.id}）</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
