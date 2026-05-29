@@ -795,6 +795,12 @@ export function SpuRuleManagement() {
                   >
                     商品排序管理
                   </Link>
+                  <Link
+                    to="/hot-ranking"
+                    className="block py-1.5 cursor-pointer text-slate-700 hover:text-blue-600"
+                  >
+                    热搜榜配置
+                  </Link>
                 </div>
               </div>
 

@@ -609,6 +609,7 @@ export function ProductSortManagement() {
                   <Link to="/" className="block py-1.5 cursor-pointer hover:text-blue-600">SPU词条管理</Link>
                   <Link to="/scene" className="block py-1.5 cursor-pointer hover:text-blue-600">场景搜索配置</Link>
                   <div className="py-1.5 cursor-pointer text-blue-600 font-medium">商品排序管理</div>
+                  <Link to="/hot-ranking" className="block py-1.5 cursor-pointer hover:text-blue-600">热搜榜配置</Link>
                 </div>
               </div>
 

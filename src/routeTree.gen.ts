@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SceneRouteImport } from './routes/scene'
 import { Route as ProductSortRouteImport } from './routes/product-sort'
+import { Route as HotRankingRouteImport } from './routes/hot-ranking'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SceneRoute = SceneRouteImport.update({
@@ -23,6 +24,11 @@ const ProductSortRoute = ProductSortRouteImport.update({
   path: '/product-sort',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HotRankingRoute = HotRankingRouteImport.update({
+  id: '/hot-ranking',
+  path: '/hot-ranking',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,30 +37,34 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/hot-ranking': typeof HotRankingRoute
   '/product-sort': typeof ProductSortRoute
   '/scene': typeof SceneRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/hot-ranking': typeof HotRankingRoute
   '/product-sort': typeof ProductSortRoute
   '/scene': typeof SceneRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/hot-ranking': typeof HotRankingRoute
   '/product-sort': typeof ProductSortRoute
   '/scene': typeof SceneRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/product-sort' | '/scene'
+  fullPaths: '/' | '/hot-ranking' | '/product-sort' | '/scene'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/product-sort' | '/scene'
-  id: '__root__' | '/' | '/product-sort' | '/scene'
+  to: '/' | '/hot-ranking' | '/product-sort' | '/scene'
+  id: '__root__' | '/' | '/hot-ranking' | '/product-sort' | '/scene'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HotRankingRoute: typeof HotRankingRoute
   ProductSortRoute: typeof ProductSortRoute
   SceneRoute: typeof SceneRoute
 }
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductSortRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hot-ranking': {
+      id: '/hot-ranking'
+      path: '/hot-ranking'
+      fullPath: '/hot-ranking'
+      preLoaderRoute: typeof HotRankingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,19 +104,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HotRankingRoute: HotRankingRoute,
   ProductSortRoute: ProductSortRoute,
   SceneRoute: SceneRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
