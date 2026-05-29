@@ -522,7 +522,7 @@ export function HotRankingManagement() {
                 <SelectTrigger className="h-8"><SelectValue placeholder="请选择 SPU" /></SelectTrigger>
                 <SelectContent>
                   {candidateSpus.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}（{s.category} · {s.id}）</SelectItem>
+                    <SelectItem key={s.id} value={s.id}>{s.name}（{s.category} · {s.source} · {s.id}）</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
