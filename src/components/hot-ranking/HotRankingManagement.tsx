@@ -367,6 +367,7 @@ export function HotRankingManagement() {
                                 <td className="px-3 py-2 text-slate-400">#{pos}</td>
                                 <td className="px-3 py-2 text-slate-400">—</td>
                                 <td className="px-3 py-2 text-slate-400">—</td>
+                                <td className="px-3 py-2 text-slate-400">—</td>
                                 <td className="px-3 py-2 text-slate-400">空缺</td>
                                 <td className="px-3 py-2 text-right text-slate-400">—</td>
                               </tr>
