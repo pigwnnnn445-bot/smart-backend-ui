@@ -570,6 +570,7 @@ export function HotRankingManagement() {
                   <Badge variant="outline" className="ml-2">
                     当前榜单：{totalCount} / {MAX_SLOTS}
                   </Badge>
+                  {statusBadge}
                   {willDisplay ? (
                     <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">前台展示中</Badge>
                   ) : (
@@ -579,6 +580,56 @@ export function HotRankingManagement() {
                     </Badge>
                   )}
                   <div className="ml-auto">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mr-2"
+                      onClick={() => setRevertOpen(true)}
+                      disabled={!hasDraftDiff || currentStatus === "reviewing"}
+                      title={hasDraftDiff ? "撤销草稿，恢复线上版本" : "当前无草稿变更"}
+                    >
+                      <Undo2 className="h-4 w-4" />
+                      撤销变更
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mr-2"
+                      onClick={() => setPublishOpen(true)}
+                      disabled={!hasDraftDiff || currentStatus === "reviewing"}
+                      title={
+                        currentStatus === "reviewing"
+                          ? "审核中，等待审核结果"
+                          : hasDraftDiff
+                            ? "提交草稿进入审核"
+                            : "当前无草稿变更"
+                      }
+                    >
+                      <Send className="h-4 w-4" />
+                      提交发布
+                    </Button>
+                    {currentStatus === "reviewing" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mr-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        onClick={approvePublish}
+                        title="模拟审核动作：审核通过后覆盖线上"
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                        审核通过（演示）
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mr-2"
+                      onClick={openClear}
+                      title="按 IP 一键清除草稿配置"
+                    >
+                      <Eraser className="h-4 w-4" />
+                      一键清除配置
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
@@ -600,6 +651,8 @@ export function HotRankingManagement() {
                         setAddPosition(availablePositions[0]);
                         setAddOpen(true);
                       }}
+                      disabled={currentStatus === "reviewing"}
+                      title={currentStatus === "reviewing" ? "审核中，暂不可编辑草稿" : ""}
                     >
                       <Plus className="h-4 w-4" />
                       新增榜单位置配置
