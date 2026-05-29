@@ -138,6 +138,7 @@ export function HotRankingManagement() {
   const [addOpen, setAddOpen] = useState(false);
   const [addSpuId, setAddSpuId] = useState("");
   const [addPosition, setAddPosition] = useState<number>(1);
+  const [addSource, setAddSource] = useState<SpuSource | "全部">("全部");
   const [addCategory, setAddCategory] = useState<SpuCategory | "全部">("全部");
 
   const [removeId, setRemoveId] = useState<string | null>(null);
@@ -176,8 +177,16 @@ export function HotRankingManagement() {
     (p) => !usedPositions.has(p),
   );
   const pinnedIdSet = new Set(pinnedList.map((p) => p.spuId));
+  // 商品来源决定可选分类
+  const availableCategories = useMemo(() => {
+    const pool = addSource === "全部" ? ALL_SPUS : ALL_SPUS.filter((s) => s.source === addSource);
+    return Array.from(new Set(pool.map((s) => s.category)));
+  }, [addSource]);
   const candidateSpus = ALL_SPUS.filter(
-    (s) => !pinnedIdSet.has(s.id) && (addCategory === "全部" || s.category === addCategory),
+    (s) =>
+      !pinnedIdSet.has(s.id) &&
+      (addSource === "全部" || s.source === addSource) &&
+      (addCategory === "全部" || s.category === addCategory),
   );
 
   function handleAdd() {
@@ -568,12 +577,30 @@ export function HotRankingManagement() {
               </Select>
             </div>
             <div>
+              <div className="mb-1 text-slate-600">商品来源</div>
+              <Select
+                value={addSource}
+                onValueChange={(v) => {
+                  setAddSource(v as SpuSource | "全部");
+                  setAddCategory("全部");
+                  setAddSpuId("");
+                }}
+              >
+                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="全部">全部来源</SelectItem>
+                  <SelectItem value="b2c商品">b2c商品</SelectItem>
+                  <SelectItem value="c2c商品">c2c商品</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <div className="mb-1 text-slate-600">所属分类</div>
               <Select value={addCategory} onValueChange={(v) => { setAddCategory(v as SpuCategory | "全部"); setAddSpuId(""); }}>
                 <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="全部">全部分类</SelectItem>
-                  {CATEGORIES.map((c) => (
+                  {availableCategories.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
                 </SelectContent>
