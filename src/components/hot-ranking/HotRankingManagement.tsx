@@ -121,19 +121,27 @@ const DEFAULT_PINNED: Record<IpCode, PinnedItem[]> = {
   VN: [],
 };
 
-// Each IP's natural hot-sort order (mock). Excludes those that would be pinned at runtime.
-const NATURAL_ORDER: Record<IpCode, string[]> = {
+// Each IP's natural hot-sort order (mock). 按 hotScore 从高到低排序，模拟自动榜单。
+const NATURAL_ORDER_RAW: Record<IpCode, string[]> = {
   US: ["SPU001", "SPU004", "SPU002", "SPU006", "SPU003", "SPU012", "SPU007", "SPU010", "SPU013", "SPU008", "SPU005"],
   JP: ["SPU002", "SPU003", "SPU005", "SPU014", "SPU004", "SPU006", "SPU007", "SPU011", "SPU001", "SPU008"],
-  KR: ["SPU002", "SPU003", "SPU004", "SPU005", "SPU001", "SPU006"], // 6 items
-  TW: ["SPU001", "SPU002", "SPU005"], // 3 items, below threshold
-  HK: ["SPU001", "SPU002", "SPU003", "SPU004"], // 4 items, below threshold
+  KR: ["SPU002", "SPU003", "SPU004", "SPU005", "SPU001", "SPU006"],
+  TW: ["SPU001", "SPU002", "SPU005"],
+  HK: ["SPU001", "SPU002", "SPU003", "SPU004"],
   SG: ["SPU001", "SPU002", "SPU004", "SPU005", "SPU006", "SPU007", "SPU010", "SPU011", "SPU012", "SPU013", "SPU014"],
   MY: ["SPU001", "SPU002", "SPU003", "SPU004", "SPU005", "SPU006", "SPU007"],
   TH: ["SPU002", "SPU003", "SPU004", "SPU005", "SPU006", "SPU007"],
-  ID: ["SPU001", "SPU002"], // 2 items, below threshold
+  ID: ["SPU001", "SPU002"],
   VN: ["SPU001", "SPU002", "SPU003", "SPU004", "SPU005"],
 };
+const NATURAL_ORDER: Record<IpCode, string[]> = Object.fromEntries(
+  (Object.keys(NATURAL_ORDER_RAW) as IpCode[]).map((code) => [
+    code,
+    [...NATURAL_ORDER_RAW[code]].sort(
+      (a, b) => (ALL_SPUS.find((s) => s.id === b)?.hotScore ?? 0) - (ALL_SPUS.find((s) => s.id === a)?.hotScore ?? 0),
+    ),
+  ]),
+) as Record<IpCode, string[]>;
 
 const MAX_SLOTS = 10;
 const MIN_DISPLAY = 5;
