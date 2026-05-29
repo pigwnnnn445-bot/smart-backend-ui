@@ -452,6 +452,7 @@ export function HotRankingManagement() {
                       <table className="w-full text-sm">
                         <thead className="bg-slate-50 text-slate-600">
                         <tr>
+                          <th className="w-8 px-2 py-2"></th>
                           <th className="w-14 px-3 py-2 text-left">位置</th>
                           <th className="px-3 py-2 text-left">SPU</th>
                           <th className="w-24 px-3 py-2 text-left">所属分类</th>
@@ -464,8 +465,43 @@ export function HotRankingManagement() {
                         <tbody>
                           {pinnedList.map((p) => {
                             const spu = spuById(p.spuId);
+                            const isDragging = dragId === p.spuId;
+                            const isOver = dragOverId === p.spuId && dragId !== p.spuId;
                             return (
-                              <tr key={p.spuId} className="border-t border-slate-100">
+                              <tr
+                                key={p.spuId}
+                                draggable
+                                onDragStart={(e) => {
+                                  setDragId(p.spuId);
+                                  e.dataTransfer.effectAllowed = "move";
+                                }}
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  e.dataTransfer.dropEffect = "move";
+                                  if (dragOverId !== p.spuId) setDragOverId(p.spuId);
+                                }}
+                                onDragLeave={() => {
+                                  if (dragOverId === p.spuId) setDragOverId(null);
+                                }}
+                                onDrop={(e) => {
+                                  e.preventDefault();
+                                  if (dragId) reorderPinned(dragId, p.spuId);
+                                  setDragId(null);
+                                  setDragOverId(null);
+                                }}
+                                onDragEnd={() => {
+                                  setDragId(null);
+                                  setDragOverId(null);
+                                }}
+                                className={
+                                  "border-t border-slate-100 " +
+                                  (isDragging ? "opacity-50 " : "") +
+                                  (isOver ? "bg-blue-50 " : "")
+                                }
+                              >
+                                <td className="px-2 py-2 text-slate-400 cursor-grab active:cursor-grabbing" title="拖拽排序">
+                                  <GripVertical className="h-4 w-4" />
+                                </td>
                                 <td className="px-3 py-2 font-semibold text-blue-600">#{p.position}</td>
                                 <td className="px-3 py-2">
                                   <div className="font-medium text-slate-800">{spu?.name ?? p.spuId}</div>
