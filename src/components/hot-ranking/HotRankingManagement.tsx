@@ -577,12 +577,30 @@ export function HotRankingManagement() {
               </Select>
             </div>
             <div>
+              <div className="mb-1 text-slate-600">商品来源</div>
+              <Select
+                value={addSource}
+                onValueChange={(v) => {
+                  setAddSource(v as SpuSource | "全部");
+                  setAddCategory("全部");
+                  setAddSpuId("");
+                }}
+              >
+                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="全部">全部来源</SelectItem>
+                  <SelectItem value="b2c商品">b2c商品</SelectItem>
+                  <SelectItem value="c2c商品">c2c商品</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <div className="mb-1 text-slate-600">所属分类</div>
               <Select value={addCategory} onValueChange={(v) => { setAddCategory(v as SpuCategory | "全部"); setAddSpuId(""); }}>
                 <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="全部">全部分类</SelectItem>
-                  {CATEGORIES.map((c) => (
+                  {availableCategories.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
                 </SelectContent>
