@@ -146,8 +146,6 @@ const NATURAL_ORDER: Record<IpCode, string[]> = Object.fromEntries(
 const MAX_SLOTS = 10;
 const MIN_DISPLAY = 5;
 
-type PublishStatus = "published" | "draft" | "reviewing";
-
 function isSameConfig(a: PinnedItem[], b: PinnedItem[]) {
   if (a.length !== b.length) return false;
   const sa = [...a].sort((x, y) => x.position - y.position);
@@ -170,8 +168,9 @@ export function HotRankingManagement() {
       (Object.keys(DEFAULT_PINNED) as IpCode[]).map((k) => [k, DEFAULT_PINNED[k].map((p) => ({ ...p }))]),
     ) as Record<IpCode, PinnedItem[]>,
   );
-  // 全局发布状态：所有 IP 的草稿统一提交、统一审核、统一生效
-  const [globalStatus, setGlobalStatus] = useState<PublishStatus>("published");
+  // 全局发布流程：唯一持久状态 = 是否在审核中。
+  // 是否"已发布 / 草稿待发布"完全由 pinnedMap vs publishedMap 派生，无需另存。
+  const [reviewing, setReviewing] = useState(false);
 
   const [addOpen, setAddOpen] = useState(false);
   const [addSpuId, setAddSpuId] = useState("");
@@ -198,19 +197,18 @@ export function HotRankingManagement() {
   const [revertOpen, setRevertOpen] = useState(false);
 
   const pinnedList = pinnedMap[currentIp];
-  const publishedList = publishedMap[currentIp];
-  // 有差异的 IP 列表（全局视角）
+  // 有草稿差异的 IP 列表（全局视角）
   const dirtyIps = useMemo(
     () => IPS.filter((ip) => !isSameConfig(pinnedMap[ip.code], publishedMap[ip.code])).map((ip) => ip.code),
     [pinnedMap, publishedMap],
   );
   const hasDraftDiff = dirtyIps.length > 0;
-  const isReviewing = globalStatus === "reviewing";
-  // 任意草稿改动后：如果之前是 reviewing，保持 reviewing；否则按 diff 重置
-  function bumpStatusAfterEdit(nextPinned: Record<IpCode, PinnedItem[]>) {
-    const stillDirty = IPS.some((ip) => !isSameConfig(nextPinned[ip.code], publishedMap[ip.code]));
-    setGlobalStatus((s) => (s === "reviewing" ? s : stillDirty ? "draft" : "published"));
-  }
+  // 派生的展示态：reviewing > draft > published
+  const phase: "published" | "draft" | "reviewing" = reviewing
+    ? "reviewing"
+    : hasDraftDiff
+      ? "draft"
+      : "published";
 
   // Compose final ranking: pinned positions are locked; natural sort fills the rest in order, skipping pinned spuIds.
   const finalRanking = useMemo(() => {
