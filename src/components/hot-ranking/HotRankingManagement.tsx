@@ -17,6 +17,11 @@ import {
   ArrowDown,
   GripVertical,
   Copy,
+  Eraser,
+  Send,
+  Undo2,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,6 +138,15 @@ const NATURAL_ORDER: Record<IpCode, string[]> = {
 const MAX_SLOTS = 10;
 const MIN_DISPLAY = 5;
 
+type PublishStatus = "published" | "draft" | "reviewing";
+
+function isSameConfig(a: PinnedItem[], b: PinnedItem[]) {
+  if (a.length !== b.length) return false;
+  const sa = [...a].sort((x, y) => x.position - y.position);
+  const sb = [...b].sort((x, y) => x.position - y.position);
+  return sa.every((p, i) => p.spuId === sb[i].spuId && p.position === sb[i].position);
+}
+
 function spuById(id: string) {
   return ALL_SPUS.find((s) => s.id === id);
 }
@@ -142,6 +156,16 @@ function spuById(id: string) {
 export function HotRankingManagement() {
   const [currentIp, setCurrentIp] = useState<IpCode>("US");
   const [pinnedMap, setPinnedMap] = useState<Record<IpCode, PinnedItem[]>>(DEFAULT_PINNED);
+  // 已发布到线上的配置（实际生效的版本）；编辑只改 pinnedMap（草稿），需要发布才覆盖
+  const [publishedMap, setPublishedMap] = useState<Record<IpCode, PinnedItem[]>>(() =>
+    Object.fromEntries(
+      (Object.keys(DEFAULT_PINNED) as IpCode[]).map((k) => [k, DEFAULT_PINNED[k].map((p) => ({ ...p }))]),
+    ) as Record<IpCode, PinnedItem[]>,
+  );
+  // 每个 IP 的发布状态
+  const [statusMap, setStatusMap] = useState<Record<IpCode, PublishStatus>>(
+    () => Object.fromEntries((Object.keys(DEFAULT_PINNED) as IpCode[]).map((k) => [k, "published"])) as Record<IpCode, PublishStatus>,
+  );
 
   const [addOpen, setAddOpen] = useState(false);
   const [addSpuId, setAddSpuId] = useState("");
@@ -158,7 +182,28 @@ export function HotRankingManagement() {
   const [copyTargets, setCopyTargets] = useState<IpCode[]>([]);
   const [copyConfirmOpen, setCopyConfirmOpen] = useState(false);
 
+  // 一键清除配置
+  const [clearOpen, setClearOpen] = useState(false);
+  const [clearTargets, setClearTargets] = useState<IpCode[]>([]);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+
+  // 发布 / 撤销 / 审核通过
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [revertOpen, setRevertOpen] = useState(false);
+
   const pinnedList = pinnedMap[currentIp];
+  const publishedList = publishedMap[currentIp];
+  const currentStatus = statusMap[currentIp];
+  const hasDraftDiff = !isSameConfig(pinnedList, publishedList);
+
+  // 任何对草稿的改动都要根据与线上的 diff 重新计算状态
+  function recomputeStatus(code: IpCode, draftOverride?: PinnedItem[], publishedOverride?: PinnedItem[]) {
+    setStatusMap((s) => {
+      const draft = draftOverride ?? pinnedMap[code];
+      const published = publishedOverride ?? publishedMap[code];
+      return { ...s, [code]: isSameConfig(draft, published) ? "published" : "draft" };
+    });
+  }
 
   // Compose final ranking: pinned positions are locked; natural sort fills the rest in order, skipping pinned spuIds.
   const finalRanking = useMemo(() => {
@@ -211,30 +256,35 @@ export function HotRankingManagement() {
       toast.error("该位置已被占用");
       return;
     }
-    setPinnedMap((m) => ({
-      ...m,
-      [currentIp]: [
-        ...m[currentIp],
-        {
-          spuId: addSpuId,
-          position: addPosition,
-          operator: "当前用户",
-          updatedAt: new Date().toISOString().slice(0, 19).replace("T", " "),
-        },
-      ].sort((a, b) => a.position - b.position),
-    }));
-    toast.success("已配置榜单位置");
+    setPinnedMap((m) => {
+      const next = {
+        ...m,
+        [currentIp]: [
+          ...m[currentIp],
+          {
+            spuId: addSpuId,
+            position: addPosition,
+            operator: "当前用户",
+            updatedAt: new Date().toISOString().slice(0, 19).replace("T", " "),
+          },
+        ].sort((a, b) => a.position - b.position),
+      };
+      recomputeStatus(currentIp, next[currentIp]);
+      return next;
+    });
+    toast.success("已加入草稿，待提交发布后生效");
     setAddOpen(false);
     setAddSpuId("");
   }
 
   function handleRemove(spuId: string) {
-    setPinnedMap((m) => ({
-      ...m,
-      [currentIp]: m[currentIp].filter((p) => p.spuId !== spuId),
-    }));
+    setPinnedMap((m) => {
+      const next = { ...m, [currentIp]: m[currentIp].filter((p) => p.spuId !== spuId) };
+      recomputeStatus(currentIp, next[currentIp]);
+      return next;
+    });
     setRemoveId(null);
-    toast.success("已移除该位置配置，SPU 将重新参与热搜排序");
+    toast.success("已在草稿中移除，提交发布后线上生效");
   }
 
   function movePinned(spuId: string, delta: number) {
@@ -248,12 +298,14 @@ export function HotRankingManagement() {
         toast.error("目标位置已被占用");
         return m;
       }
-      return {
+      const next = {
         ...m,
         [currentIp]: list
           .map((p) => (p.spuId === spuId ? { ...p, position: newPos } : p))
           .sort((a, b) => a.position - b.position),
       };
+      recomputeStatus(currentIp, next[currentIp]);
+      return next;
     });
   }
 
@@ -276,9 +328,11 @@ export function HotRankingManagement() {
         operator: p.spuId === sourceId ? "当前用户" : p.operator,
         updatedAt: p.spuId === sourceId ? now : p.updatedAt,
       }));
-      return { ...m, [currentIp]: reassigned };
+      const next = { ...m, [currentIp]: reassigned };
+      recomputeStatus(currentIp, next[currentIp]);
+      return next;
     });
-    toast.success("已更新榜单顺序");
+    toast.success("草稿顺序已更新，提交发布后线上生效");
   }
 
   // 可复制的目标 IP（排除当前 IP）
@@ -326,12 +380,113 @@ export function HotRankingManagement() {
       copyTargets.forEach((code) => {
         next[code] = snapshot.map((p) => ({ ...p }));
       });
+      // 复制只改草稿，每个目标 IP 重新计算状态
+      setStatusMap((s) => {
+        const ns = { ...s };
+        copyTargets.forEach((code) => {
+          ns[code] = isSameConfig(next[code], publishedMap[code]) ? "published" : "draft";
+        });
+        return ns;
+      });
       return next;
     });
-    toast.success(`已将当前方案复制到 ${copyTargets.length} 个 IP`);
+    toast.success(`已复制到 ${copyTargets.length} 个 IP 的草稿，需各自提交发布后生效`);
     setCopyConfirmOpen(false);
     setCopyOpen(false);
   }
+
+  // ====== 一键清除配置 ======
+  const clearableIps = IPS; // 全部 IP 都允许选择（包含当前 IP）
+  const clearTargetsWithExisting = clearTargets.filter(
+    (code) => (pinnedMap[code] ?? []).length > 0,
+  );
+
+  function openClear() {
+    setClearTargets([]);
+    setClearOpen(true);
+  }
+
+  function toggleClearTarget(code: IpCode) {
+    setClearTargets((p) => (p.includes(code) ? p.filter((c) => c !== code) : [...p, code]));
+  }
+
+  function toggleAllClearTargets() {
+    const allCodes = clearableIps.map((i) => i.code);
+    const allSelected = allCodes.every((c) => clearTargets.includes(c));
+    setClearTargets(allSelected ? [] : allCodes);
+  }
+
+  function handleClearConfirm() {
+    if (clearTargets.length === 0) {
+      toast.error("请至少勾选一个目标 IP");
+      return;
+    }
+    if (clearTargetsWithExisting.length === 0) {
+      toast.info("所选 IP 当前草稿均为空，无需清除");
+      return;
+    }
+    setClearConfirmOpen(true);
+  }
+
+  function commitClear() {
+    setPinnedMap((m) => {
+      const next = { ...m };
+      clearTargets.forEach((code) => {
+        next[code] = [];
+      });
+      setStatusMap((s) => {
+        const ns = { ...s };
+        clearTargets.forEach((code) => {
+          ns[code] = isSameConfig([], publishedMap[code]) ? "published" : "draft";
+        });
+        return ns;
+      });
+      return next;
+    });
+    toast.success(`已清空 ${clearTargets.length} 个 IP 的草稿配置，提交发布后线上生效`);
+    setClearConfirmOpen(false);
+    setClearOpen(false);
+  }
+
+  // ====== 发布流程 ======
+  function submitForReview() {
+    if (!hasDraftDiff) {
+      toast.info("当前无未发布的草稿变更");
+      return;
+    }
+    setStatusMap((s) => ({ ...s, [currentIp]: "reviewing" }));
+    setPublishOpen(false);
+    toast.success("已提交审核，审核通过后将覆盖线上");
+  }
+
+  function approvePublish() {
+    // 模拟"审核通过"动作：将草稿覆盖到已发布
+    setPublishedMap((pm) => ({ ...pm, [currentIp]: pinnedMap[currentIp].map((p) => ({ ...p })) }));
+    setStatusMap((s) => ({ ...s, [currentIp]: "published" }));
+    toast.success("审核通过，配置已发布到线上");
+  }
+
+  function revertDraft() {
+    setPinnedMap((m) => ({ ...m, [currentIp]: publishedMap[currentIp].map((p) => ({ ...p })) }));
+    setStatusMap((s) => ({ ...s, [currentIp]: "published" }));
+    setRevertOpen(false);
+    toast.success("已撤销草稿变更，恢复为线上版本");
+  }
+
+  const statusBadge =
+    currentStatus === "published" ? (
+      <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+        <CheckCircle2 className="mr-1 h-3 w-3" />已发布
+      </Badge>
+    ) : currentStatus === "reviewing" ? (
+      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+        <Clock className="mr-1 h-3 w-3" />审核中
+      </Badge>
+    ) : (
+      <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+        <AlertCircle className="mr-1 h-3 w-3" />草稿待发布
+      </Badge>
+    );
 
   return (
     <div className="flex min-h-screen bg-slate-100 text-sm text-slate-800">
@@ -415,6 +570,7 @@ export function HotRankingManagement() {
                   <Badge variant="outline" className="ml-2">
                     当前榜单：{totalCount} / {MAX_SLOTS}
                   </Badge>
+                  {statusBadge}
                   {willDisplay ? (
                     <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">前台展示中</Badge>
                   ) : (
@@ -424,6 +580,56 @@ export function HotRankingManagement() {
                     </Badge>
                   )}
                   <div className="ml-auto">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mr-2"
+                      onClick={() => setRevertOpen(true)}
+                      disabled={!hasDraftDiff || currentStatus === "reviewing"}
+                      title={hasDraftDiff ? "撤销草稿，恢复线上版本" : "当前无草稿变更"}
+                    >
+                      <Undo2 className="h-4 w-4" />
+                      撤销变更
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mr-2"
+                      onClick={() => setPublishOpen(true)}
+                      disabled={!hasDraftDiff || currentStatus === "reviewing"}
+                      title={
+                        currentStatus === "reviewing"
+                          ? "审核中，等待审核结果"
+                          : hasDraftDiff
+                            ? "提交草稿进入审核"
+                            : "当前无草稿变更"
+                      }
+                    >
+                      <Send className="h-4 w-4" />
+                      提交发布
+                    </Button>
+                    {currentStatus === "reviewing" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mr-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        onClick={approvePublish}
+                        title="模拟审核动作：审核通过后覆盖线上"
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                        审核通过（演示）
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mr-2"
+                      onClick={openClear}
+                      title="按 IP 一键清除草稿配置"
+                    >
+                      <Eraser className="h-4 w-4" />
+                      一键清除配置
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
@@ -445,6 +651,8 @@ export function HotRankingManagement() {
                         setAddPosition(availablePositions[0]);
                         setAddOpen(true);
                       }}
+                      disabled={currentStatus === "reviewing"}
+                      title={currentStatus === "reviewing" ? "审核中，暂不可编辑草稿" : ""}
                     >
                       <Plus className="h-4 w-4" />
                       新增榜单位置配置
@@ -796,6 +1004,118 @@ export function HotRankingManagement() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setCopyConfirmOpen(false)}>取消</Button>
             <Button variant="destructive" onClick={commitCopy}>确认覆盖</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 一键清除配置 - Sheet */}
+      <Sheet open={clearOpen} onOpenChange={setClearOpen}>
+        <SheetContent side="right" className="!w-[420px] !max-w-none p-0 flex flex-col">
+          <SheetHeader className="px-6 py-4 border-b border-slate-200">
+            <SheetTitle className="text-base">一键清除配置</SheetTitle>
+          </SheetHeader>
+          <div className="px-6 py-3 border-b border-slate-200 text-xs text-slate-500">
+            勾选的 IP 将清空全部固定位置（只改草稿，需各自提交发布后线上生效）。审核中的 IP 无法被选择。
+          </div>
+          <div className="flex-1 overflow-auto px-6 py-4">
+            <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+              {clearableIps.map((ip) => {
+                const existing = (pinnedMap[ip.code] ?? []).length;
+                const reviewing = statusMap[ip.code] === "reviewing";
+                return (
+                  <label
+                    key={ip.code}
+                    className={
+                      "flex items-center gap-2 text-sm text-slate-700 " +
+                      (reviewing ? "opacity-50 cursor-not-allowed" : "cursor-pointer")
+                    }
+                  >
+                    <Checkbox
+                      checked={clearTargets.includes(ip.code)}
+                      disabled={reviewing}
+                      onCheckedChange={() => !reviewing && toggleClearTarget(ip.code)}
+                    />
+                    <span className="truncate">
+                      {ip.name}
+                      <span className="ml-1 text-xs text-slate-400">（草稿 {existing} 条）</span>
+                      {reviewing && <span className="ml-1 text-xs text-blue-600">审核中</span>}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t border-slate-200 px-6 py-3 bg-white">
+            <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+              <Checkbox
+                checked={
+                  clearableIps.every((i) => clearTargets.includes(i.code))
+                    ? true
+                    : clearTargets.length > 0
+                      ? "indeterminate"
+                      : false
+                }
+                onCheckedChange={toggleAllClearTargets}
+              />
+              全选
+              <span className="ml-3 text-slate-500">已选 IP：{clearTargets.length}</span>
+            </label>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setClearOpen(false)}>取消</Button>
+              <Button size="sm" variant="destructive" onClick={handleClearConfirm}>清除</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* 清除二次确认 */}
+      <Dialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>确认清除草稿配置</DialogTitle>
+            <DialogDescription>
+              以下 {clearTargetsWithExisting.length} 个 IP 当前草稿将被清空（线上版本不会立即变化，需提交发布后生效）：
+              <span className="mt-2 block text-slate-700">
+                {clearTargetsWithExisting.map((c) => IPS.find((i) => i.code === c)?.name).join("、")}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setClearConfirmOpen(false)}>取消</Button>
+            <Button variant="destructive" onClick={commitClear}>确认清除</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 提交发布确认 */}
+      <Dialog open={publishOpen} onOpenChange={setPublishOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>提交发布</DialogTitle>
+            <DialogDescription>
+              将当前 IP（{IPS.find((i) => i.code === currentIp)?.name}）的草稿提交审核。
+              审核通过后会覆盖线上配置。审核期间不可继续编辑该 IP 的草稿。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPublishOpen(false)}>取消</Button>
+            <Button onClick={submitForReview}>提交审核</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 撤销变更确认 */}
+      <Dialog open={revertOpen} onOpenChange={setRevertOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>撤销草稿变更</DialogTitle>
+            <DialogDescription>
+              将丢弃当前 IP 的全部草稿改动，恢复为线上已发布版本，是否继续？
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRevertOpen(false)}>取消</Button>
+            <Button variant="destructive" onClick={revertDraft}>确认撤销</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
