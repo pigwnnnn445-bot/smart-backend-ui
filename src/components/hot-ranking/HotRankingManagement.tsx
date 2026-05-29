@@ -16,10 +16,18 @@ import {
   ArrowUp,
   ArrowDown,
   GripVertical,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -144,6 +152,11 @@ export function HotRankingManagement() {
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  // 复制配置到其他 IP
+  const [copyOpen, setCopyOpen] = useState(false);
+  const [copyTargets, setCopyTargets] = useState<IpCode[]>([]);
+  const [copyConfirmOpen, setCopyConfirmOpen] = useState(false);
 
   const pinnedList = pinnedMap[currentIp];
 
