@@ -447,6 +447,9 @@ export function HotRankingManagement() {
                                 <td className="px-3 py-2">
                                   {spu?.category ? <Badge variant="outline">{spu.category}</Badge> : "—"}
                                 </td>
+                                <td className="px-3 py-2">
+                                  {spu?.source ? <Badge variant="outline">{spu.source}</Badge> : "—"}
+                                </td>
                                 <td className="px-3 py-2 text-slate-600">{p.operator}</td>
                                 <td className="px-3 py-2 text-slate-500">{p.updatedAt}</td>
                                 <td className="px-3 py-2 text-right">
