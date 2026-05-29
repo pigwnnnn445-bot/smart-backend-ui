@@ -1007,6 +1007,118 @@ export function HotRankingManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 一键清除配置 - Sheet */}
+      <Sheet open={clearOpen} onOpenChange={setClearOpen}>
+        <SheetContent side="right" className="!w-[420px] !max-w-none p-0 flex flex-col">
+          <SheetHeader className="px-6 py-4 border-b border-slate-200">
+            <SheetTitle className="text-base">一键清除配置</SheetTitle>
+          </SheetHeader>
+          <div className="px-6 py-3 border-b border-slate-200 text-xs text-slate-500">
+            勾选的 IP 将清空全部固定位置（只改草稿，需各自提交发布后线上生效）。审核中的 IP 无法被选择。
+          </div>
+          <div className="flex-1 overflow-auto px-6 py-4">
+            <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+              {clearableIps.map((ip) => {
+                const existing = (pinnedMap[ip.code] ?? []).length;
+                const reviewing = statusMap[ip.code] === "reviewing";
+                return (
+                  <label
+                    key={ip.code}
+                    className={
+                      "flex items-center gap-2 text-sm text-slate-700 " +
+                      (reviewing ? "opacity-50 cursor-not-allowed" : "cursor-pointer")
+                    }
+                  >
+                    <Checkbox
+                      checked={clearTargets.includes(ip.code)}
+                      disabled={reviewing}
+                      onCheckedChange={() => !reviewing && toggleClearTarget(ip.code)}
+                    />
+                    <span className="truncate">
+                      {ip.name}
+                      <span className="ml-1 text-xs text-slate-400">（草稿 {existing} 条）</span>
+                      {reviewing && <span className="ml-1 text-xs text-blue-600">审核中</span>}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t border-slate-200 px-6 py-3 bg-white">
+            <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+              <Checkbox
+                checked={
+                  clearableIps.every((i) => clearTargets.includes(i.code))
+                    ? true
+                    : clearTargets.length > 0
+                      ? "indeterminate"
+                      : false
+                }
+                onCheckedChange={toggleAllClearTargets}
+              />
+              全选
+              <span className="ml-3 text-slate-500">已选 IP：{clearTargets.length}</span>
+            </label>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setClearOpen(false)}>取消</Button>
+              <Button size="sm" variant="destructive" onClick={handleClearConfirm}>清除</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* 清除二次确认 */}
+      <Dialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>确认清除草稿配置</DialogTitle>
+            <DialogDescription>
+              以下 {clearTargetsWithExisting.length} 个 IP 当前草稿将被清空（线上版本不会立即变化，需提交发布后生效）：
+              <span className="mt-2 block text-slate-700">
+                {clearTargetsWithExisting.map((c) => IPS.find((i) => i.code === c)?.name).join("、")}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setClearConfirmOpen(false)}>取消</Button>
+            <Button variant="destructive" onClick={commitClear}>确认清除</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 提交发布确认 */}
+      <Dialog open={publishOpen} onOpenChange={setPublishOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>提交发布</DialogTitle>
+            <DialogDescription>
+              将当前 IP（{IPS.find((i) => i.code === currentIp)?.name}）的草稿提交审核。
+              审核通过后会覆盖线上配置。审核期间不可继续编辑该 IP 的草稿。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPublishOpen(false)}>取消</Button>
+            <Button onClick={submitForReview}>提交审核</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 撤销变更确认 */}
+      <Dialog open={revertOpen} onOpenChange={setRevertOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>撤销草稿变更</DialogTitle>
+            <DialogDescription>
+              将丢弃当前 IP 的全部草稿改动，恢复为线上已发布版本，是否继续？
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRevertOpen(false)}>取消</Button>
+            <Button variant="destructive" onClick={revertDraft}>确认撤销</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
