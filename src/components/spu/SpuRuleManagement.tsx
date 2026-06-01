@@ -90,6 +90,13 @@ interface RuleRow {
 
 const SPU_LIST = ["Netflix", "Spotify", "Tidal", "ChatGPT"];
 
+const SPU_TYPE_MAP: Record<string, ProductType> = {
+  Netflix: "b2c",
+  Spotify: "b2c",
+  Tidal: "b2c",
+  ChatGPT: "c2c",
+};
+
 type ProductType = "b2c" | "c2c";
 
 // 复制词库配置 - 不同商品类型下可选的源SPU列表
@@ -120,13 +127,14 @@ interface SpuInfo {
   category: string;
   productStatus: "在售" | "下架";
   inSearch: boolean;
+  productType?: ProductType;
 }
 
 const SPU_INFOS: SpuInfo[] = [
-  { id: "SPU10001", name: "Netflix", category: "影视会员", productStatus: "在售", inSearch: true },
-  { id: "SPU10002", name: "Spotify", category: "音乐会员", productStatus: "在售", inSearch: true },
-  { id: "SPU10003", name: "Tidal", category: "音乐会员", productStatus: "在售", inSearch: false },
-  { id: "SPU10004", name: "ChatGPT", category: "AI工具", productStatus: "在售", inSearch: true },
+  { id: "SPU10001", name: "Netflix", category: "影视会员", productStatus: "在售", inSearch: true, productType: "b2c" },
+  { id: "SPU10002", name: "Spotify", category: "音乐会员", productStatus: "在售", inSearch: true, productType: "b2c" },
+  { id: "SPU10003", name: "Tidal", category: "音乐会员", productStatus: "在售", inSearch: false, productType: "b2c" },
+  { id: "SPU10004", name: "ChatGPT", category: "AI工具", productStatus: "在售", inSearch: true, productType: "c2c" },
 ];
 
 interface OpLog {
@@ -281,7 +289,8 @@ const blank: RuleRow = {
 
 export function SpuRuleManagement() {
   const [view, setView] = useState<"overview" | "manage">("overview");
-  const [activeSpu, setActiveSpu] = useState("ChatGPT");
+  const [activeSpu, setActiveSpu] = useState("Netflix");
+  const [activeProductType, setActiveProductType] = useState<ProductType>("b2c");
   const [enabledSpu, setEnabledSpu] = useState<Record<string, boolean>>(
     Object.fromEntries(SPU_LIST.map((s) => [s, true])),
   );
@@ -646,7 +655,7 @@ export function SpuRuleManagement() {
 
   // 总览表数据
   const overviewRows = useMemo(() => {
-    return SPU_INFOS.map((s) => {
+    return SPU_INFOS.filter((s) => s.productType === activeProductType).map((s) => {
       const spuRows = rowsBySpu[s.name] ?? [];
       const termCount = spuRows.length;
       const enabledCount = spuRows.filter((r) => r.status === "已启用").length;
@@ -662,7 +671,7 @@ export function SpuRuleManagement() {
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rowsBySpu, libState]);
+  }, [rowsBySpu, libState, activeProductType]);
 
   function confirmToggleLib() {
     if (!libConfirm) return;
@@ -826,7 +835,7 @@ export function SpuRuleManagement() {
                     <Input placeholder="搜索" className="h-8 pl-7" />
                   </div>
                   <div className="space-y-1">
-                    {SPU_LIST.filter((s) => !hideDisabled || enabledSpu[s]).map((s) => (
+                    {SPU_LIST.filter((s) => SPU_TYPE_MAP[s] === activeProductType).filter((s) => !hideDisabled || enabledSpu[s]).map((s) => (
                       <div
                         key={s}
                         onClick={() => setActiveSpu(s)}
@@ -864,6 +873,22 @@ export function SpuRuleManagement() {
                   />
                 ) : (
                 <>
+                  <Tabs
+                    value={activeProductType}
+                    onValueChange={(v) => {
+                      const type = v as ProductType;
+                      setActiveProductType(type);
+                      const typeSpus = SPU_LIST.filter((s) => SPU_TYPE_MAP[s] === type);
+                      if (!typeSpus.includes(activeSpu)) {
+                        setActiveSpu(typeSpus[0] ?? "");
+                      }
+                    }}
+                  >
+                    <TabsList>
+                      <TabsTrigger value="b2c">B2C SPU</TabsTrigger>
+                      <TabsTrigger value="c2c">C2C SPU</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 {/* Filters */}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   <div className="flex items-center gap-2">
