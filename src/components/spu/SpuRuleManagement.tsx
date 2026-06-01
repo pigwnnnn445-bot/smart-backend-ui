@@ -655,7 +655,7 @@ export function SpuRuleManagement() {
 
   // 总览表数据
   const overviewRows = useMemo(() => {
-    return SPU_INFOS.map((s) => {
+    return SPU_INFOS.filter((s) => s.productType === activeProductType).map((s) => {
       const spuRows = rowsBySpu[s.name] ?? [];
       const termCount = spuRows.length;
       const enabledCount = spuRows.filter((r) => r.status === "已启用").length;
@@ -671,7 +671,7 @@ export function SpuRuleManagement() {
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rowsBySpu, libState]);
+  }, [rowsBySpu, libState, activeProductType]);
 
   function confirmToggleLib() {
     if (!libConfirm) return;
