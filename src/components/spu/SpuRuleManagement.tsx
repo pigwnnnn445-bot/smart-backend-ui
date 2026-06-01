@@ -876,22 +876,41 @@ export function SpuRuleManagement() {
                   />
                 ) : (
                 <>
-                  <Tabs
-                    value={activeProductType}
-                    onValueChange={(v) => {
-                      const type = v as ProductType;
-                      setActiveProductType(type);
-                      const typeSpus = SPU_LIST.filter((s) => SPU_TYPE_MAP[s] === type);
-                      if (!typeSpus.includes(activeSpu)) {
-                        setActiveSpu(typeSpus[0] ?? "");
-                      }
-                    }}
-                  >
-                    <TabsList>
-                      <TabsTrigger value="b2c">B2C SPU</TabsTrigger>
-                      <TabsTrigger value="c2c">C2C SPU</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                  <div className="mb-6 border-b border-slate-200">
+                    <div className="flex gap-6">
+                      {([
+                        { v: "b2c", label: "B2C SPU" },
+                        { v: "c2c", label: "C2C SPU" },
+                      ] as const).map((t) => {
+                        const active = activeProductType === t.v;
+                        return (
+                          <button
+                            key={t.v}
+                            type="button"
+                            onClick={() => {
+                              const type = t.v as ProductType;
+                              setActiveProductType(type);
+                              const typeSpus = SPU_LIST.filter((s) => SPU_TYPE_MAP[s] === type);
+                              if (!typeSpus.includes(activeSpu)) {
+                                setActiveSpu(typeSpus[0] ?? "");
+                              }
+                            }}
+                            className={cn(
+                              "relative -mb-px px-1 pb-3 pt-1 text-sm font-medium transition-colors",
+                              active
+                                ? "text-blue-600"
+                                : "text-slate-500 hover:text-slate-800",
+                            )}
+                          >
+                            {t.label}
+                            {active && (
+                              <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 {/* Filters */}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   <div className="flex items-center gap-2">
