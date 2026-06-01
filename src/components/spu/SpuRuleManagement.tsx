@@ -835,7 +835,7 @@ export function SpuRuleManagement() {
                     <Input placeholder="搜索" className="h-8 pl-7" />
                   </div>
                   <div className="space-y-1">
-                    {SPU_LIST.filter((s) => !hideDisabled || enabledSpu[s]).map((s) => (
+                    {SPU_LIST.filter((s) => SPU_TYPE_MAP[s] === activeProductType).filter((s) => !hideDisabled || enabledSpu[s]).map((s) => (
                       <div
                         key={s}
                         onClick={() => setActiveSpu(s)}
