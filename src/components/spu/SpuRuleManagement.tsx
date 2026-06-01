@@ -952,6 +952,10 @@ export function SpuRuleManagement() {
                       })}
                     </div>
                   </div>
+                <div className="mb-5">
+                  <h2 className="text-base font-semibold tracking-tight text-slate-900">SPU 词条管理</h2>
+                  <p className="mt-1 text-xs text-slate-500">按 SPU 维护具体词条内容、匹配方式与启用状态，支持批量操作与复制其他词库配置。</p>
+                </div>
                 {/* Filters */}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   <div className="flex items-center gap-2">
