@@ -1882,19 +1882,6 @@ function OverviewTable({
 
   return (
     <>
-      <div className="mb-5">
-        <div className="flex items-end justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-slate-900">SPU 词库管理</h2>
-            <p className="mt-0.5 text-xs text-slate-500">查看与维护所有 SPU 的词库配置状态</p>
-          </div>
-          <div className="flex items-center gap-4 text-xs text-slate-500">
-            <span><span className="font-semibold text-slate-900">{rows.length}</span> 个 SPU</span>
-            <span className="h-3 w-px bg-slate-200" />
-            <span><span className="font-semibold text-emerald-600">{rows.filter(r => r.libStatus === "已启用").length}</span> 已启用</span>
-          </div>
-        </div>
-      </div>
       <div className="mb-4 rounded-xl border border-slate-200/80 bg-slate-50/60 p-4">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div className="flex items-center gap-2">
