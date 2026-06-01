@@ -124,10 +124,10 @@ interface SpuInfo {
 }
 
 const SPU_INFOS: SpuInfo[] = [
-  { id: "SPU10001", name: "Netflix", category: "影视会员", productStatus: "在售", inSearch: true },
-  { id: "SPU10002", name: "Spotify", category: "音乐会员", productStatus: "在售", inSearch: true },
-  { id: "SPU10003", name: "Tidal", category: "音乐会员", productStatus: "在售", inSearch: false },
-  { id: "SPU10004", name: "ChatGPT", category: "AI工具", productStatus: "在售", inSearch: true },
+  { id: "SPU10001", name: "Netflix", category: "影视会员", productStatus: "在售", inSearch: true, productType: "b2c" },
+  { id: "SPU10002", name: "Spotify", category: "音乐会员", productStatus: "在售", inSearch: true, productType: "b2c" },
+  { id: "SPU10003", name: "Tidal", category: "音乐会员", productStatus: "在售", inSearch: false, productType: "b2c" },
+  { id: "SPU10004", name: "ChatGPT", category: "AI工具", productStatus: "在售", inSearch: true, productType: "c2c" },
 ];
 
 interface OpLog {
