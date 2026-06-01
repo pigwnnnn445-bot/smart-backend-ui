@@ -1152,7 +1152,6 @@ export function SpuRuleManagement() {
                         <TableHead>匹配方式</TableHead>
                         <TableHead>是否明确指向当前SPU</TableHead>
                         <TableHead>词条状态</TableHead>
-                        <TableHead>生效范围</TableHead>
                         <TableHead>最近更新人</TableHead>
                         <TableHead>最近更新时间</TableHead>
                         <TableHead>备注</TableHead>
@@ -1162,7 +1161,7 @@ export function SpuRuleManagement() {
                     <TableBody>
                       {filtered.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={12} className="py-10 text-center text-slate-400">
+                        <TableCell colSpan={11} className="py-10 text-center text-slate-400">
                             暂无数据
                           </TableCell>
                         </TableRow>
@@ -1217,22 +1216,6 @@ export function SpuRuleManagement() {
                                 )}
                               >
                                 {r.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                className={cn(
-                                  "border-0",
-                                  r.scope === "全部IP生效"
-                                    ? "bg-emerald-100 text-emerald-700"
-                                    : r.scope === "全部IP不生效"
-                                      ? "bg-slate-200 text-slate-600"
-                                      : r.scope === "部分IP生效"
-                                        ? "bg-sky-100 text-sky-700"
-                                        : "bg-amber-100 text-amber-700",
-                                )}
-                              >
-                                {r.scope}
                               </Badge>
                             </TableCell>
                             <TableCell>{r.updater}</TableCell>
