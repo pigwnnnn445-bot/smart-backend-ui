@@ -901,6 +901,10 @@ export function SpuRuleManagement() {
                       })}
                     </div>
                   </div>
+                  <div className="mb-5">
+                    <h2 className="text-base font-semibold tracking-tight text-slate-900">SPU 词库管理</h2>
+                    <p className="mt-1 text-xs text-slate-500">查看与维护所有 SPU 的词库总体配置状态，可在此启用/停用词库或进入词条编辑。</p>
+                  </div>
                   <OverviewTable
                     rows={overviewRows}
                     onEdit={(spu) => {
@@ -948,6 +952,10 @@ export function SpuRuleManagement() {
                       })}
                     </div>
                   </div>
+                <div className="mb-5">
+                  <h2 className="text-base font-semibold tracking-tight text-slate-900">SPU 词条管理</h2>
+                  <p className="mt-1 text-xs text-slate-500">按 SPU 维护具体词条内容、匹配方式与启用状态，支持批量操作与复制其他词库配置。</p>
+                </div>
                 {/* Filters */}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   <div className="flex items-center gap-2">
