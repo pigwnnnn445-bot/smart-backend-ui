@@ -873,6 +873,22 @@ export function SpuRuleManagement() {
                   />
                 ) : (
                 <>
+                  <Tabs
+                    value={activeProductType}
+                    onValueChange={(v) => {
+                      const type = v as ProductType;
+                      setActiveProductType(type);
+                      const typeSpus = SPU_LIST.filter((s) => SPU_TYPE_MAP[s] === type);
+                      if (!typeSpus.includes(activeSpu)) {
+                        setActiveSpu(typeSpus[0] ?? "");
+                      }
+                    }}
+                  >
+                    <TabsList>
+                      <TabsTrigger value="b2c">B2C SPU</TabsTrigger>
+                      <TabsTrigger value="c2c">C2C SPU</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 {/* Filters */}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   <div className="flex items-center gap-2">
