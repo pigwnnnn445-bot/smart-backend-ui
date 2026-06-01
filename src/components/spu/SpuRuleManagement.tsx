@@ -120,6 +120,7 @@ interface SpuInfo {
   category: string;
   productStatus: "在售" | "下架";
   inSearch: boolean;
+  productType?: ProductType;
 }
 
 const SPU_INFOS: SpuInfo[] = [
