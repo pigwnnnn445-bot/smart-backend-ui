@@ -58,7 +58,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type TermType = string;
-type MatchType = "精准匹配" | "前缀匹配" | "模糊匹配";
+type MatchType = "精准匹配" | "前缀匹配";
 type DirectFlag = "是" | "否";
 type Status = "草稿" | "已启用" | "已停用";
 type Scope = "部分IP生效" | "部分IP不生效" | "全部IP生效" | "全部IP不生效";
@@ -157,7 +157,7 @@ const TERM_TYPES: TermType[] = [
   "场景词",
   "品类词",
 ];
-const MATCH_TYPES: MatchType[] = ["精准匹配", "前缀匹配", "模糊匹配"];
+const MATCH_TYPES: MatchType[] = ["精准匹配", "前缀匹配"];
 const DIRECT_FLAGS: DirectFlag[] = ["是", "否"];
 const STATUSES: Status[] = ["草稿", "已启用", "已停用"];
 const SCOPES: Scope[] = ["部分IP生效", "部分IP不生效", "全部IP生效", "全部IP不生效"];
@@ -589,7 +589,7 @@ export function SpuRuleManagement() {
         content: `${copySourceSpu}-别名词`,
         standard: normalizeTerm(`${copySourceSpu}alias`),
         termType: ["别名词"],
-        matchType: "模糊匹配",
+        matchType: "前缀匹配",
         direct: "否",
         status,
         scope: "全部IP生效",
@@ -1690,7 +1690,7 @@ export function SpuRuleManagement() {
               <TableBody>
                 {[
                   { content: `${copySourceSpu}-品牌词`, type: "品牌词", match: "精准匹配", direct: "是", status: "已启用" },
-                  { content: `${copySourceSpu}-别名词`, type: "别名词", match: "模糊匹配", direct: "否", status: "已启用" },
+                  { content: `${copySourceSpu}-别名词`, type: "别名词", match: "前缀匹配", direct: "否", status: "已启用" },
                   { content: `${copySourceSpu}-场景词`, type: "场景词", match: "前缀匹配", direct: "否", status: "已启用" },
                 ].map((r, i) => (
                   <TableRow key={i}>
