@@ -290,6 +290,7 @@ const blank: RuleRow = {
 export function SpuRuleManagement() {
   const [view, setView] = useState<"overview" | "manage">("overview");
   const [activeSpu, setActiveSpu] = useState("ChatGPT");
+  const [activeProductType, setActiveProductType] = useState<ProductType>("b2c");
   const [enabledSpu, setEnabledSpu] = useState<Record<string, boolean>>(
     Object.fromEntries(SPU_LIST.map((s) => [s, true])),
   );
