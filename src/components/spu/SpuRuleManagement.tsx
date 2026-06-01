@@ -1370,44 +1370,6 @@ export function SpuRuleManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm">
-                  <span className="text-red-500 mr-1">*</span>生效范围
-                </label>
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={draft.scope}
-                    onValueChange={(v) =>
-                      setDraft({ ...draft, scope: v as Scope, regions: [] })
-                    }
-                  >
-                    <SelectTrigger className="flex-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SCOPES.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {(draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="h-9 shrink-0 bg-blue-500 hover:bg-blue-600 text-white"
-                      onClick={() => setRegionSheetOpen(true)}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                      编辑{draft.regions.length > 0 ? ` (${draft.regions.length})` : ""}
-                    </Button>
-                  )}
-                </div>
-                {scopeError && (
-                  <p className="text-xs text-rose-500 mt-1">{scopeError}</p>
-                )}
-              </div>
             </div>
             <div>
               <label className="mb-1.5 block text-sm">备注</label>
