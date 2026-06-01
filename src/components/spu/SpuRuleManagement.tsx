@@ -768,49 +768,52 @@ export function SpuRuleManagement() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-4">
-          <div className="rounded-md bg-white shadow-sm">
+        <main className="flex-1 overflow-auto p-6 bg-slate-50/60">
+          <div className="rounded-xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70 overflow-hidden">
             <div className="flex">
               {/* Left col: Menu */}
-              <div className="shrink-0 border-r border-slate-200 pl-3 pr-2 py-4">
-                <div className="space-y-2 text-slate-700">
-                  <div
-                    onClick={() => setView("overview")}
-                    className={cn(
-                      "py-1.5 cursor-pointer",
-                      view === "overview" && "text-blue-600 font-medium",
-                    )}
-                  >
-                    SPU词库管理
-                  </div>
-                  <div
-                    onClick={() => setView("manage")}
-                    className={cn(
-                      "py-1.5 cursor-pointer",
-                      view === "manage" && "text-blue-600 font-medium",
-                    )}
-                  >
-                    SPU词条管理
-                  </div>
+              <div className="w-44 shrink-0 border-r border-slate-200/80 bg-gradient-to-b from-slate-50/80 to-white px-3 py-5">
+                <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Search Config
+                </div>
+                <nav className="space-y-1 text-sm text-slate-600">
+                  {[
+                    { label: "SPU词库管理", active: view === "overview", onClick: () => setView("overview") },
+                    { label: "SPU词条管理", active: view === "manage", onClick: () => setView("manage") },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={item.onClick}
+                      className={cn(
+                        "w-full text-left rounded-lg px-3 py-2 transition-colors",
+                        item.active
+                          ? "bg-blue-50 text-blue-700 font-medium shadow-sm ring-1 ring-blue-100"
+                          : "hover:bg-slate-100/80 hover:text-slate-900",
+                      )}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                   <Link
                     to="/scene"
-                    className="block py-1.5 cursor-pointer text-slate-700 hover:text-blue-600"
+                    className="block rounded-lg px-3 py-2 hover:bg-slate-100/80 hover:text-slate-900"
                   >
                     场景搜索配置
                   </Link>
                   <Link
                     to="/product-sort"
-                    className="block py-1.5 cursor-pointer text-slate-700 hover:text-blue-600"
+                    className="block rounded-lg px-3 py-2 hover:bg-slate-100/80 hover:text-slate-900"
                   >
                     商品排序管理
                   </Link>
                   <Link
                     to="/hot-ranking"
-                    className="block py-1.5 cursor-pointer text-slate-700 hover:text-blue-600"
+                    className="block rounded-lg px-3 py-2 hover:bg-slate-100/80 hover:text-slate-900"
                   >
                     热搜榜配置
                   </Link>
-                </div>
+                </nav>
               </div>
 
               {view === "manage" && (
@@ -1823,12 +1826,26 @@ function OverviewTable({
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-5">
+        <div className="flex items-end justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900">SPU 词库管理</h2>
+            <p className="mt-0.5 text-xs text-slate-500">查看与维护所有 SPU 的词库配置状态</p>
+          </div>
+          <div className="flex items-center gap-4 text-xs text-slate-500">
+            <span><span className="font-semibold text-slate-900">{rows.length}</span> 个 SPU</span>
+            <span className="h-3 w-px bg-slate-200" />
+            <span><span className="font-semibold text-emerald-600">{rows.filter(r => r.libStatus === "已启用").length}</span> 已启用</span>
+          </div>
+        </div>
+      </div>
+      <div className="mb-4 rounded-xl border border-slate-200/80 bg-slate-50/60 p-4">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div className="flex items-center gap-2">
           <Label className="w-20 shrink-0 text-right text-slate-600">SPU ID</Label>
           <Input
             placeholder="请输入SPU ID"
-            className="h-8"
+            className="h-9 bg-white"
             value={filters.spuId}
             onChange={(e) => setFilters((f) => ({ ...f, spuId: e.target.value }))}
           />
@@ -1837,7 +1854,7 @@ function OverviewTable({
           <Label className="w-20 shrink-0 text-right text-slate-600">SPU名称</Label>
           <Input
             placeholder="请输入SPU名称"
-            className="h-8"
+            className="h-9 bg-white"
             value={filters.spuName}
             onChange={(e) => setFilters((f) => ({ ...f, spuName: e.target.value }))}
           />
@@ -1848,7 +1865,7 @@ function OverviewTable({
             value={filters.category || "all"}
             onValueChange={(v) => setFilters((f) => ({ ...f, category: v === "all" ? "" : v }))}
           >
-            <SelectTrigger className="h-8">
+            <SelectTrigger className="h-9 bg-white">
               <SelectValue placeholder="请选择" />
             </SelectTrigger>
             <SelectContent>
@@ -1869,33 +1886,34 @@ function OverviewTable({
           />
         </div>
       </div>
-      <div className="mb-4 flex justify-end gap-2">
-        <Button size="sm" className="h-8 bg-rose-500 hover:bg-rose-600">
-          <Filter className="h-3.5 w-3.5" /> 筛选
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8"
-          onClick={() => setFilters({ spuId: "", spuName: "", category: "", libStatus: [] })}
-        >
-          <RotateCcw className="h-3.5 w-3.5" /> 重置
-        </Button>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-9"
+            onClick={() => setFilters({ spuId: "", spuName: "", category: "", libStatus: [] })}
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> 重置
+          </Button>
+          <Button size="sm" className="h-9 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-sm">
+            <Filter className="h-3.5 w-3.5" /> 筛选
+          </Button>
+        </div>
       </div>
-      <div className="overflow-x-auto rounded border border-slate-200">
+      <div className="overflow-x-auto rounded-xl border border-slate-200/80 bg-white">
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead>SPU ID</TableHead>
-              <TableHead>SPU名称</TableHead>
-              <TableHead>SPU分类</TableHead>
-              <TableHead>是否参与搜索</TableHead>
-              <TableHead>词条数量</TableHead>
-              <TableHead>已启用词条数</TableHead>
-              <TableHead>词库状态</TableHead>
-              <TableHead>最近更新人</TableHead>
-              <TableHead className="whitespace-nowrap">最近更新时间</TableHead>
-              <TableHead className="text-right">操作</TableHead>
+            <TableRow className="bg-slate-50/80 hover:bg-slate-50/80 border-b border-slate-200/80">
+              <TableHead className="text-xs font-semibold uppercase tracking-wide text-slate-500">SPU ID</TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wide text-slate-500">SPU 名称</TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wide text-slate-500">SPU 分类</TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wide text-slate-500">参与搜索</TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wide text-slate-500">词条数量</TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wide text-slate-500">已启用</TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wide text-slate-500">词库状态</TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wide text-slate-500">最近更新人</TableHead>
+              <TableHead className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">最近更新时间</TableHead>
+              <TableHead className="text-right text-xs font-semibold uppercase tracking-wide text-slate-500">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -1907,9 +1925,9 @@ function OverviewTable({
               </TableRow>
             ) : (
               filtered.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="whitespace-nowrap">{r.id}</TableCell>
-                  <TableCell>{r.name}</TableCell>
+                <TableRow key={r.id} className="border-b border-slate-100 hover:bg-blue-50/30 transition-colors">
+                  <TableCell className="whitespace-nowrap py-3 font-mono text-xs text-slate-500">{r.id}</TableCell>
+                  <TableCell className="py-3 font-medium text-slate-900">{r.name}</TableCell>
                   <TableCell>{r.category}</TableCell>
                   <TableCell>
                     <Badge
