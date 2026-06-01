@@ -360,7 +360,6 @@ export function SpuRuleManagement() {
   const [editOpen, setEditOpen] = useState(false);
   const [draft, setDraft] = useState<RuleRow>(blank);
   const [mode, setMode] = useState<"create" | "edit">("create");
-  const [scopeError, setScopeError] = useState("");
   const [duplicateError, setDuplicateError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{
     content?: string;
@@ -416,7 +415,6 @@ export function SpuRuleManagement() {
     setMode("create");
     setDraft({ ...blank, id: crypto.randomUUID() });
     setDuplicateError("");
-    setScopeError("");
     setFieldErrors({});
     setCrossSpuWarning("");
     setEditOpen(true);
@@ -426,7 +424,6 @@ export function SpuRuleManagement() {
     setMode("edit");
     setDraft({ ...row });
     setDuplicateError("");
-    setScopeError("");
     setFieldErrors({});
     setCrossSpuWarning("");
     setEditOpen(true);
@@ -440,19 +437,7 @@ export function SpuRuleManagement() {
     if (!draft.standard.trim()) errs.standard = "请输入标准化词";
     if (draft.termType.length === 0) errs.termType = "请选择词条类型";
     if (draft.remark && draft.remark.length > 300) errs.remark = "备注内容不能超过300字符";
-    let scopeErr = "";
-    if (
-      (draft.scope === "部分IP生效" || draft.scope === "部分IP不生效") &&
-      draft.regions.length === 0
-    ) {
-      scopeErr =
-        draft.scope === "部分IP生效"
-          ? "请选择「生效」的国家/地区"
-          : "请选择「不生效」的国家/地区";
-    }
-    if (scopeErr) setScopeError(scopeErr);
-    else setScopeError("");
-    if (Object.keys(errs).length > 0 || scopeErr) {
+    if (Object.keys(errs).length > 0) {
       setFieldErrors(errs);
       return;
     }
