@@ -768,49 +768,52 @@ export function SpuRuleManagement() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-4">
-          <div className="rounded-md bg-white shadow-sm">
+        <main className="flex-1 overflow-auto p-6 bg-slate-50/60">
+          <div className="rounded-xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70 overflow-hidden">
             <div className="flex">
               {/* Left col: Menu */}
-              <div className="shrink-0 border-r border-slate-200 pl-3 pr-2 py-4">
-                <div className="space-y-2 text-slate-700">
-                  <div
-                    onClick={() => setView("overview")}
-                    className={cn(
-                      "py-1.5 cursor-pointer",
-                      view === "overview" && "text-blue-600 font-medium",
-                    )}
-                  >
-                    SPU词库管理
-                  </div>
-                  <div
-                    onClick={() => setView("manage")}
-                    className={cn(
-                      "py-1.5 cursor-pointer",
-                      view === "manage" && "text-blue-600 font-medium",
-                    )}
-                  >
-                    SPU词条管理
-                  </div>
+              <div className="w-44 shrink-0 border-r border-slate-200/80 bg-gradient-to-b from-slate-50/80 to-white px-3 py-5">
+                <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Search Config
+                </div>
+                <nav className="space-y-1 text-sm text-slate-600">
+                  {[
+                    { label: "SPU词库管理", active: view === "overview", onClick: () => setView("overview") },
+                    { label: "SPU词条管理", active: view === "manage", onClick: () => setView("manage") },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={item.onClick}
+                      className={cn(
+                        "w-full text-left rounded-lg px-3 py-2 transition-colors",
+                        item.active
+                          ? "bg-blue-50 text-blue-700 font-medium shadow-sm ring-1 ring-blue-100"
+                          : "hover:bg-slate-100/80 hover:text-slate-900",
+                      )}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                   <Link
                     to="/scene"
-                    className="block py-1.5 cursor-pointer text-slate-700 hover:text-blue-600"
+                    className="block rounded-lg px-3 py-2 hover:bg-slate-100/80 hover:text-slate-900"
                   >
                     场景搜索配置
                   </Link>
                   <Link
                     to="/product-sort"
-                    className="block py-1.5 cursor-pointer text-slate-700 hover:text-blue-600"
+                    className="block rounded-lg px-3 py-2 hover:bg-slate-100/80 hover:text-slate-900"
                   >
                     商品排序管理
                   </Link>
                   <Link
                     to="/hot-ranking"
-                    className="block py-1.5 cursor-pointer text-slate-700 hover:text-blue-600"
+                    className="block rounded-lg px-3 py-2 hover:bg-slate-100/80 hover:text-slate-900"
                   >
                     热搜榜配置
                   </Link>
-                </div>
+                </nav>
               </div>
 
               {view === "manage" && (
