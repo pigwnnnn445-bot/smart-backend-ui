@@ -90,6 +90,13 @@ interface RuleRow {
 
 const SPU_LIST = ["Netflix", "Spotify", "Tidal", "ChatGPT"];
 
+const SPU_TYPE_MAP: Record<string, ProductType> = {
+  Netflix: "b2c",
+  Spotify: "b2c",
+  Tidal: "b2c",
+  ChatGPT: "c2c",
+};
+
 type ProductType = "b2c" | "c2c";
 
 // 复制词库配置 - 不同商品类型下可选的源SPU列表
