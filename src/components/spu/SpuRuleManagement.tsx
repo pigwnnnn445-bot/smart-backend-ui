@@ -44,6 +44,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -373,6 +381,7 @@ export function SpuRuleManagement() {
   const [batchConfirm, setBatchConfirm] = useState<Extract<Status, "已启用" | "已停用"> | null>(null);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
 
   // 批量选择
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -1119,6 +1128,13 @@ export function SpuRuleManagement() {
                     </Button>
                     <Button
                       size="sm"
+                      className="h-8 bg-blue-600 hover:bg-blue-700"
+                      onClick={() => setSubmitConfirmOpen(true)}
+                    >
+                      提交
+                    </Button>
+                    <Button
+                      size="sm"
                       onClick={openCreate}
                       className="h-8 bg-blue-500 hover:bg-blue-600"
                     >
@@ -1766,6 +1782,32 @@ export function SpuRuleManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 提交二次确认 */}
+      <AlertDialog open={submitConfirmOpen} onOpenChange={setSubmitConfirmOpen}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认保存配置</AlertDialogTitle>
+            <AlertDialogDescription>
+              当前支付方式前台无退款路径，确定要保存配置吗？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setSubmitConfirmOpen(false)}>
+              取消
+            </Button>
+            <Button
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={() => {
+                setSubmitConfirmOpen(false);
+                toast.success("配置已保存");
+              }}
+            >
+              确定
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
