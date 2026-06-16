@@ -381,6 +381,7 @@ export function SpuRuleManagement() {
   const [batchConfirm, setBatchConfirm] = useState<Extract<Status, "已启用" | "已停用"> | null>(null);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
 
   // 批量选择
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
