@@ -1128,6 +1128,13 @@ export function SpuRuleManagement() {
                     </Button>
                     <Button
                       size="sm"
+                      className="h-8 bg-blue-600 hover:bg-blue-700"
+                      onClick={() => setSubmitConfirmOpen(true)}
+                    >
+                      提交
+                    </Button>
+                    <Button
+                      size="sm"
                       onClick={openCreate}
                       className="h-8 bg-blue-500 hover:bg-blue-600"
                     >
