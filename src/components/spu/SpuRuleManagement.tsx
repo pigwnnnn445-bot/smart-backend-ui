@@ -1782,6 +1782,32 @@ export function SpuRuleManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 提交二次确认 */}
+      <AlertDialog open={submitConfirmOpen} onOpenChange={setSubmitConfirmOpen}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认保存配置</AlertDialogTitle>
+            <AlertDialogDescription>
+              当前支付方式前台无退款路径，确定要保存配置吗？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setSubmitConfirmOpen(false)}>
+              取消
+            </Button>
+            <Button
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={() => {
+                setSubmitConfirmOpen(false);
+                toast.success("配置已保存");
+              }}
+            >
+              确定
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
